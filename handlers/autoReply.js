@@ -39,7 +39,13 @@ async function setupAutoReply(client, onReady) {
           console.log(`   Pesan: ${message.text}`);
           
           // Kirim balasan
-          await client.sendMessage(message.peerId || message.chatId, {
+          // Use chatId for group/channel, peerId for private chat
+          const chatId = message.chatId || message.peerId;
+          if (!chatId) {
+            console.warn('⚠️  Tidak dapat menentukan chat ID untuk balasan');
+            return;
+          }
+          await client.sendMessage(chatId, {
             message: config.AUTO_REPLY_MESSAGE,
             replyTo: message.id
           });

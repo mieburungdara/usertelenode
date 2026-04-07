@@ -20,6 +20,12 @@ const maxDelayRaw = parseInt(process.env.MAX_DELAY, 10);
 // Use Number.isNaN to properly handle 0 as valid value
 const minDelay = Number.isNaN(minDelayRaw) ? 3000 : minDelayRaw;
 const maxDelay = Number.isNaN(maxDelayRaw) ? 10000 : maxDelayRaw;
+if (minDelay < 0) {
+  throw new Error('MIN_DELAY must be a non-negative number.');
+}
+if (maxDelay < 0) {
+  throw new Error('MAX_DELAY must be a non-negative number.');
+}
 if (minDelay >= maxDelay) {
   throw new Error('MIN_DELAY must be less than MAX_DELAY.');
 }

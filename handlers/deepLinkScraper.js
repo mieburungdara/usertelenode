@@ -310,7 +310,8 @@ async function deepLinkScraper(client, rl) {
                 return isRecent && isFromBot;
               });
               
-              const response = recentMessages.length > 0 ? recentMessages[0] : (botMessages.length > 0 ? botMessages[0] : null);
+              // Only use recent messages, don't fall back to stale messages
+              const response = recentMessages.length > 0 ? recentMessages[0] : null;
               
               // Sanitize link data for report (prevent markdown injection)
               const safeBotUsername = String(link.botUsername || '').replace(/[*_\[\]()~\x60>#+\-=|{}.!]/g, '');
@@ -393,11 +394,12 @@ async function deepLinkScraper(client, rl) {
     
     // Delay sebelum pesan berikutnya (human-like behavior)
     if (msgId < endId && isRunning) {
-      // Generate new random delay for each message
-      const nextMinDelay = typeof config.MIN_DELAY === 'number' && !isNaN(config.MIN_DELAY) ? config.MIN_DELAY : 3000;
-      const nextMaxDelay = typeof config.MAX_DELAY === 'number' && !isNaN(config.MAX_DELAY) ? config.MAX_DELAY : 10000;
-      const nextDelay = Math.floor(Math.random() * (nextMaxDelay - nextMinDelay + 1)) + nextMinDelay;
-      console.log(`   \u23f3 Delay ${(nextDelay/1000).toFixed(1)} detik (menghindari rate limit)...`);
+      const minDelay = typeof config.MIN_DELAY === 'number' && !isNaN(config.MIN_DELAY) ? config.MIN_DELAY : 3000;
+      const maxDelay = typeof config.MAX_DELAY === 'number' && !isNaN(config.MAX_DELAY) ? config.MAX_DELAY : 10000;
+      const effectiveMin = Math.min(minDelay, maxDelay);
+      const effectiveMax = Math.max(minDelay, maxDelay);
+      const nextDelay = Math.floor(Math.random() * (effectiveMax - effectiveMin + 1)) + effectiveMin;
+      console.log(`   ⏳ Delay ${(nextDelay/1000).toFixed(1)} detik (menghindari rate limit)...`);
       await new Promise(resolve => setTimeout(resolve, nextDelay));
     }
   }
