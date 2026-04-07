@@ -187,8 +187,18 @@ async function addAccount() {
     // Dapatkan string session
     const sessionStr = client.session.save();
 
-    // Simpan ke accounts.json
+    // Cek duplikat
     const data = loadAccounts();
+    const existingIndex = data.accounts.findIndex(
+      acc => acc.phone === phoneNumber || acc.id === userId
+    );
+    if (existingIndex !== -1) {
+      console.log('\n⚠️ Akun dengan nomor atau ID ini sudah terdaftar.');
+      await client.disconnect();
+      return;
+    }
+
+    // Simpan ke accounts.json
     const newAccount = {
       id: userId,
       phone: phoneNumber,
