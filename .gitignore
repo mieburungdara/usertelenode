@@ -1,0 +1,28 @@
+# Sensitive files
+.env
+accounts.json
+
+# Sessions
+sessions/
+*.session
+
+# Reports (opsional, tambahkan ke git report/)
+report.md
+
+# Node modules
+node_modules/
+
+# Debug logs
+npm-debug.log.*
+yarn-debug.log.*
+yarn-error.log.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
