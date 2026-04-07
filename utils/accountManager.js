@@ -168,7 +168,8 @@ async function addAccount() {
 
     // Dapatkan info user
     const me = await client.getMe();
-    const userId = me.id;
+    // Convert BigInt id to string for JSON serialization
+    const userId = typeof me.id === 'bigint' ? me.id.toString() : String(me.id);
     const username = me.username || '';
     
     // Dapatkan string session

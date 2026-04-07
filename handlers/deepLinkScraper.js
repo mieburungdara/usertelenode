@@ -290,7 +290,9 @@ async function deepLinkScraper(client, rl) {
                 const msgTimestamp = msg.date ? (typeof msg.date === 'number' ? msg.date * 1000 : new Date(msg.date).getTime()) : 0;
                 const isRecent = (now - msgTimestamp) < 300000; // 5 minutes
                 // Check if message is FROM the bot (from_id matches)
-                const isFromBot = msg.fromId && msg.fromId.userId && msg.fromId.userId.toString() === botPeer.id.toString();
+                // fromId can be PeerUser (has userId), PeerChannel (has channelId), or PeerChat (has chatId)
+                const senderId = msg.fromId ? (msg.fromId.userId || msg.fromId.channelId || msg.fromId.chatId) : null;
+                const isFromBot = senderId && senderId.toString() === botPeer.id.toString();
                 return isRecent && isFromBot;
               });
               

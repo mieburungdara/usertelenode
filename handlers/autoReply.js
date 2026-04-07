@@ -1,6 +1,9 @@
 const { NewMessage } = require('telegram/events');
 const config = require('../config');
 
+// Guard to prevent duplicate handler registration
+let _handlerAdded = false;
+
 /**
  * Handler untuk auto reply
  * Mendengarkan pesan dari bot tertentu dan membalas otomatis
@@ -9,6 +12,12 @@ const config = require('../config');
  * @param {object} config - Konfigurasi
  */
 async function setupAutoReply(client, onReady) {
+  if (_handlerAdded) {
+    console.warn('⚠️  Handler sudah terdaftar. Tidak menambah duplikat.');
+    if (onReady) onReady();
+    return;
+  }
+
   console.log('\n🤖 Mode Auto Reply aktif...');
   console.log(`   Target Bot ID: ${config.TARGET_BOT_ID}`);
   console.log(`   Trigger: "${config.TRIGGER_MESSAGE}"`);
@@ -16,7 +25,7 @@ async function setupAutoReply(client, onReady) {
   console.log('   Tekan Ctrl+C untuk berhenti.\n');
 
   // Handler untuk pesan baru
-  client.addEventHandler(async (event) => {
+  const handler = async (event) => {
     try {
       const message = event.message;
       const sender = await message.getSender();
@@ -41,7 +50,10 @@ async function setupAutoReply(client, onReady) {
     } catch (error) {
       console.error('❌ Error di autoReply handler:', error.message);
     }
-  }, new NewMessage({}));
+  };
+  
+  client.addEventHandler(handler, new NewMessage({}));
+  _handlerAdded = true;
 
   console.log('⏳ Menunggu pesan masuk...\n');
 
