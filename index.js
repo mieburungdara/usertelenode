@@ -9,7 +9,13 @@
  * - Safe Exit dengan Report Generation
  */
 
-const readlineSync = require('readline-sync');
+let readlineSync;
+try {
+  readlineSync = require('readline-sync');
+} catch (e) {
+  console.error('❌ Module readline-sync tidak ditemukan. Jalankan: npm install');
+  process.exit(1);
+}
 
 // Buat readline interface
 const rl = {
@@ -18,9 +24,16 @@ const rl = {
 };
 
 // Import modules
-const { addAccount, listAccounts, selectAccount, deleteAccount, loadClient } = require('./utils/accountManager');
-const setupAutoReply = require('./handlers/autoReply');
-const deepLinkScraper = require('./handlers/deepLinkScraper');
+let addAccount, listAccounts, selectAccount, deleteAccount, loadClient;
+let setupAutoReply, deepLinkScraper;
+try {
+  ({ addAccount, listAccounts, selectAccount, deleteAccount, loadClient } = require('./utils/accountManager'));
+  setupAutoReply = require('./handlers/autoReply');
+  deepLinkScraper = require('./handlers/deepLinkScraper');
+} catch (e) {
+  console.error('❌ Gagal memuat modul:', e.message);
+  process.exit(1);
+}
 
 // Tampilkan header
 function printHeader() {

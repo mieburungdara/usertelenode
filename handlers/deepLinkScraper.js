@@ -4,7 +4,8 @@ const { Api } = require('telegram');
 const { extractDeepLinks, generateStartMessage } = require('../utils/linkParser');
 const config = require('../config');
 
-const REPORT_FILE = path.resolve(__dirname, '..', config.REPORT_FILE);
+const reportFileName = (typeof config.REPORT_FILE === 'string' && config.REPORT_FILE.trim()) ? config.REPORT_FILE : 'report.md';
+const REPORT_FILE = path.resolve(__dirname, '..', reportFileName);
 
 /**
  * Random delay antara 3-10 detik
@@ -13,7 +14,10 @@ function randomDelay() {
   // Ensure config values are valid numbers
   const minDelay = typeof config.MIN_DELAY === 'number' && !isNaN(config.MIN_DELAY) ? config.MIN_DELAY : 3000;
   const maxDelay = typeof config.MAX_DELAY === 'number' && !isNaN(config.MAX_DELAY) ? config.MAX_DELAY : 10000;
-  const delay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+  // Ensure minDelay <= maxDelay to prevent negative delay
+  const effectiveMin = Math.min(minDelay, maxDelay);
+  const effectiveMax = Math.max(minDelay, maxDelay);
+  const delay = Math.floor(Math.random() * (effectiveMax - effectiveMin + 1)) + effectiveMin;
   return new Promise((resolve) => setTimeout(resolve, delay));
 }
 
