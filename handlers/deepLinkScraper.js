@@ -141,7 +141,7 @@ async function deepLinkScraper(client, rl) {
 
   // Input channel
   const channelInput = rl.question('Masukkan username/link channel publik (contoh: contohchannel atau https://t.me/contohchannel): ');
-  let channelId = channelInput.trim();
+  let channelId = (channelInput || '').trim();
   
   // Bersihkan input dari URL
   if (channelId.includes('t.me/')) {
@@ -367,9 +367,10 @@ async function deepLinkScraper(client, rl) {
       console.log(`   ❌ Error: ${e.message}`);
       
       // Cek flood wait - GramJS format: "A wait of X seconds is required" atau "FloodWaitError"
-      const floodMatch = e.message.match(/wait of (\d+)/) || e.message.match(/FLOOD_WAIT_(\d+)/) || e.message.match(/FloodWait/);
+      // Support decimal wait times (e.g., "wait of 3.5 seconds")
+      const floodMatch = e.message.match(/wait of ([\d.]+)/) || e.message.match(/FLOOD_WAIT_([\d.]+)/) || e.message.match(/FloodWait/);
       if (floodMatch) {
-        const waitTime = floodMatch[1] ? parseInt(floodMatch[1], 10) : 30;
+        const waitTime = floodMatch[1] ? Math.ceil(parseFloat(floodMatch[1])) : 30;
         console.log(`   ⏳ Flood wait detected. Tunggu ${waitTime} detik...`);
         await new Promise(r => setTimeout(r, waitTime * 1000));
         continue;

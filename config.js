@@ -15,8 +15,11 @@ if (!/^\d+$/.test(targetBotId)) {
   throw new Error('TARGET_BOT_ID must be a valid numeric Telegram bot ID.');
 }
 
-const minDelay = parseInt(process.env.MIN_DELAY, 10) || 3000;
-const maxDelay = parseInt(process.env.MAX_DELAY, 10) || 10000;
+const minDelayRaw = parseInt(process.env.MIN_DELAY, 10);
+const maxDelayRaw = parseInt(process.env.MAX_DELAY, 10);
+// Use Number.isNaN to properly handle 0 as valid value
+const minDelay = Number.isNaN(minDelayRaw) ? 3000 : minDelayRaw;
+const maxDelay = Number.isNaN(maxDelayRaw) ? 10000 : maxDelayRaw;
 if (minDelay >= maxDelay) {
   throw new Error('MIN_DELAY must be less than MAX_DELAY.');
 }

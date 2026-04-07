@@ -24,7 +24,7 @@ const deepLinkScraper = require('./handlers/deepLinkScraper');
 
 // Tampilkan header
 function printHeader() {
-  console.clear();
+  try { console.clear(); } catch (e) { /* ignore unsupported terminals */ }
   console.log('╔══════════════════════════════════════════╗');
   console.log('║     🤖 UserTeleNode - User Bot Telegram  ║');
   console.log('║     Dibuat dengan Node.js + GramJS       ║');
