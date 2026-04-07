@@ -279,13 +279,19 @@ async function deepLinkScraper(client, rl) {
             await randomDelay();
             
             // Ambil pesan terakhir dari bot - pastikan ambil pesan SETELAH kita kirim /start
+            // Filter by sender to ensure we get the bot's response
             try {
               const botMessages = await client.getMessages(botPeer, { limit: 5 });
-              // Filter pesan yang dikirim SETELAH kita kirim /start (dalam 30 detik terakhir)
+              // Filter pesan yang dikirim SETELAH kita kirim /start (dalam 5 menit terakhir)
+              // AND only messages FROM the bot (check from_id matches botPeer)
               const now = Date.now();
               const recentMessages = botMessages.filter(msg => {
-                const msgDate = msg.date ? new Date(msg.date).getTime() : 0;
-                return (now - msgDate) < 60000; // pesan dalam 1 menit terakhir
+                // msg.date from GramJS is Unix timestamp in seconds, convert to ms
+                const msgTimestamp = msg.date ? (typeof msg.date === 'number' ? msg.date * 1000 : new Date(msg.date).getTime()) : 0;
+                const isRecent = (now - msgTimestamp) < 300000; // 5 minutes
+                // Check if message is FROM the bot (from_id matches)
+                const isFromBot = msg.fromId && msg.fromId.userId && msg.fromId.userId.toString() === botPeer.id.toString();
+                return isRecent && isFromBot;
               });
               
               const response = recentMessages.length > 0 ? recentMessages[0] : (botMessages.length > 0 ? botMessages[0] : null);
@@ -310,6 +316,10 @@ async function deepLinkScraper(client, rl) {
                   
                   isRunning = false;
                   reportData.stopped = true;
+                  link.hasMedia = false;
+                  
+                  // Push this link BEFORE generating report
+                  reportData.deepLinks.push(link);
                   
                   // Remove Ctrl+C listeners untuk tidak double exit
                   process.removeAllListeners('SIGINT');
@@ -332,11 +342,13 @@ async function deepLinkScraper(client, rl) {
               console.log(`   ⚠️ Gagal cek response bot: ${e.message}`);
               link.hasMedia = false;
             }
+            // Push link here for successful responses (media or no media detected)
+            reportData.deepLinks.push(link);
           } catch (e) {
             console.log(`   ❌ Gagal kirim /start ke bot: ${e.message}`);
             link.hasMedia = false;
+            reportData.deepLinks.push(link);
           }
-          reportData.deepLinks.push(link);
         }
       }
       
