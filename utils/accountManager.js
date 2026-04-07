@@ -162,11 +162,8 @@ async function addAccount() {
       phoneCode: async () => {
         const code = await question('Masukkan kode OTP yang diterima di Telegram: ');
         return code;
-      },
-      onError: (err) => {
-        // Throw error agar bisa di-catch oleh try-catch
-        throw err;
       }
+      // Remove onError callback - GramJS handles errors via rejection
     });
 
     // Dapatkan info user

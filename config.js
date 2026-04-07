@@ -5,9 +5,14 @@ if (isNaN(apiId)) {
   throw new Error('API_ID is not a valid number. Please check your .env file.');
 }
 
+const apiHash = process.env.API_HASH;
+if (!apiHash || typeof apiHash !== 'string') {
+  throw new Error('API_HASH is not set or invalid. Please check your .env file.');
+}
+
 module.exports = {
   API_ID: apiId,
-  API_HASH: process.env.API_HASH,
+  API_HASH: apiHash,
   TARGET_BOT_ID: '825312679',
   TRIGGER_MESSAGE: 'Partner found 😺',
   AUTO_REPLY_MESSAGE: 'cowok',

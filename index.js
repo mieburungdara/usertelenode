@@ -45,21 +45,15 @@ function printMainMenu() {
 }
 
 // Safe exit handler untuk auto reply
+// Use module-level variables to prevent handler accumulation
+let _safeExitSetup = false;
+
 function setupSafeExit(client) {
-  process.on('SIGINT', async () => {
-    console.log('\n\n⚠️  Menerima sinyal berhenti...');
-    console.log('👋 Menutup koneksi...');
-    
-    try {
-      await client.disconnect();
-    } catch (e) {
-    }
-    
-    console.log('✅ Bot berhenti dengan aman.');
-    process.exit(0);
-  });
+  if (_safeExitSetup) return;
+  _safeExitSetup = true;
   
-  process.on('SIGTERM', async () => {
+  // Use once() instead of on() to prevent handler accumulation
+  const sigHandler = async () => {
     console.log('\n\n⚠️  Menerima sinyal berhenti...');
     console.log('👋 Menutup koneksi...');
     
@@ -70,7 +64,10 @@ function setupSafeExit(client) {
     
     console.log('✅ Bot berhenti dengan aman.');
     process.exit(0);
-  });
+  };
+  
+  process.once('SIGINT', sigHandler);
+  process.once('SIGTERM', sigHandler);
 }
 
 // Mode 1: Auto Reply
@@ -98,8 +95,8 @@ async function runAutoReplyMode() {
     // Keep script running
     console.log('Bot berjalan... Tekan Ctrl+C untuk berhenti.');
     
-    // Keep alive - use setInterval instead of deprecated process.stdin.resume()
-    const keepAlive = setInterval(() => {}, 1000);
+    // Block execution until process exits
+    await new Promise(() => {});
     
   } catch (error) {
     console.error('❌ Gagal menghubungkan client:', error.message);
