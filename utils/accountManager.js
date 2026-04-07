@@ -16,7 +16,13 @@ function loadAccounts() {
       return { accounts: [] };
     }
     const data = fs.readFileSync(ACCOUNTS_FILE, 'utf-8');
-    return JSON.parse(data);
+    const parsed = JSON.parse(data);
+    // Validate structure
+    if (!parsed || !Array.isArray(parsed.accounts)) {
+      console.error('❌ accounts.json memiliki format yang tidak valid.');
+      return { accounts: [] };
+    }
+    return parsed;
   } catch (error) {
     console.error('❌ Gagal membaca accounts.json:', error.message);
     return { accounts: [] };
@@ -25,12 +31,15 @@ function loadAccounts() {
 
 /**
  * Simpan akun ke accounts.json
+ * @returns {boolean} true if save was successful
  */
 function saveAccounts(data) {
   try {
     fs.writeFileSync(ACCOUNTS_FILE, JSON.stringify(data, null, 2));
+    return true;
   } catch (error) {
     console.error('❌ Gagal menyimpan accounts.json:', error.message);
+    return false;
   }
 }
 

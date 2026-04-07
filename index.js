@@ -107,6 +107,7 @@ async function runAutoReplyMode() {
   } catch (error) {
     console.error('❌ Gagal menghubungkan client:', error.message);
     rl.question('\nTekan Enter untuk kembali ke menu utama...');
+    return main();
   }
 }
 
@@ -131,6 +132,7 @@ async function runDeepLinkScraper() {
   } catch (error) {
     console.error('❌ Gagal menghubungkan client:', error.message);
     rl.question('\nTekan Enter untuk kembali ke menu utama...');
+    return main();
   }
 }
 
@@ -152,8 +154,8 @@ async function main() {
   printMainMenu();
   
   const choiceInput = rl.question('Masukkan pilihan (1-5): ');
-  if (!choiceInput) {
-    console.log('\n❌ Input kosong.');
+  if (!choiceInput || !choiceInput.trim()) {
+    console.log('\n❌ Input kosong atau hanya spasi.');
     return main();
   }
   const choice = choiceInput.trim();
