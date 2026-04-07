@@ -351,8 +351,10 @@ async function deepLinkScraper(client, rl) {
               console.log(`   ⚠️ Gagal cek response bot: ${e.message}`);
               link.hasMedia = false;
             }
-            // Push link here for successful responses (media or no media detected)
-            reportData.deepLinks.push(link);
+            // Push link only if not already pushed (no-media stop case pushes before exit)
+            if (!reportData.stopped) {
+              reportData.deepLinks.push(link);
+            }
           } catch (e) {
             console.log(`   ❌ Gagal kirim /start ke bot: ${e.message}`);
             link.hasMedia = false;

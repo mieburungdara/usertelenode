@@ -45,10 +45,13 @@ function printMainMenu() {
 }
 
 // Safe exit handler untuk auto reply
-// Use module-level variables to prevent handler accumulation
+// Use module-level variables to prevent handler accumulation and stale references
 let _safeExitSetup = false;
+let _currentClient = null;
 
 function setupSafeExit(client) {
+  _currentClient = client;  // Always update to latest client
+  
   if (_safeExitSetup) return;
   _safeExitSetup = true;
   
@@ -58,8 +61,11 @@ function setupSafeExit(client) {
     console.log('👋 Menutup koneksi...');
     
     try {
-      await client.disconnect();
+      if (_currentClient) {
+        await _currentClient.disconnect();
+      }
     } catch (e) {
+      // Ignore disconnect errors
     }
     
     console.log('✅ Bot berhenti dengan aman.');

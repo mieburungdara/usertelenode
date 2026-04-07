@@ -145,14 +145,14 @@ async function addAccount() {
 
   const phoneNumber = await question('Masukkan nomor telepon (contoh: 6281234567890): ');
 
-  // Buat client dengan StringSession kosong
-  const sessionString = new StringSession('');
-  const client = new TelegramClient(sessionString, config.API_ID, config.API_HASH, {
-    connectionRetries: 5,
-    deviceModel: 'UserTeleNode',
-  });
-
   try {
+    // Buat client dengan StringSession kosong INSIDE try to ensure cleanup
+    const sessionString = new StringSession('');
+    const client = new TelegramClient(sessionString, config.API_ID, config.API_HASH, {
+      connectionRetries: 5,
+      deviceModel: 'UserTeleNode',
+    });
+
     await client.start({
       phoneNumber: async () => phoneNumber,
       password: async () => {
