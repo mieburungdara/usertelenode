@@ -69,9 +69,9 @@ function generateReport(reportData) {
 ## Detail Link
 
 ${reportData.deepLinks.length > 0 ? reportData.deepLinks.map((link, i) => `### ${i + 1}. Link
-- **URL:** ${link.fullUrl}
-- **Bot:** @${link.botUsername}
-- **Start Data:** ${link.startData}
+- **URL:** ${String(link.fullUrl || '').replace(/</g, "<").replace(/>/g, ">")}
+- **Bot:** @${link.safeBotUsername || String(link.botUsername || '').replace(/[*_\[\]()~```>#+\-=|{}.!]/g, '')}
+- **Start Data:** ${link.safeStartData || String(link.startData || '').replace(/[*_\[\]()~```>#+\-=|{}.!]/g, '')}
 - **Response:** ${link.hasMedia ? '✅ Ada Media' : '❌ Tidak Ada Media'}`).join('\n\n') : '**Tidak ada deep link ditemukan.**'}
 
 ---
@@ -295,6 +295,13 @@ async function deepLinkScraper(client, rl) {
               });
               
               const response = recentMessages.length > 0 ? recentMessages[0] : (botMessages.length > 0 ? botMessages[0] : null);
+              
+              // Sanitize link data for report (prevent markdown injection)
+              const safeBotUsername = String(link.botUsername).replace(/[*_\[\]()~```>#+\-=|{}.!]/g, '');
+              const safeStartData = String(link.startData).replace(/[*_\[\]()~```>#+\-=|{}.!]/g, '');
+              link.safeBotUsername = safeBotUsername;
+              link.safeStartData = safeStartData;
+              
               if (response) {
                 const hasMediaResponse = hasMedia(response);
                 
