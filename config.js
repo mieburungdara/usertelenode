@@ -4,9 +4,12 @@ const apiId = parseInt(process.env.API_ID, 10);
 if (isNaN(apiId)) {
   throw new Error('API_ID is not a valid number. Please check your .env file.');
 }
+if (apiId <= 0) {
+  throw new Error('API_ID must be a positive number.');
+}
 
 const apiHash = process.env.API_HASH;
-if (!apiHash || typeof apiHash !== 'string') {
+if (!apiHash || typeof apiHash !== 'string' || apiHash.trim() === '') {
   throw new Error('API_HASH is not set or invalid. Please check your .env file.');
 }
 

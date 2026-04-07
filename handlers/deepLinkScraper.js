@@ -101,7 +101,7 @@ ${reportData.stopped ? '\u26a0\ufe0f **BOT STOP** - Ditemukan response tanpa med
 `;
 
   fs.writeFileSync(REPORT_FILE, report, 'utf-8');
-  console.log(`\n\U0001f4c4 Report telah disimpan ke: ${REPORT_FILE}`);
+  console.log(`\n\u{1F4C4} Report telah disimpan ke: ${REPORT_FILE}`);
 }
 
 /**
@@ -130,14 +130,14 @@ async function deepLinkScraper(client, rl) {
     if (!isRunning) return;
     isRunning = false;
     
-    console.log('\n\n\u26a0\ufe0f  Menerima sinyal berhenti...');
-    console.log('\U0001f4ca Merangkum laporan...');
+    console.log('\n\n\u26A0\uFE0F  Menerima sinyal berhenti...');
+    console.log('\u{1F4CA} Merangkum laporan...');
     
     reportData.stopped = true;
     generateReport(reportData);
     
     console.log('\u2705 Laporan telah disimpan.');
-    console.log('\U0001f44bBot berhenti dengan aman.');
+    console.log('\u{1F44B} Bot berhenti dengan aman.');
     
     try {
       await client.disconnect();
@@ -151,7 +151,7 @@ async function deepLinkScraper(client, rl) {
   process.on('SIGINT', safeExit);
   process.on('SIGTERM', safeExit);
 
-  console.log('\n\U0001f517 Mode Deep Link Scraper');
+  console.log('\n\u{1F517} Mode Deep Link Scraper');
   console.log('\u2500'.repeat(40));
 
   // Input channel
@@ -174,7 +174,7 @@ async function deepLinkScraper(client, rl) {
   try {
     channel = await client.getEntity(channelId);
   } catch (e) {
-    console.error(`\u274c Channel ${channelId} tidak ditemukan atau tidak bisa diakses.`);
+    console.error(`\u274C Channel ${channelId} tidak ditemukan atau tidak bisa diakses.`);
     console.log('   Pastikan channel publik dan Anda sudah join.');
     process.exit(1);
   }
@@ -188,7 +188,7 @@ async function deepLinkScraper(client, rl) {
   console.log('\nMendapatkan info pesan terakhir...');
   const messages = await client.getMessages(channel, { limit: 1 });
   if (messages.length === 0) {
-    console.log('\u274c Tidak ada pesan di channel ini.');
+    console.log('\u274C Tidak ada pesan di channel ini.');
     process.exit(1);
   }
   
@@ -207,7 +207,7 @@ async function deepLinkScraper(client, rl) {
   }
   
   if (startId > endId) {
-    console.log('\u274c ID awal harus lebih kecil dari ID akhir.');
+    console.log('\u274C ID awal harus lebih kecil dari ID akhir.');
     process.exit(1);
   }
   
@@ -215,7 +215,7 @@ async function deepLinkScraper(client, rl) {
   reportData.endId = endId;
   
   console.log('\n' + '='.repeat(40));
-  console.log(`\U0001f680 Scraping dimulai...`);
+  console.log(`\u{1F680} Scraping dimulai...`);
   console.log(`   Channel: ${channelId}`);
   console.log(`   Range: ID ${startId} - ${endId}`);
   console.log(`   Delay: 3-10 detik per pesan`);
@@ -229,7 +229,7 @@ async function deepLinkScraper(client, rl) {
     if (!isRunning) return;
     
     const progress = msgId - startId + 1;
-    console.log(`\n\U0001f4e5 [${progress}/${totalToCheck}] Mengecek pesan ID: ${msgId}...`);
+    console.log(`\n\u{1F4E5} [${progress}/${totalToCheck}] Mengecek pesan ID: ${msgId}...`);
     
     try {
       // Ambil pesan spesifik - GramJS expects array of message IDs
@@ -237,7 +237,7 @@ async function deepLinkScraper(client, rl) {
       
       // Jika tidak ada pesan di ID tersebut
       if (!msgs || (Array.isArray(msgs) && msgs.length === 0)) {
-        console.log(`   \u23ed\ufe0f  Tidak ada pesan di ID ${msgId}.`);
+        console.log(`   \u23ED\uFE0F  Tidak ada pesan di ID ${msgId}.`);
         continue;
       }
       
@@ -250,26 +250,26 @@ async function deepLinkScraper(client, rl) {
       // Cek media di pesan channel
       if (hasMedia(message)) {
         reportData.totalMedia++;
-        console.log(`   \U0001f5bc\ufe0f  Pesan mengandung media.`);
+        console.log(`   \u{1F5BC}\uFE0F  Pesan mengandung media.`);
       }
       
       // Cek apakah pesan mengandung text
       const messageText = message.text || '';
       if (messageText) {
-        console.log(`   \U0001f4dd Text: ${messageText.substring(0, 100)}${messageText.length > 100 ? '...' : ''}`);
+        console.log(`   \u{1F4DD} Text: ${messageText.substring(0, 100)}${messageText.length > 100 ? '...' : ''}`);
       }
       
       // Parse deep links
       const deepLinks = extractDeepLinks(messageText);
       
       if (deepLinks.length > 0) {
-        console.log(`   \U0001f517 Ditemukan ${deepLinks.length} deep link!`);
+        console.log(`   \u{1F517} Ditemukan ${deepLinks.length} deep link!`);
         reportData.totalLinks += deepLinks.length;
         
         // Proses setiap deep link
         for (const link of deepLinks) {
-          console.log(`   \u21b3 Bot: @${link.botUsername}`);
-          console.log(`   \u21b3 Start Data: ${link.startData}`);
+          console.log(`   \u21B3 Bot: @${link.botUsername}`);
+          console.log(`   \u21B3 Start Data: ${link.startData}`);
           
           // Cari entity bot
           let botPeer;
@@ -277,19 +277,19 @@ async function deepLinkScraper(client, rl) {
             botPeer = await client.getEntity(link.botUsername);
             console.log(`   \u2705 Bot ditemukan: ${botPeer.firstName || botPeer.username}`);
           } catch (e) {
-            console.log(`   \u26a0\ufe0f Bot @${link.botUsername} tidak ditemukan. Skip.`);
+            console.log(`   \u26A0\uFE0F Bot @${link.botUsername} tidak ditemukan. Skip.`);
             continue;
           }
           
           // Kirim /start
           const startMessage = generateStartMessage(link.botUsername, link.startData);
-          console.log(`   \U0001f4e4 Mengirim: ${startMessage}`);
+          console.log(`   \u{1F4E4} Mengirim: ${startMessage}`);
           
           try {
             await client.sendMessage(botPeer, { message: startMessage });
             
             // Tunggu response dari bot
-            console.log(`   \u23f3 Menunggu response dari bot...`);
+            console.log(`   \u23F3 Menunggu response dari bot...`);
             await randomDelay();
             
             // Ambil pesan terakhir dari bot - pastikan ambil pesan SETELAH kita kirim /start
@@ -328,14 +328,14 @@ async function deepLinkScraper(client, rl) {
                   console.log(`   \u2705 Bot response dengan media.`);
                   reportData.totalMedia++;
                 } else {
-                  console.log(`   \u274c Bot response TANPA media!`);
+                  console.log(`   \u274C Bot response TANPA media!`);
                   console.log(`   Response text: ${(response.text || 'N/A').substring(0, 100)}`);
                   
                   reportData.noMediaCount++;
                   
                   // Bot harus stop jika tidak ada media
                   console.log('\n' + '='.repeat(40));
-                  console.log('\u26d4 BOT STOP - Response bot tidak mengandung media!');
+                  console.log('\u26D4 BOT STOP - Response bot tidak mengandung media!');
                   console.log('='.repeat(40));
                   
                   isRunning = false;
@@ -359,11 +359,11 @@ async function deepLinkScraper(client, rl) {
                   process.exit(0);
                 }
               } else {
-                console.log(`   \u26a0\ufe0f Tidak ada response dari bot.`);
+                console.log(`   \u26A0\uFE0F Tidak ada response dari bot.`);
                 link.hasMedia = false;
               }
             } catch (e) {
-              console.log(`   \u26a0\ufe0f Gagal cek response bot: ${e.message}`);
+              console.log(`   \u26A0\uFE0F Gagal cek response bot: ${e.message}`);
               link.hasMedia = false;
             }
             // Push link only if not already pushed (no-media stop case pushes before exit)
@@ -371,7 +371,7 @@ async function deepLinkScraper(client, rl) {
               reportData.deepLinks.push(link);
             }
           } catch (e) {
-            console.log(`   \u274c Gagal kirim /start ke bot: ${e.message}`);
+            console.log(`   \u274C Gagal kirim /start ke bot: ${e.message}`);
             link.hasMedia = false;
             reportData.deepLinks.push(link);
           }
@@ -379,14 +379,14 @@ async function deepLinkScraper(client, rl) {
       }
       
     } catch (e) {
-      console.log(`   \u274c Error: ${e.message}`);
+      console.log(`   \u274C Error: ${e.message}`);
       
       // Cek flood wait - GramJS format: "A wait of X seconds is required" atau "FloodWaitError"
       // Support decimal wait times (e.g., "wait of 3.5 seconds")
       const floodMatch = e.message.match(/wait of ([\d.]+)/) || e.message.match(/FLOOD_WAIT_([\d.]+)/) || e.message.match(/FloodWait/);
       if (floodMatch) {
         const waitTime = floodMatch[1] ? Math.ceil(parseFloat(floodMatch[1])) : 30;
-        console.log(`   \u23f3 Flood wait detected. Tunggu ${waitTime} detik...`);
+        console.log(`   \u23F3 Flood wait detected. Tunggu ${waitTime} detik...`);
         await new Promise(r => setTimeout(r, waitTime * 1000));
         continue;
       }
@@ -399,7 +399,7 @@ async function deepLinkScraper(client, rl) {
       const effectiveMin = Math.min(minDelay, maxDelay);
       const effectiveMax = Math.max(minDelay, maxDelay);
       const nextDelay = Math.floor(Math.random() * (effectiveMax - effectiveMin + 1)) + effectiveMin;
-      console.log(`   ⏳ Delay ${(nextDelay/1000).toFixed(1)} detik (menghindari rate limit)...`);
+      console.log(`   \u23F3 Delay ${(nextDelay/1000).toFixed(1)} detik (menghindari rate limit)...`);
       await new Promise(resolve => setTimeout(resolve, nextDelay));
     }
   }
