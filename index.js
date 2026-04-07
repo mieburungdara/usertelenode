@@ -98,8 +98,8 @@ async function runAutoReplyMode() {
     // Keep script running
     console.log('Bot berjalan... Tekan Ctrl+C untuk berhenti.');
     
-    // Keep alive
-    process.stdin.resume();
+    // Keep alive - use setInterval instead of deprecated process.stdin.resume()
+    const keepAlive = setInterval(() => {}, 1000);
     
   } catch (error) {
     console.error('❌ Gagal menghubungkan client:', error.message);
@@ -148,7 +148,12 @@ async function main() {
   printHeader();
   printMainMenu();
   
-  const choice = rl.question('Masukkan pilihan (1-5): ').trim();
+  const choiceInput = rl.question('Masukkan pilihan (1-5): ');
+  if (!choiceInput) {
+    console.log('\n❌ Input kosong.');
+    return main();
+  }
+  const choice = choiceInput.trim();
   
   switch (choice) {
     case '1':

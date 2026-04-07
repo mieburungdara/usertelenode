@@ -70,7 +70,11 @@ function selectAccount(rl) {
   console.log('─'.repeat(40));
   
   const input = rl.question('Pilih nomor akun (1-' + data.accounts.length + '): ');
-  const index = parseInt(input) - 1;
+  const index = parseInt(input, 10) - 1;
+  if (isNaN(index)) {
+    console.log('❌ Input tidak valid. Masukkan angka.');
+    return null;
+  }
   
   if (index < 0 || index >= data.accounts.length) {
     console.log('❌ Nomor akun tidak valid.');
@@ -94,7 +98,11 @@ function deleteAccount(rl) {
   console.log('─'.repeat(40));
   
   const input = rl.question('Pilih nomor akun yang ingin dihapus (atau 0 untuk batal): ');
-  const index = parseInt(input) - 1;
+  const index = parseInt(input, 10) - 1;
+  if (isNaN(index)) {
+    console.log('❌ Input tidak valid. Masukkan angka.');
+    return false;
+  }
   
   if (index === -1) {
     console.log('❌ Penghapusan dibatalkan.');
@@ -156,7 +164,8 @@ async function addAccount() {
         return code;
       },
       onError: (err) => {
-        console.error('❌ Error:', err.message);
+        // Throw error agar bisa di-catch oleh try-catch
+        throw err;
       }
     });
 

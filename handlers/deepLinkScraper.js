@@ -275,11 +275,18 @@ async function deepLinkScraper(client, rl) {
             console.log(`   ⏳ Menunggu response dari bot...`);
             await randomDelay();
             
-            // Ambil pesan terakhir dari bot
+            // Ambil pesan terakhir dari bot - pastikan ambil pesan SETELAH kita kirim /start
             try {
-              const botMessages = await client.getMessages(botPeer, { limit: 1 });
-              if (botMessages.length > 0) {
-                const response = botMessages[0];
+              const botMessages = await client.getMessages(botPeer, { limit: 5 });
+              // Filter pesan yang dikirim SETELAH kita kirim /start (dalam 30 detik terakhir)
+              const now = Date.now();
+              const recentMessages = botMessages.filter(msg => {
+                const msgDate = msg.date ? new Date(msg.date).getTime() : 0;
+                return (now - msgDate) < 60000; // pesan dalam 1 menit terakhir
+              });
+              
+              const response = recentMessages.length > 0 ? recentMessages[0] : (botMessages.length > 0 ? botMessages[0] : null);
+              if (response) {
                 const hasMediaResponse = hasMedia(response);
                 
                 link.hasMedia = hasMediaResponse;
