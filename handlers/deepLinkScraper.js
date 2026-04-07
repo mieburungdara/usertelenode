@@ -228,7 +228,7 @@ async function deepLinkScraper(client, rl) {
       
       // Handle jika return bukan array
       const message = Array.isArray(msgs) ? msgs[0] : msgs;
-      if (!message) continue;
+      if (!message || !message.id) continue;
       
       reportData.totalMessages++;
       
@@ -281,7 +281,7 @@ async function deepLinkScraper(client, rl) {
             // Ambil pesan terakhir dari bot - pastikan ambil pesan SETELAH kita kirim /start
             // Filter by sender to ensure we get the bot's response
             try {
-              const botMessages = await client.getMessages(botPeer, { limit: 5 });
+              const botMessages = await client.getMessages(botPeer, { limit: 5 }) || [];
               // Filter pesan yang dikirim SETELAH kita kirim /start (dalam 5 menit terakhir)
               // AND only messages FROM the bot (check from_id matches botPeer)
               const now = Date.now();
@@ -299,8 +299,8 @@ async function deepLinkScraper(client, rl) {
               const response = recentMessages.length > 0 ? recentMessages[0] : (botMessages.length > 0 ? botMessages[0] : null);
               
               // Sanitize link data for report (prevent markdown injection)
-              const safeBotUsername = String(link.botUsername).replace(/[*_\[\]()~```>#+\-=|{}.!]/g, '');
-              const safeStartData = String(link.startData).replace(/[*_\[\]()~```>#+\-=|{}.!]/g, '');
+              const safeBotUsername = String(link.botUsername || '').replace(/[*_\[\]()~```>#+\-=|{}.!]/g, '');
+              const safeStartData = String(link.startData || '').replace(/[*_\[\]()~```>#+\-=|{}.!]/g, '');
               link.safeBotUsername = safeBotUsername;
               link.safeStartData = safeStartData;
               

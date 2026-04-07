@@ -33,8 +33,8 @@ async function setupAutoReply(client, onReady) {
       // Cek apakah pesan berasal dari target bot ID
       // sender.id bisa BigInt, gunakan String() untuk comparison yang reliable
       if (sender && sender.id && String(sender.id) === String(config.TARGET_BOT_ID)) {
-        // Cek apakah isi pesan match dengan trigger
-        if (message.text && message.text.trim() === config.TRIGGER_MESSAGE) {
+        // Cek apakah isi pesan match dengan trigger (skip if trigger is empty)
+        if (config.TRIGGER_MESSAGE && message.text && message.text.trim() === config.TRIGGER_MESSAGE) {
           console.log(`✅ Trigger terdeteksi dari bot ID ${config.TARGET_BOT_ID}`);
           console.log(`   Pesan: ${message.text}`);
           

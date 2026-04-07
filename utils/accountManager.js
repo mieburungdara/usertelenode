@@ -128,7 +128,10 @@ function deleteAccount(rl) {
   
   if (confirm.toLowerCase() === 'y') {
     data.accounts.splice(index, 1);
-    saveAccounts(data);
+    if (!saveAccounts(data)) {
+      console.log('❌ Gagal menyimpan perubahan.');
+      return false;
+    }
     console.log('✅ Akun berhasil dihapus.');
     return true;
   }
