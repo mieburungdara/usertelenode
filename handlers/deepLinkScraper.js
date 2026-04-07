@@ -10,7 +10,10 @@ const REPORT_FILE = path.resolve(__dirname, '..', config.REPORT_FILE);
  * Random delay antara 3-10 detik
  */
 function randomDelay() {
-  const delay = Math.floor(Math.random() * (config.MAX_DELAY - config.MIN_DELAY + 1)) + config.MIN_DELAY;
+  // Ensure config values are valid numbers
+  const minDelay = typeof config.MIN_DELAY === 'number' && !isNaN(config.MIN_DELAY) ? config.MIN_DELAY : 3000;
+  const maxDelay = typeof config.MAX_DELAY === 'number' && !isNaN(config.MAX_DELAY) ? config.MAX_DELAY : 10000;
+  const delay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
   return new Promise((resolve) => setTimeout(resolve, delay));
 }
 
@@ -179,10 +182,10 @@ async function deepLinkScraper(client, rl) {
   
   // Input range pesan
   const startInput = rl.question(`Masukkan ID pesan awal (1-${maxMsgId}): `);
-  const startId = parseInt(startInput) || 1;
+  const startId = parseInt(startInput, 10) || 1;
   
   const endInput = rl.question(`Masukkan ID pesan akhir (${startId}-${maxMsgId}): `);
-  let endId = parseInt(endInput);
+  let endId = parseInt(endInput, 10);
   
   if (isNaN(endId) || endId > maxMsgId) {
     endId = maxMsgId;
@@ -343,7 +346,7 @@ async function deepLinkScraper(client, rl) {
       // Cek flood wait - GramJS format: "A wait of X seconds is required" atau "FloodWaitError"
       const floodMatch = e.message.match(/wait of (\d+)/) || e.message.match(/FLOOD_WAIT_(\d+)/) || e.message.match(/FloodWait/);
       if (floodMatch) {
-        const waitTime = floodMatch[1] ? parseInt(floodMatch[1]) : 30;
+        const waitTime = floodMatch[1] ? parseInt(floodMatch[1], 10) : 30;
         console.log(`   ⏳ Flood wait detected. Tunggu ${waitTime} detik...`);
         await new Promise(r => setTimeout(r, waitTime * 1000));
         continue;
@@ -352,9 +355,12 @@ async function deepLinkScraper(client, rl) {
     
     // Delay sebelum pesan berikutnya (human-like behavior)
     if (msgId < endId && isRunning) {
-      const delay = Math.floor(Math.random() * (config.MAX_DELAY - config.MIN_DELAY + 1)) + config.MIN_DELAY;
-      console.log(`   ⏳ Delay ${delay/1000} detik (menghindari rate limit)...`);
-      await new Promise(resolve => setTimeout(resolve, delay));
+      // Generate new random delay for each message
+      const nextMinDelay = typeof config.MIN_DELAY === 'number' && !isNaN(config.MIN_DELAY) ? config.MIN_DELAY : 3000;
+      const nextMaxDelay = typeof config.MAX_DELAY === 'number' && !isNaN(config.MAX_DELAY) ? config.MAX_DELAY : 10000;
+      const nextDelay = Math.floor(Math.random() * (nextMaxDelay - nextMinDelay + 1)) + nextMinDelay;
+      console.log(`   ⏳ Delay ${(nextDelay/1000).toFixed(1)} detik (menghindari rate limit)...`);
+      await new Promise(resolve => setTimeout(resolve, nextDelay));
     }
   }
   

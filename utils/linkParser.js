@@ -6,15 +6,18 @@
  * @returns {Array} - Array of {botUsername, startData}
  */
 function extractDeepLinks(text) {
-  if (!text) return [];
+  if (!text || typeof text !== 'string') return [];
 
   const results = [];
   
   // Pattern untuk mencocokkan Telegram deep link
   // Mencakup: https://t.me/username?start=data, t.me/username?start=data
+  // Use non-global regex to avoid lastIndex issues
   const pattern = /https?:\/\/(?:www\.)?t\.me\/([a-zA-Z0-9_]{5,})[?&]start=([a-zA-Z0-9_\-]+)/gi;
   
   let match;
+  // Reset lastIndex before each use
+  pattern.lastIndex = 0;
   while ((match = pattern.exec(text)) !== null) {
     results.push({
       botUsername: match[1],
@@ -25,6 +28,8 @@ function extractDeepLinks(text) {
 
   // Juga cek format tanpa http/https: t.me/username?start=data
   const patternShort = /(?:^|\s)t\.me\/([a-zA-Z0-9_]{5,})[?&]start=([a-zA-Z0-9_\-]+)/gi;
+  // Reset lastIndex before each use
+  patternShort.lastIndex = 0;
   while ((match = patternShort.exec(text)) !== null) {
     const botUsername = match[1];
     const startData = match[2];
