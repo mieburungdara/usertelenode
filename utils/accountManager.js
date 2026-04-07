@@ -223,6 +223,9 @@ async function addAccount() {
  * Load client dari akun yang sudah tersimpan
  */
 async function loadClient(account) {
+  if (!account || !account.sessionString) {
+    throw new Error('Akun tidak valid atau session string kosong.');
+  }
   const session = new StringSession(account.sessionString);
   
   const client = new TelegramClient(session, config.API_ID, config.API_HASH, {

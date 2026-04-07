@@ -151,13 +151,21 @@ async function runDeepLinkScraper() {
 
 // Mode 3: Tambah Akun
 async function runAddAccount() {
-  await addAccount();
+  try {
+    await addAccount();
+  } catch (error) {
+    console.error('❌ Terjadi kesalahan saat menambahkan akun:', error.message);
+  }
   rl.question('\nTekan Enter untuk kembali ke menu utama...');
 }
 
 // Mode 4: Hapus Akun
 function runDeleteAccount() {
-  deleteAccount(rl);
+  try {
+    deleteAccount(rl);
+  } catch (error) {
+    console.error('❌ Terjadi kesalahan saat menghapus akun:', error.message);
+  }
   rl.question('\nTekan Enter untuk kembali ke menu utama...');
 }
 
