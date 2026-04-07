@@ -29,7 +29,7 @@ async function setupAutoReply(client, onReady) {
           console.log(`   Pesan: ${message.text}`);
           
           // Kirim balasan
-          await client.sendMessage(message.chatId, {
+          await client.sendMessage(message.peerId || message.chatId, {
             message: config.AUTO_REPLY_MESSAGE,
             replyTo: message.id
           });

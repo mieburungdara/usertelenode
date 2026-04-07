@@ -156,14 +156,9 @@ async function deepLinkScraper(client, rl) {
   try {
     channel = await client.getEntity(channelId);
   } catch (e) {
-    try {
-      // Coba tanpa @
-      channel = await client.getPeerId(channelId.replace('@', ''));
-    } catch (e) {
-      console.error(`❌ Channel ${channelId} tidak ditemukan atau tidak bisa diakses.`);
-      console.log('   Pastikan channel publik dan Anda sudah join.');
-      process.exit(1);
-    }
+    console.error(`❌ Channel ${channelId} tidak ditemukan atau tidak bisa diakses.`);
+    console.log('   Pastikan channel publik dan Anda sudah join.');
+    process.exit(1);
   }
   
   reportData.channelUsername = channelId;
@@ -219,8 +214,8 @@ async function deepLinkScraper(client, rl) {
     console.log(`\n📥 [${progress}/${totalToCheck}] Mengecek pesan ID: ${msgId}...`);
     
     try {
-      // Ambil pesan spesifik
-      const msgs = await client.getMessages(channel, { ids: new Api.InputMessageID({ id: msgId }) });
+      // Ambil pesan spesifik - GramJS expects array of message IDs
+      const msgs = await client.getMessages(channel, { ids: [msgId] });
       
       // Jika tidak ada pesan di ID tersebut
       if (!msgs || (Array.isArray(msgs) && msgs.length === 0)) {

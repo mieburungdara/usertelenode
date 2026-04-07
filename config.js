@@ -1,7 +1,12 @@
 require('dotenv').config();
 
+const apiId = parseInt(process.env.API_ID, 10);
+if (isNaN(apiId)) {
+  throw new Error('API_ID is not a valid number. Please check your .env file.');
+}
+
 module.exports = {
-  API_ID: parseInt(process.env.API_ID),
+  API_ID: apiId,
   API_HASH: process.env.API_HASH,
   TARGET_BOT_ID: '825312679',
   TRIGGER_MESSAGE: 'Partner found 😺',
