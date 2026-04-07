@@ -45,8 +45,8 @@ npm install
 Edit file `.env`:
 
 ```env
-API_ID=3492277
-API_HASH=0891af746430cd4b49a1cb3e645cff92
+API_ID=your_api_id_here
+API_HASH=your_api_hash_here
 ```
 
 ## 📖 Cara Menggunakan

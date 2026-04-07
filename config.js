@@ -29,8 +29,8 @@ if (minDelay < 0) {
 if (maxDelay < 0) {
   throw new Error('MAX_DELAY must be a non-negative number.');
 }
-if (minDelay >= maxDelay) {
-  throw new Error('MIN_DELAY must be less than MAX_DELAY.');
+if (minDelay > maxDelay) {
+  throw new Error('MIN_DELAY must be less than or equal to MAX_DELAY.');
 }
 
 module.exports = {

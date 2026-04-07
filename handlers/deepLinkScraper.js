@@ -1,6 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const { Api } = require('telegram');
 const { extractDeepLinks, generateStartMessage } = require('../utils/linkParser');
 const config = require('../config');
 
@@ -164,6 +163,13 @@ async function deepLinkScraper(client, rl) {
     channelId = '@' + (match ? match[1] : channelId);
   } else if (!channelId.startsWith('@')) {
     channelId = '@' + channelId;
+  }
+  
+  // Validate channel input is not empty
+  if (!channelId || channelId === '@') {
+    console.error('\u274C Channel tidak boleh kosong.');
+    console.log('   Masukkan username atau link channel yang valid.');
+    process.exit(1);
   }
   
   console.log(`Target channel: ${channelId}`);
