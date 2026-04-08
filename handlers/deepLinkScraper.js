@@ -7,7 +7,7 @@ const reportFileName = (typeof config.REPORT_FILE === 'string' && config.REPORT_
 const REPORT_FILE = path.resolve(__dirname, '..', reportFileName);
 
 /**
- * Random delay antara 3-10 detik
+ * Random delay antara konfigurasi MIN_DELAY-MAX_DELAY
  */
 function randomDelay() {
   // Ensure config values are valid numbers
@@ -83,9 +83,9 @@ function generateReport(reportData) {
 ## Detail Link
 
 ${reportData.deepLinks.length > 0 ? reportData.deepLinks.map((link, i) => `### ${i + 1}. Link
-- **URL:** ${escapeHtml(String(link.fullUrl || ''))}
+- **URL:** \`${escapeHtml(String(link.fullUrl || ''))}\`
 - **Bot:** @${link.safeBotUsername || String(link.botUsername || '').replace(/[*_\[\]()~\x60>#+\-=|{}.!]/g, '')}
-- **Start Data:** ${link.safeStartData || String(link.startData || '').replace(/[*_\[\]()~\x60>#+\-=|{}.!]/g, '')}
+- **Start Data:** \`${link.safeStartData || String(link.startData || '').replace(/[*_\[\]()~\x\u0060>#+\-=|{}.!]/g, '')}\`
 - **Response:** ${link.hasMedia ? '\u2705 Ada Media' : '\u274c Tidak Ada Media'}`).join('\n\n') : '**Tidak ada deep link ditemukan.**'}
 
 ---
@@ -116,7 +116,6 @@ async function deepLinkScraper(client, rl) {
     totalMessages: 0,
     totalLinks: 0,
     totalMedia: 0,
-    deepLinkCount: 0,
     noMediaCount: 0,
     deepLinks: [],
     stopped: false
@@ -124,7 +123,9 @@ async function deepLinkScraper(client, rl) {
 
   // Safe exit handler
   let isRunning = true;
-  
+  // Track timestamp after sending /start to filter bot responses
+  let lastStartTimestamp = 0;
+
   const safeExit = async () => {
     if (!isRunning) return;
     isRunning = false;
@@ -146,16 +147,20 @@ async function deepLinkScraper(client, rl) {
     process.exit(0);
   };
 
-  // Register Ctrl+C handler
+  // Register Ctrl+C handler WITH TRACKED REFERENCES
   process.on('SIGINT', safeExit);
   process.on('SIGTERM', safeExit);
 
   console.log('\n\u{1F517} Mode Deep Link Scraper');
   console.log('\u2500'.repeat(40));
 
-  // Input channel
+  // Input channel with guard
+  if (typeof rl?.question !== 'function') {
+    console.error('\u274C Interface readline tidak tersedia.');
+    process.exit(1);
+  }
   const channelInput = rl.question('Masukkan username/link channel publik (contoh: contohchannel atau https://t.me/contohchannel): ');
-  let channelId = (channelInput || '').trim();
+  let channelId = String(channelInput || '').trim();
   
   // Bersihkan input dari URL
   if (channelId.includes('t.me/')) {
@@ -201,12 +206,20 @@ async function deepLinkScraper(client, rl) {
   const maxMsgId = messages[0].id;
   console.log(`ID Pesan terakhir: ${maxMsgId}`);
   
-  // Input range pesan
+  // Input range pesan with guards
   const startInput = rl.question(`Masukkan ID pesan awal (1-${maxMsgId}): `);
-  const startId = parseInt(startInput, 10) || 1;
+  if (startInput === undefined) {
+    console.error('\u274C Input tidak tersedia.');
+    process.exit(1);
+  }
+  const startId = parseInt(String(startInput), 10) || 1;
   
   const endInput = rl.question(`Masukkan ID pesan akhir (${startId}-${maxMsgId}): `);
-  let endId = parseInt(endInput, 10);
+  if (endInput === undefined) {
+    console.error('\u274C Input tidak tersedia.');
+    process.exit(1);
+  }
+  let endId = parseInt(String(endInput), 10);
   
   if (isNaN(endId) || endId > maxMsgId) {
     endId = maxMsgId;
@@ -224,7 +237,9 @@ async function deepLinkScraper(client, rl) {
   console.log(`\u{1F680} Scraping dimulai...`);
   console.log(`   Channel: ${channelId}`);
   console.log(`   Range: ID ${startId} - ${endId}`);
-  console.log(`   Delay: 3-10 detik per pesan`);
+  const minSec = (typeof config.MIN_DELAY === 'number' && !isNaN(config.MIN_DELAY) ? config.MIN_DELAY : 3000) / 1000;
+  const maxSec = (typeof config.MAX_DELAY === 'number' && !isNaN(config.MAX_DELAY) ? config.MAX_DELAY : 10000) / 1000;
+  console.log(`   Delay: ${minSec.toFixed(1)}-${maxSec.toFixed(1)} detik per pesan`);
   console.log('   Tekan Ctrl+C untuk berhenti dan generate report.');
   console.log('='.repeat(40));
   
@@ -294,34 +309,32 @@ async function deepLinkScraper(client, rl) {
           try {
             await client.sendMessage(botPeer, { message: startMessage });
             
-            // Tunggu response dari bot
+            // Track timestamp after sending /start
+            lastStartTimestamp = Date.now();
             console.log(`   \u23F3 Menunggu response dari bot...`);
             await randomDelay();
             
-            // Ambil pesan terakhir dari bot - pastikan ambil pesan SETELAH kita kirim /start
-            // Filter by sender to ensure we get the bot's response
+            // Ambil pesan dari bot - pastikan ambil pesan SETELAH kita kirim /start
+            // Filter by sender AND time (after lastStartTimestamp)
             try {
               const botMessages = await client.getMessages(botPeer, { limit: 5 }) || [];
-              // Filter pesan yang dikirim SETELAH kita kirim /start (dalam 5 menit terakhir)
-              // AND only messages FROM the bot (check from_id matches botPeer)
-              const now = Date.now();
               const recentMessages = botMessages.filter(msg => {
                 // msg.date from GramJS is Unix timestamp in seconds, convert to ms
                 const msgTimestamp = msg.date ? (typeof msg.date === 'number' ? msg.date * 1000 : new Date(msg.date).getTime()) : 0;
-                const isRecent = (now - msgTimestamp) < 300000; // 5 minutes
+                // Message must be AFTER the /start we sent
+                const isAfterStart = msgTimestamp > lastStartTimestamp;
                 // Check if message is FROM the bot (from_id matches)
-                // fromId can be PeerUser (has userId), PeerChannel (has channelId), or PeerChat (has chatId)
                 const senderId = msg.fromId ? (msg.fromId.userId || msg.fromId.channelId || msg.fromId.chatId) : null;
                 const isFromBot = senderId && senderId.toString() === botPeer.id.toString();
-                return isRecent && isFromBot;
+                return isAfterStart && isFromBot;
               });
               
-              // Only use recent messages, don't fall back to stale messages
+              // Only use messages after our /start
               const response = recentMessages.length > 0 ? recentMessages[0] : null;
               
               // Sanitize link data for report (prevent markdown injection)
-               const safeBotUsername = escapeHtml(String(link.botUsername || '').replace(/[*_\[\]()~\x60>#+\-=|{}.!]/g, ''));
-               const safeStartData = escapeHtml(String(link.startData || '').replace(/[*_\[\]()~\x60>#+\-=|{}.!]/g, ''));
+              const safeBotUsername = escapeHtml(String(link.botUsername || '').replace(/[*_\[\]()~\x60>#+\-=|{}.!]/g, ''));
+              const safeStartData = escapeHtml(String(link.startData || '').replace(/[*_\[\]()~\x60>#+\-=|{}.!]/g, ''));
               link.safeBotUsername = safeBotUsername;
               link.safeStartData = safeStartData;
               
@@ -351,9 +364,9 @@ async function deepLinkScraper(client, rl) {
                   // Push this link BEFORE generating report
                   reportData.deepLinks.push(link);
                   
-                  // Remove Ctrl+C listeners untuk tidak double exit
-                  process.removeAllListeners('SIGINT');
-                  process.removeAllListeners('SIGTERM');
+                  // Stop and remove only our exit handlers
+                  process.removeListener('SIGINT', safeExit);
+                  process.removeListener('SIGTERM', safeExit);
                   
                   generateReport(reportData);
                   
@@ -417,9 +430,9 @@ async function deepLinkScraper(client, rl) {
     generateReport(reportData);
   }
   
-  // Remove listeners
-  process.removeAllListeners('SIGINT');
-  process.removeAllListeners('SIGTERM');
+  // Remove only our exit listeners
+  process.removeListener('SIGINT', safeExit);
+  process.removeListener('SIGTERM', safeExit);
   
   rl.close();
   

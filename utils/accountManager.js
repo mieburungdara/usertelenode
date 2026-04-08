@@ -7,6 +7,18 @@ const config = require('../config');
 
 const ACCOUNTS_FILE = path.resolve(__dirname, '..', config.ACCOUNTS_FILE);
 
+// Default readline-sync interface for backward compatibility
+const defaultRL = {
+  question: (query) => readlineSync.question(query),
+  close: () => {}
+};
+
+// Normalize phone number by removing all non-digit characters
+function normalizePhone(phone) {
+  if (!phone) return '';
+  return String(phone).replace(/\D/g, '');
+}
+
 /**
  * Load semua akun dari accounts.json
  */
@@ -62,13 +74,14 @@ function listAccounts() {
     console.log('');
   });
   
-  return data.accounts;
+  // Return a copy to prevent external mutation
+  return [...data.accounts];
 }
 
 /**
  * Pilih akun dari daftar
  */
-function selectAccount(rl) {
+function selectAccount(rl = defaultRL) {
   const data = loadAccounts();
   if (data.accounts.length === 0) {
     console.log('\n⚠️ Belum ada akun terdaftar. Silakan tambahkan akun terlebih dahulu.');
@@ -96,7 +109,7 @@ function selectAccount(rl) {
 /**
  * Hapus akun
  */
-function deleteAccount(rl) {
+function deleteAccount(rl = defaultRL) {
   const data = loadAccounts();
   if (data.accounts.length === 0) {
     console.log('\n⚠️ Belum ada akun untuk dihapus.');
@@ -187,14 +200,14 @@ async function addAccount() {
     // Dapatkan string session
     const sessionStr = client.session.save();
 
-    // Cek duplikat
+    // Cek duplikat dengan normalisasi nomor telepon
+    const normalizedPhone = normalizePhone(phoneNumber);
     const data = loadAccounts();
     const existingIndex = data.accounts.findIndex(
-      acc => acc.phone === phoneNumber || acc.id === userId
+      acc => normalizePhone(acc.phone) === normalizedPhone || acc.id === userId
     );
     if (existingIndex !== -1) {
       console.log('\n⚠️ Akun dengan nomor atau ID ini sudah terdaftar.');
-      await client.disconnect();
       return;
     }
 
@@ -214,7 +227,6 @@ async function addAccount() {
     console.log(`   User ID: ${userId}`);
     console.log('   Session telah disimpan.');
 
-    await client.disconnect();
   } catch (error) {
     console.error('\n❌ Login gagal:', error.message);
     if (error.message.includes('PHONE_NUMBER_INVALID')) {
@@ -225,6 +237,12 @@ async function addAccount() {
       console.log('   Password 2FA yang Anda masukkan salah.');
     }
   } finally {
+    // Ensure client is always disconnected
+    try {
+      await client.disconnect();
+    } catch (e) {
+      // Ignore disconnect errors
+    }
     readline.close();
   }
 }

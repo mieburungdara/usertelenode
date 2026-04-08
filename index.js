@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * UserTeleNode - Telegram User Bot dengan Node.js
- * 
+ *
  * Fitur:
  * - Multi Account Management
  * - Auto Reply Mode
@@ -35,6 +35,18 @@ try {
   process.exit(1);
 }
 
+// Helper: Timeout wrapper for disconnect
+async function disconnectWithTimeout(client, timeoutMs = 5000) {
+  try {
+    await Promise.race([
+      client.disconnect(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs))
+    ]);
+  } catch (e) {
+    // Silently ignore disconnect errors (including timeout)
+  }
+}
+
 // Tampilkan header
 function printHeader() {
   try { console.clear(); } catch (e) { /* ignore unsupported terminals */ }
@@ -64,29 +76,30 @@ let _currentClient = null;
 
 function setupSafeExit(client) {
   _currentClient = client;  // Always update to latest client
-  
+
   if (_safeExitSetup) return;
   _safeExitSetup = true;
-  
+
   // Use once() instead of on() to prevent handler accumulation
   const sigHandler = async () => {
     console.log('\n\n⚠️  Menerima sinyal berhenti...');
     console.log('👋 Menutup koneksi...');
-    
+
     try {
       if (_currentClient) {
-        await _currentClient.disconnect();
+        await disconnectWithTimeout(_currentClient, 5000);
       }
     } catch (e) {
       // Ignore disconnect errors
     }
-    
+
     console.log('✅ Bot berhenti dengan aman.');
     process.exit(0);
   };
-  
+
   process.once('SIGINT', sigHandler);
   process.once('SIGTERM', sigHandler);
+  process.once('SIGBREAK', sigHandler); // Windows Ctrl+Break
 }
 
 // Mode 1: Auto Reply
@@ -96,31 +109,35 @@ async function runAutoReplyMode() {
     rl.question('\nTekan Enter untuk kembali ke menu utama...');
     return;
   }
-  
-  console.log('\n🔄 Menghubungkan dengan akun @' + (account.username || account.phone) + '...');
-  
+
+  console.log('\n🔄 Menghubungkan dengan akun @' + (account.username || account.phone || 'unknown') + '...');
+
+  let client = null;
   try {
-    const client = await loadClient(account);
+    client = await loadClient(account);
     const me = await client.getMe();
-    console.log('✅ Terhubung sebagai @' + (me.username || me.firstName));
-    
+    console.log('✅ Terhubung sebagai @' + (me.username || me.firstName || 'unknown'));
+
     setupSafeExit(client);
-    
+
     // Setup auto reply
     await setupAutoReply(client, () => {
       // Client sudah idle di event handler
     });
-    
+
     // Keep script running
     console.log('Bot berjalan... Tekan Ctrl+C untuk berhenti.');
-    
+
     // Block execution until process exits
     await new Promise(() => {});
-    
+
   } catch (error) {
     console.error('❌ Gagal menghubungkan client:', error.message);
+    if (client) {
+      await disconnectWithTimeout(client, 5000);
+    }
     rl.question('\nTekan Enter untuk kembali ke menu utama...');
-    return main();
+    return; // Return to menu, don't recurse
   }
 }
 
@@ -131,21 +148,28 @@ async function runDeepLinkScraper() {
     rl.question('\nTekan Enter untuk kembali ke menu utama...');
     return;
   }
-  
-  console.log('\n🔄 Menghubungkan dengan akun @' + (account.username || account.phone) + '...');
-  
+
+  console.log('\n🔄 Menghubungkan dengan akun @' + (account.username || account.phone || 'unknown') + '...');
+
+  let client = null;
   try {
-    const client = await loadClient(account);
+    client = await loadClient(account);
     const me = await client.getMe();
-    console.log('✅ Terhubung sebagai @' + (me.username || me.firstName));
-    
+    console.log('✅ Terhubung sebagai @' + (me.username || me.firstName || 'unknown'));
+
+    // Register safe exit for this mode
+    setupSafeExit(client);
+
     // Jalankan scraper dengan readline-sync interface wrapper
     await deepLinkScraper(client, rl);
-    
+
   } catch (error) {
     console.error('❌ Gagal menghubungkan client:', error.message);
+    if (client) {
+      await disconnectWithTimeout(client, 5000);
+    }
     rl.question('\nTekan Enter untuk kembali ke menu utama...');
-    return main();
+    return; // Return to menu, don't recurse
   }
 }
 
@@ -169,40 +193,44 @@ function runDeleteAccount() {
   rl.question('\nTekan Enter untuk kembali ke menu utama...');
 }
 
-// Main function
+// Main function - iterative loop instead of recursion
 async function main() {
-  printHeader();
-  printMainMenu();
-  
-  const choiceInput = rl.question('Masukkan pilihan (1-5): ');
-  if (!choiceInput || !choiceInput.trim()) {
-    console.log('\n❌ Input kosong atau hanya spasi.');
-    return main();
-  }
-  const choice = choiceInput.trim();
-  
-  switch (choice) {
-    case '1':
-      await runAutoReplyMode();
-      break;
-    case '2':
-      await runDeepLinkScraper();
-      break;
-    case '3':
-      await runAddAccount();
-      // Restart menu setelah tambah akun
-      return main();
-    case '4':
-      runDeleteAccount();
-      return main();
-    case '5':
-      console.log('\n👋 Terima kasih telah menggunakan UserTeleNode!');
-      process.exit(0);
-      return;
-    default:
-      console.log('\n❌ Pilihan tidak valid.');
+  while (true) {
+    printHeader();
+    printMainMenu();
+
+    const choiceInput = rl.question('Masukkan pilihan (1-5): ');
+    if (!choiceInput || !choiceInput.trim()) {
+      console.log('\n❌ Input kosong atau hanya spasi.');
       rl.question('\nTekan Enter untuk mencoba lagi...');
-      return main();
+      continue;
+    }
+    const choice = choiceInput.trim();
+
+    switch (choice) {
+      case '1':
+        await runAutoReplyMode();
+        break;
+      case '2':
+        await runDeepLinkScraper();
+        break;
+      case '3':
+        await runAddAccount();
+        // Continue to next iteration (menu restart)
+        break;
+      case '4':
+        runDeleteAccount();
+        // Continue to next iteration
+        break;
+      case '5':
+        console.log('\n👋 Terima kasih telah menggunakan UserTeleNode!');
+        process.exit(0);
+        break;
+      default:
+        console.log('\n❌ Pilihan tidak valid.');
+        rl.question('\nTekan Enter untuk mencoba lagi...');
+        break;
+    }
   }
 }
 
