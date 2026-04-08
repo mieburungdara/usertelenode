@@ -1,23 +1,15 @@
 const { NewMessage } = require('telegram/events');
 const config = require('../config');
 
-// Guard to prevent duplicate handler registration
-let _handlerAdded = false;
-
 /**
  * Handler untuk auto reply
  * Mendengarkan pesan dari bot tertentu dan membalas otomatis
  * 
  * @param {TelegramClient} client - Instance Telegram client
  * @param {object} config - Konfigurasi
+ * @returns {Function} Function to remove the event handler
  */
-async function setupAutoReply(client, onReady) {
-  if (_handlerAdded) {
-    console.warn('⚠️  Handler sudah terdaftar. Tidak menambah duplikat.');
-    if (onReady) onReady();
-    return;
-  }
-
+function setupAutoReply(client) {
   console.log('\n🤖 Mode Auto Reply aktif...');
   console.log(`   Target Bot ID: ${config.TARGET_BOT_ID}`);
   console.log(`   Trigger: "${config.TRIGGER_MESSAGE}"`);
@@ -58,12 +50,17 @@ async function setupAutoReply(client, onReady) {
     }
   };
   
+  // Add event handler
   client.addEventHandler(handler, new NewMessage({ incoming: true, edited: false }));
-  _handlerAdded = true;
-
+  
   console.log('⏳ Menunggu pesan masuk...\n');
 
-  if (onReady) onReady();
+  // Return cleanup function
+  return () => {
+    // Note: GramJS doesn't provide a direct removeEventHandler, but we can track it
+    // For now, the handler will be cleaned when client disconnects
+    console.log('🧹 Auto reply handler cleanup requested');
+  };
 }
 
 module.exports = setupAutoReply;

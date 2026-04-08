@@ -44,13 +44,20 @@ function hasMedia(message) {
 
 /**
  * Escape HTML special characters to prevent HTML injection in report
+ * Also escape markdown special characters for safe display
  */
-function escapeHtml(str) {
-  return str
+function escapeForReport(str) {
+  if (!str) return '';
+  // First escape markdown chars (except backticks which we handle separately)
+  let escaped = String(str).replace(/[*_\[\]()~>#+\-=|{}.!]/g, '\\$&');
+  // Then escape HTML
+  escaped = escaped
     .replace(/&/g, '\u0026amp;')
     .replace(/</g, '\u0026lt;')
     .replace(/>/g, '\u0026gt;')
-    .replace(/"/g, '\u0026quot;');
+    .replace(/"/g, '\u0026quot;')
+    .replace(/`/g, '\\`'); // Escape backticks for markdown code spans
+  return escaped;
 }
 
 /**
@@ -83,9 +90,9 @@ function generateReport(reportData) {
 ## Detail Link
 
 ${reportData.deepLinks.length > 0 ? reportData.deepLinks.map((link, i) => `### ${i + 1}. Link
-- **URL:** \`${escapeHtml(String(link.fullUrl || ''))}\`
-- **Bot:** @${link.safeBotUsername || String(link.botUsername || '').replace(/[*_\[\]()~\x60>#+\-=|{}.!]/g, '')}
-- **Start Data:** \`${link.safeStartData || String(link.startData || '').replace(/[*_\[\]()~\x\u0060>#+\-=|{}.!]/g, '')}\`
+- **URL:** \`${escapeForReport(link.fullUrl)}\`
+- **Bot:** @${escapeForReport(link.botUsername)}
+- **Start Data:** \`${escapeForReport(link.startData)}\`
 - **Response:** ${link.hasMedia ? '\u2705 Ada Media' : '\u274c Tidak Ada Media'}`).join('\n\n') : '**Tidak ada deep link ditemukan.**'}
 
 ---
@@ -144,10 +151,9 @@ async function deepLinkScraper(client, rl) {
     } catch (e) {
       // Ignore disconnect errors
     }
-    process.exit(0);
   };
 
-  // Register Ctrl+C handler WITH TRACKED REFERENCES
+  // Register Ctrl+C handler
   process.on('SIGINT', safeExit);
   process.on('SIGTERM', safeExit);
 
@@ -198,11 +204,11 @@ async function deepLinkScraper(client, rl) {
   // Dapatkan info pesan terakhir
   console.log('\nMendapatkan info pesan terakhir...');
   const messages = await client.getMessages(channel, { limit: 1 });
-  if (messages.length === 0) {
+  if (!messages || !Array.isArray(messages) || messages.length === 0) {
     console.log('\u274C Tidak ada pesan di channel ini.');
     process.exit(1);
   }
-  
+   
   const maxMsgId = messages[0].id;
   console.log(`ID Pesan terakhir: ${maxMsgId}`);
   
@@ -257,14 +263,17 @@ async function deepLinkScraper(client, rl) {
       const msgs = await client.getMessages(channel, { ids: [msgId] });
       
       // Jika tidak ada pesan di ID tersebut
-      if (!msgs || (Array.isArray(msgs) && msgs.length === 0)) {
+      if (!msgs || !Array.isArray(msgs) || msgs.length === 0) {
         console.log(`   \u23ED\uFE0F  Tidak ada pesan di ID ${msgId}.`);
         continue;
       }
       
-      // Handle jika return bukan array
-      const message = Array.isArray(msgs) ? msgs[0] : msgs;
-      if (!message || !message.id) continue;
+      // Take first message from array
+      const message = msgs[0];
+      if (!message || !message.id) {
+        console.log(`   \u23ED\uFE0F  Pesan tidak valid di ID ${msgId}.`);
+        continue;
+      }
       
       reportData.totalMessages++;
       
@@ -309,18 +318,23 @@ async function deepLinkScraper(client, rl) {
           try {
             await client.sendMessage(botPeer, { message: startMessage });
             
-            // Track timestamp after sending /start
+            // Track timestamp immediately after sending
             lastStartTimestamp = Date.now();
             console.log(`   \u23F3 Menunggu response dari bot...`);
-            await randomDelay();
             
             // Ambil pesan dari bot - pastikan ambil pesan SETELAH kita kirim /start
             // Filter by sender AND time (after lastStartTimestamp)
             try {
-              const botMessages = await client.getMessages(botPeer, { limit: 5 }) || [];
+              // Increase limit to 50 to get more messages from active bots
+              const botMessages = await client.getMessages(botPeer, { limit: 50 });
+              if (!botMessages || !Array.isArray(botMessages)) {
+                botMessages = [];
+              }
+              
               const recentMessages = botMessages.filter(msg => {
+                if (!msg || !msg.date) return false;
                 // msg.date from GramJS is Unix timestamp in seconds, convert to ms
-                const msgTimestamp = msg.date ? (typeof msg.date === 'number' ? msg.date * 1000 : new Date(msg.date).getTime()) : 0;
+                const msgTimestamp = typeof msg.date === 'number' ? msg.date * 1000 : new Date(msg.date).getTime();
                 // Message must be AFTER the /start we sent
                 const isAfterStart = msgTimestamp > lastStartTimestamp;
                 // Check if message is FROM the bot (from_id matches)
@@ -331,12 +345,6 @@ async function deepLinkScraper(client, rl) {
               
               // Only use messages after our /start
               const response = recentMessages.length > 0 ? recentMessages[0] : null;
-              
-              // Sanitize link data for report (prevent markdown injection)
-              const safeBotUsername = escapeHtml(String(link.botUsername || '').replace(/[*_\[\]()~\x60>#+\-=|{}.!]/g, ''));
-              const safeStartData = escapeHtml(String(link.startData || '').replace(/[*_\[\]()~\x60>#+\-=|{}.!]/g, ''));
-              link.safeBotUsername = safeBotUsername;
-              link.safeStartData = safeStartData;
               
               if (response) {
                 const hasMediaResponse = hasMedia(response);
@@ -361,13 +369,10 @@ async function deepLinkScraper(client, rl) {
                   reportData.stopped = true;
                   link.hasMedia = false;
                   
-                  // Push this link BEFORE generating report
+                  // Push this link before generating report
                   reportData.deepLinks.push(link);
                   
-                  // Stop and remove only our exit handlers
-                  process.removeListener('SIGINT', safeExit);
-                  process.removeListener('SIGTERM', safeExit);
-                  
+                  // Generate report and exit cleanly
                   generateReport(reportData);
                   
                   try {
@@ -385,10 +390,12 @@ async function deepLinkScraper(client, rl) {
               console.log(`   \u26A0\uFE0F Gagal cek response bot: ${e.message}`);
               link.hasMedia = false;
             }
-            // Push link only if not already pushed (no-media stop case pushes before exit)
+            
+            // Always push the link after processing (unless already stopped and pushed)
             if (!reportData.stopped) {
               reportData.deepLinks.push(link);
             }
+            
           } catch (e) {
             console.log(`   \u274C Gagal kirim /start ke bot: ${e.message}`);
             link.hasMedia = false;
@@ -430,7 +437,7 @@ async function deepLinkScraper(client, rl) {
     generateReport(reportData);
   }
   
-  // Remove only our exit listeners
+  // Remove signal listeners
   process.removeListener('SIGINT', safeExit);
   process.removeListener('SIGTERM', safeExit);
   
@@ -439,8 +446,4 @@ async function deepLinkScraper(client, rl) {
   try {
     await client.disconnect();
   } catch (e) {}
-  
-  process.exit(0);
 }
-
-module.exports = deepLinkScraper;

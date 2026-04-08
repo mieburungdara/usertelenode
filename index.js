@@ -69,37 +69,39 @@ function printMainMenu() {
   console.log('');
 }
 
-// Safe exit handler untuk auto reply
-// Use module-level variables to prevent handler accumulation and stale references
-let _safeExitSetup = false;
-let _currentClient = null;
-
-function setupSafeExit(client) {
-  _currentClient = client;  // Always update to latest client
-
-  if (_safeExitSetup) return;
-  _safeExitSetup = true;
-
-  // Use once() instead of on() to prevent handler accumulation
-  const sigHandler = async () => {
+// Safe exit handler - creates isolated handler per mode execution
+function createSafeExitHandler(client, cleanupFn) {
+  let isRunning = true;
+  
+  const handler = async () => {
+    if (!isRunning) return;
+    isRunning = false;
+    
     console.log('\n\n⚠️  Menerima sinyal berhenti...');
     console.log('👋 Menutup koneksi...');
-
+    
+    // Call cleanup if provided
+    if (cleanupFn) {
+      try {
+        cleanupFn();
+      } catch (e) {
+        console.warn('⚠️  Error during cleanup:', e.message);
+      }
+    }
+    
     try {
-      if (_currentClient) {
-        await disconnectWithTimeout(_currentClient, 5000);
+      if (client) {
+        await disconnectWithTimeout(client, 5000);
       }
     } catch (e) {
       // Ignore disconnect errors
     }
-
+    
     console.log('✅ Bot berhenti dengan aman.');
     process.exit(0);
   };
-
-  process.once('SIGINT', sigHandler);
-  process.once('SIGTERM', sigHandler);
-  process.once('SIGBREAK', sigHandler); // Windows Ctrl+Break
+  
+  return handler;
 }
 
 // Mode 1: Auto Reply
@@ -113,17 +115,20 @@ async function runAutoReplyMode() {
   console.log('\n🔄 Menghubungkan dengan akun @' + (account.username || account.phone || 'unknown') + '...');
 
   let client = null;
+  let cleanupAutoReply = null;
   try {
     client = await loadClient(account);
     const me = await client.getMe();
     console.log('✅ Terhubung sebagai @' + (me.username || me.firstName || 'unknown'));
 
-    setupSafeExit(client);
+    // Setup auto reply (returns cleanup function)
+    cleanupAutoReply = setupAutoReply(client);
 
-    // Setup auto reply
-    await setupAutoReply(client, () => {
-      // Client sudah idle di event handler
-    });
+    // Create dedicated safe exit handler for this session
+    const safeExitHandler = createSafeExitHandler(client, cleanupAutoReply);
+    process.on('SIGINT', safeExitHandler);
+    process.on('SIGTERM', safeExitHandler);
+    process.on('SIGBREAK', safeExitHandler);
 
     // Keep script running
     console.log('Bot berjalan... Tekan Ctrl+C untuk berhenti.');
@@ -133,11 +138,14 @@ async function runAutoReplyMode() {
 
   } catch (error) {
     console.error('❌ Gagal menghubungkan client:', error.message);
+    if (cleanupAutoReply) {
+      try { cleanupAutoReply(); } catch (e) {}
+    }
     if (client) {
       await disconnectWithTimeout(client, 5000);
     }
     rl.question('\nTekan Enter untuk kembali ke menu utama...');
-    return; // Return to menu, don't recurse
+    return;
   }
 }
 
@@ -157,11 +165,21 @@ async function runDeepLinkScraper() {
     const me = await client.getMe();
     console.log('✅ Terhubung sebagai @' + (me.username || me.firstName || 'unknown'));
 
-    // Register safe exit for this mode
-    setupSafeExit(client);
+    // Create dedicated safe exit handler for this session
+    // deepLinkScraper manages its own signal handlers, so no cleanup needed
+    const safeExitHandler = createSafeExitHandler(client, null);
+    process.on('SIGINT', safeExitHandler);
+    process.on('SIGTERM', safeExitHandler);
+    process.on('SIGBREAK', safeExitHandler);
 
-    // Jalankan scraper dengan readline-sync interface wrapper
+    // Jalankan scraper
+    // Note: deepLinkScraper now manages its own signal handlers internally
     await deepLinkScraper(client, rl);
+    
+    // Clean up our handlers after scraper exits (if not already removed by scraper)
+    process.removeListener('SIGINT', safeExitHandler);
+    process.removeListener('SIGTERM', safeExitHandler);
+    process.removeListener('SIGBREAK', safeExitHandler);
 
   } catch (error) {
     console.error('❌ Gagal menghubungkan client:', error.message);
@@ -169,7 +187,7 @@ async function runDeepLinkScraper() {
       await disconnectWithTimeout(client, 5000);
     }
     rl.question('\nTekan Enter untuk kembali ke menu utama...');
-    return; // Return to menu, don't recurse
+    return;
   }
 }
 

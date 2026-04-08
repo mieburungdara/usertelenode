@@ -170,10 +170,29 @@ async function addAccount() {
 
   const phoneNumber = await question('Masukkan nomor telepon (contoh: 6281234567890): ');
 
+  // Validate phone number
+  if (!phoneNumber || !phoneNumber.trim()) {
+    console.error('\n❌ Nomor telepon tidak boleh kosong.');
+    readline.close();
+    return;
+  }
+  const normalizedPhone = normalizePhone(phoneNumber);
+  if (!/^\d+$/.test(normalizedPhone)) {
+    console.error('\n❌ Nomor telepon tidak valid. Hanya gunakan angka.');
+    readline.close();
+    return;
+  }
+  if (normalizedPhone.length < 5) {
+    console.error('\n❌ Nomor telepon terlalu pendek.');
+    readline.close();
+    return;
+  }
+
+  let client = null;
   try {
-    // Buat client dengan StringSession kosong INSIDE try to ensure cleanup
+    // Buat client dengan StringSession kosong
     const sessionString = new StringSession('');
-    const client = new TelegramClient(sessionString, config.API_ID, config.API_HASH, {
+    client = new TelegramClient(sessionString, config.API_ID, config.API_HASH, {
       connectionRetries: 5,
       deviceModel: 'UserTeleNode',
     });
@@ -188,7 +207,6 @@ async function addAccount() {
         const code = await question('Masukkan kode OTP yang diterima di Telegram: ');
         return code;
       }
-      // Remove onError callback - GramJS handles errors via rejection
     });
 
     // Dapatkan info user
@@ -201,7 +219,6 @@ async function addAccount() {
     const sessionStr = client.session.save();
 
     // Cek duplikat dengan normalisasi nomor telepon
-    const normalizedPhone = normalizePhone(phoneNumber);
     const data = loadAccounts();
     const existingIndex = data.accounts.findIndex(
       acc => normalizePhone(acc.phone) === normalizedPhone || acc.id === userId
@@ -237,11 +254,13 @@ async function addAccount() {
       console.log('   Password 2FA yang Anda masukkan salah.');
     }
   } finally {
-    // Ensure client is always disconnected
-    try {
-      await client.disconnect();
-    } catch (e) {
-      // Ignore disconnect errors
+    // Ensure client is always safely disconnected
+    if (client) {
+      try {
+        await client.disconnect();
+      } catch (e) {
+        // Ignore disconnect errors
+      }
     }
     readline.close();
   }
