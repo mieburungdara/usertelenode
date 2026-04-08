@@ -320,8 +320,8 @@ async function deepLinkScraper(client, rl) {
               const response = recentMessages.length > 0 ? recentMessages[0] : null;
               
               // Sanitize link data for report (prevent markdown injection)
-              const safeBotUsername = String(link.botUsername || '').replace(/[*_\[\]()~\x60>#+\-=|{}.!]/g, '');
-              const safeStartData = String(link.startData || '').replace(/[*_\[\]()~\x60>#+\-=|{}.!]/g, '');
+               const safeBotUsername = escapeHtml(String(link.botUsername || '').replace(/[*_\[\]()~\x60>#+\-=|{}.!]/g, ''));
+               const safeStartData = escapeHtml(String(link.startData || '').replace(/[*_\[\]()~\x60>#+\-=|{}.!]/g, ''));
               link.safeBotUsername = safeBotUsername;
               link.safeStartData = safeStartData;
               
