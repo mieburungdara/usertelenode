@@ -285,9 +285,13 @@ async function deepLinkScraper(client, rl) {
   // Tampilkan daftar channel history
   const savedChannels = getAllChannels();
   if (savedChannels.length > 0) {
+    // ✅ Sortir channel berdasarkan terakhir diakses (terbaru di atas)
+    savedChannels.sort((a, b) => new Date(b.lastScrapedAt) - new Date(a.lastScrapedAt));
+    
     console.log('\n📋 Daftar channel yang pernah discrape:');
     savedChannels.forEach((ch, idx) => {
-      console.log(`  ${idx + 1}. ${ch.channelName} | ID terakhir: ${ch.lastScrapedId}`);
+      const lastDate = new Date(ch.lastScrapedAt).toLocaleDateString('id-ID');
+      console.log(`  ${idx + 1}. ${ch.channelName} | ID: ${ch.lastScrapedId} | ${lastDate}`);
     });
     console.log('\n💡 Masukkan nomor dari daftar, atau input channel baru');
   }
@@ -376,6 +380,12 @@ async function deepLinkScraper(client, rl) {
     startId = defaultStartId;
   }
   
+  // ✅ Warning jika user input ID dibawah history yang ada
+  if (lastScrapedId && startId <= lastScrapedId) {
+    console.log(`\n⚠️  PERINGATAN: ID ${startId} sudah pernah di scrape sebelumnya`);
+    console.log(`   Ini akan menyebabkan scrape ulang pesan yang sudah diproses`);
+  }
+  
   const endInput = rl.question(`Masukkan ID pesan akhir (default: ${maxMsgId}): `).trim();
   let endId = parseInt(String(endInput), 10);
   
@@ -405,7 +415,6 @@ async function deepLinkScraper(client, rl) {
     
       const progress = msgId - startId + 1;
       console.log(`\n\u{1F4E5} [${progress}/${totalToCheck}] Mengecek pesan ID: ${msgId}...`);
-      lastProcessedId = msgId; // ✅ Update setiap loop sebelum proses pesan
     
     try {
       const msgs = await client.getMessages(channel, { ids: [msgId] });
@@ -422,6 +431,7 @@ async function deepLinkScraper(client, rl) {
       }
       
       reportData.totalMessages++;
+      lastProcessedId = msgId; // ✅ Fix: Update HANYA setelah pesan BERHASIL di proses
       
       if (hasMedia(message)) {
         reportData.totalMedia++;
