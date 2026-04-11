@@ -419,8 +419,8 @@ async function deepLinkScraper(client, rl) {
   console.log(`\u{1F680} Scraping dimulai...`);
   console.log(`   Channel: ${parsedChannelId}`);
   console.log(`   Range: ID ${startId} - ${endId}`);
-  const minSec = (typeof config.MIN_DELAY === 'number' && !isNaN(config.MIN_DELAY) ? config.MIN_DELAY : 3000) / 1000;
-  const maxSec = (typeof config.MAX_DELAY === 'number' && !isNaN(config.MAX_DELAY) ? config.MAX_DELAY : 10000) / 1000;
+  const minSec = config.MIN_DELAY / 1000;
+  const maxSec = config.MAX_DELAY / 1000;
   console.log(`   Delay: ${minSec.toFixed(1)}-${maxSec.toFixed(1)} detik per pesan`);
   console.log('   Tekan Ctrl+C untuk berhenti dan generate report.');
   console.log('='.repeat(40));
@@ -434,8 +434,7 @@ async function deepLinkScraper(client, rl) {
   
   console.log(`\n✅ Akan memproses ${totalToCheck} pesan`);
   
-  for (let msgId = startId; msgId <= endId; msgId++) {
-    if (!isRunning) return;
+  for (let msgId = startId; msgId <= endId && isRunning; msgId++) {
     
       const progress = msgId - startId + 1;
       console.log(`\n\u{1F4E5} [${progress}/${totalToCheck}] Mengecek pesan ID: ${msgId}...`);
@@ -497,7 +496,7 @@ async function deepLinkScraper(client, rl) {
             console.log(`   \u23F3 Menunggu response dari bot...`);
             
             try {
-              const botMessages = await client.getMessages(botPeer, { limit: 50 });
+              const botMessages = await client.getMessages(botPeer, { limit: 5 });
               if (!botMessages || !Array.isArray(botMessages)) {
                 botMessages = [];
               }
@@ -530,9 +529,12 @@ async function deepLinkScraper(client, rl) {
                   console.log('\u26D4 BOT STOP - Response bot tidak mengandung media!');
                   console.log('='.repeat(40));
                   
+                  // ✅ Update ID terakhir SEBELUM exit
+                  lastProcessedId = msgId;
+
                   isRunning = false;
                   reportData.stopped = true;
-                  reportData.endId = lastProcessedId; // ✅ Fix: Gunakan ID yang sebenarnya diproses bukan ID input
+                  reportData.endId = msgId;
                   link.hasMedia = false;
                   reportData.deepLinks.push(link);
 
@@ -577,11 +579,9 @@ async function deepLinkScraper(client, rl) {
     }
     
     if (msgId < endId && isRunning) {
-      const minDelay = typeof config.MIN_DELAY === 'number' && !isNaN(config.MIN_DELAY) ? config.MIN_DELAY : 3000;
-      const maxDelay = typeof config.MAX_DELAY === 'number' && !isNaN(config.MAX_DELAY) ? config.MAX_DELAY : 10000;
-      const effectiveMin = Math.min(minDelay, maxDelay);
-      const effectiveMax = Math.max(minDelay, maxDelay);
-      const nextDelay = Math.floor(Math.random() * (effectiveMax - effectiveMin + 1)) + effectiveMin;
+      const minDelay = config.MIN_DELAY;
+      const maxDelay = config.MAX_DELAY;
+      const nextDelay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
       console.log(`   \u23F3 Delay ${(nextDelay/1000).toFixed(1)} detik (menghindari rate limit)...`);
       await new Promise(resolve => setTimeout(resolve, nextDelay));
     }
@@ -621,9 +621,9 @@ async function deepLinkScraper(client, rl) {
   
   rl.close();
   
-  try {
-    await client.disconnect();
-  } catch (e) {}
+    try {
+      await client.disconnect();
+    } catch (e) {}
 }
 
 module.exports = deepLinkScraper;
