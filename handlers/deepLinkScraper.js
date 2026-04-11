@@ -16,7 +16,7 @@ function randomDelay() {
   const effectiveMin = Math.min(minDelay, maxDelay);
   const effectiveMax = Math.max(minDelay, maxDelay);
   const delay = Math.floor(Math.random() * (effectiveMax - effectiveMin + 1)) + effectiveMin;
-  return new Promise((resolve) => setTimeout(resolve, delay));
+  return new Promise((resolve) => setTimeout(() => resolve(delay), delay));
 }
 
 /**
@@ -245,7 +245,7 @@ async function deepLinkScraper(client, rl) {
   let lastStartTimestamp = 0;
   let lastProcessedId = 0; // ✅ Track ID terakhir yang berhasil diproses secara realtime
 
-  const safeExit = () => {
+  const safeExit = async () => {
     if (!isRunning) return;
     isRunning = false;
     
@@ -267,7 +267,7 @@ async function deepLinkScraper(client, rl) {
     console.log('\u{1F44B} Bot berhenti dengan aman.');
     
     try {
-      client.disconnect();
+      await client.disconnect();
     } catch (e) {}
 
     process.removeListener('SIGINT', safeExit);
@@ -419,8 +419,8 @@ async function deepLinkScraper(client, rl) {
   console.log(`\u{1F680} Scraping dimulai...`);
   console.log(`   Channel: ${parsedChannelId}`);
   console.log(`   Range: ID ${startId} - ${endId}`);
-  const minSec = config.MIN_DELAY / 1000;
-  const maxSec = config.MAX_DELAY / 1000;
+  const minSec = (typeof config.MIN_DELAY === 'number' ? config.MIN_DELAY : 3000) / 1000;
+  const maxSec = (typeof config.MAX_DELAY === 'number' ? config.MAX_DELAY : 10000) / 1000;
   console.log(`   Delay: ${minSec.toFixed(1)}-${maxSec.toFixed(1)} detik per pesan`);
   console.log('   Tekan Ctrl+C untuk berhenti dan generate report.');
   console.log('='.repeat(40));
@@ -433,6 +433,16 @@ async function deepLinkScraper(client, rl) {
   }
   
   console.log(`\n✅ Akan memproses ${totalToCheck} pesan`);
+
+  // ✅ Validasi konfigurasi delay
+  if (typeof config.MIN_DELAY !== 'number' || config.MIN_DELAY < 0) {
+    console.log('\n⚠️  MIN_DELAY tidak valid, menggunakan default 3000ms');
+    config.MIN_DELAY = 3000;
+  }
+  if (typeof config.MAX_DELAY !== 'number' || config.MAX_DELAY < config.MIN_DELAY) {
+    console.log('\n⚠️  MAX_DELAY tidak valid, menggunakan default 10000ms');
+    config.MAX_DELAY = 10000;
+  }
   
   for (let msgId = startId; msgId <= endId && isRunning; msgId++) {
     
@@ -579,11 +589,9 @@ async function deepLinkScraper(client, rl) {
     }
     
     if (msgId < endId && isRunning) {
-      const minDelay = config.MIN_DELAY;
-      const maxDelay = config.MAX_DELAY;
-      const nextDelay = Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
-      console.log(`   \u23F3 Delay ${(nextDelay/1000).toFixed(1)} detik (menghindari rate limit)...`);
-      await new Promise(resolve => setTimeout(resolve, nextDelay));
+      // ✅ Gunakan fungsi randomDelay() yang sudah ada
+      const delay = await randomDelay();
+      console.log(`   \u23F3 Delay ${(delay/1000).toFixed(1)} detik (menghindari rate limit)...`);
     }
   }
   
@@ -621,9 +629,6 @@ async function deepLinkScraper(client, rl) {
   
   rl.close();
   
-    try {
-      await client.disconnect();
-    } catch (e) {}
 }
 
 module.exports = deepLinkScraper;
