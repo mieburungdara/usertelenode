@@ -1,6 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { extractDeepLinks, generateStartMessage } = require('../utils/linkParser');
+const { updateHistory, getAllChannels, getLastScrapedId, updateLastScrapedId } = require('../utils/scrapingHistory');
 const config = require('../config');
 
 const reportFileName = (typeof config.REPORT_FILE === 'string' && config.REPORT_FILE.trim()) ? config.REPORT_FILE : 'report.md';
@@ -10,10 +11,8 @@ const REPORT_FILE = path.resolve(__dirname, '..', reportFileName);
  * Random delay antara konfigurasi MIN_DELAY-MAX_DELAY
  */
 function randomDelay() {
-  // Ensure config values are valid numbers
   const minDelay = typeof config.MIN_DELAY === 'number' && !isNaN(config.MIN_DELAY) ? config.MIN_DELAY : 3000;
   const maxDelay = typeof config.MAX_DELAY === 'number' && !isNaN(config.MAX_DELAY) ? config.MAX_DELAY : 10000;
-  // Ensure minDelay <= maxDelay to prevent negative delay
   const effectiveMin = Math.min(minDelay, maxDelay);
   const effectiveMax = Math.max(minDelay, maxDelay);
   const delay = Math.floor(Math.random() * (effectiveMax - effectiveMin + 1)) + effectiveMin;
@@ -26,7 +25,6 @@ function randomDelay() {
 function hasMedia(message) {
   if (!message) return false;
   
-  // Cek berbagai tipe media
   if (message.media) {
     const mediaType = message.media.className;
     return (
@@ -48,15 +46,13 @@ function hasMedia(message) {
  */
 function escapeForReport(str) {
   if (!str) return '';
-  // First escape markdown chars (except backticks which we handle separately)
   let escaped = String(str).replace(/[*_\[\]()~>#+\-=|{}.!]/g, '\\$&');
-  // Then escape HTML
   escaped = escaped
     .replace(/&/g, '\u0026amp;')
     .replace(/</g, '\u0026lt;')
     .replace(/>/g, '\u0026gt;')
     .replace(/"/g, '\u0026quot;')
-    .replace(/`/g, '\\`'); // Escape backticks for markdown code spans
+    .replace(/`/g, '\\`');
   return escaped;
 }
 
@@ -111,6 +107,122 @@ ${reportData.stopped ? '\u26a0\ufe0f **BOT STOP** - Ditemukan response tanpa med
 }
 
 /**
+ * Parse channel input to get proper entity identifier
+ * Supports: @username, numeric ID (-100...), and t.me URLs
+ * @param {string} input - Raw user input
+ * @returns {string|number} Channel identifier suitable for getEntity
+ */
+function parseChannelInput(input) {
+  if (!input) return null;
+  
+  let cleaned = String(input).trim();
+  
+  if (!cleaned) return null;
+  
+  // Handle t.me URLs
+  if (cleaned.includes('t.me/')) {
+    const match = cleaned.match(/t\.me\/([a-zA-Z0-9_]+)/);
+    if (match) {
+      cleaned = match[1];
+    } else {
+      const altMatch = cleaned.match(/t\.me\/(.+)/);
+      cleaned = altMatch ? altMatch[1] : cleaned;
+    }
+    cleaned = cleaned.trim();
+  }
+  
+  if (!cleaned) return null;
+  
+  // Check if it's a numeric channel ID (all digits with optional - prefix)
+  const isNumericId = /^-?\d+$/.test(cleaned);
+  
+  if (isNumericId) {
+    return parseInt(cleaned, 10);
+  }
+  
+  if (!cleaned.startsWith('@')) {
+    cleaned = '@' + cleaned;
+  }
+  
+  return cleaned;
+}
+
+/**
+ * Resolve channel entity from parsed ID with fallback handling
+ * Specifically handles -100... channel IDs that may fail with standard getEntity
+ * @param {TelegramClient} client - GramJS client
+ * @param {string|number} parsedChannelId - Parsed channel identifier
+ * @returns {Promise<Channel>} Resolved channel entity
+ */
+async function resolveChannelEntity(client, parsedChannelId) {
+  // First, try standard getEntity
+  try {
+    return await client.getEntity(parsedChannelId);
+  } catch (e) {
+    // If getEntity fails and we have a numeric ID (especially -100...), use specialized resolution
+    if (typeof parsedChannelId === 'number') {
+      console.log(`   \u26A0\uFE0F getEntity gagal untuk numeric ID ${parsedChannelId}, mencoba resolusi khusus...`);
+      console.log(`   Error: ${e.message}`);
+      
+      const idStr = String(parsedChannelId);
+      let channelIdNum;
+      
+      // Extract actual channel ID from -100 prefix (Telegram channel encoding)
+      // In Telegram: -100xxxxx means channel with internal ID = xxxx
+      if (idStr.startsWith('-100')) {
+        channelIdNum = parseInt(idStr.substring(4), 10);
+      } else if (idStr.startsWith('-')) {
+        channelIdNum = parseInt(idStr.substring(1), 10);
+      } else {
+        channelIdNum = parsedChannelId;
+      }
+      
+      // Try to get the channel via alternative methods
+      // Method 1: Try using the constructed peer
+      try {
+        // The channel ID we extracted might already be the right one
+        // Use getEntity with the positive channel ID
+        const positiveId = channelIdNum;
+        console.log(`   Mencoba dengan channel ID positif: ${positiveId}`);
+        return await client.getEntity(positiveId);
+      } catch (e2) {
+        console.log(`   \u26A0\uFE0F Metode 1 gagal: ${e2.message}`);
+      }
+      
+      // Method 2: Try with explicitly constructed InputPeerChannel
+      try {
+        console.log(`   Mencoba InputPeerChannel dengan channelId=${channelIdNum}`);
+        // We need accessHash, but we can try getting it from existing known entities
+        // or by using getFullChannel if we can construct the peer
+        const inputPeerChannel = {
+          _: 'inputPeerChannel',
+          channelId: channelIdNum,
+          accessHash: 0n
+        };
+        return await client.getEntity(inputPeerChannel);
+      } catch (e2) {
+        console.log(`   \u26A0\uFE0F Metode 2 gagal: ${e2.message}`);
+        
+        // Final fallback: provide helpful error
+        console.error(`\n\u274C Channel dengan ID ${parsedChannelId} tidak dapat diakses.`);
+        console.log('\n   \u2139\uFE0F  Kemungkinan penyebab:');
+        console.log('   • Anda bukan anggota channel tersebut');
+        console.log('   • Channel bersifat private');
+        console.log('   • ID channel tidak valid');
+        console.log('   •Bot membutuhkan username channel (tanpa -100) sebagai gantinya');
+        console.log('\n   💡 Saran: Coba gunakan username channel (contoh: @channelname)');
+        console.log('   untuk menghindari masalah dengan format -100...');
+        
+        throw new Error(`Channel ${parsedChannelId} tidak dapat diakses`);
+      }
+    } else {
+      // For usernames, re-throw original error
+      throw e;
+    }
+  }
+}
+
+/**
  * Deep Link Scraper
  * @param {TelegramClient} client - Instance Telegram client
  */
@@ -118,6 +230,7 @@ async function deepLinkScraper(client, rl) {
   const reportData = {
     channelUsername: '',
     channelId: '',
+    parsedChannelId: '',
     startId: 0,
     endId: 0,
     totalMessages: 0,
@@ -128,10 +241,9 @@ async function deepLinkScraper(client, rl) {
     stopped: false
   };
 
-  // Safe exit handler
   let isRunning = true;
-  // Track timestamp after sending /start to filter bot responses
   let lastStartTimestamp = 0;
+  let lastProcessedId = 0; // ✅ Track ID terakhir yang berhasil diproses secara realtime
 
   const safeExit = async () => {
     if (!isRunning) return;
@@ -139,67 +251,93 @@ async function deepLinkScraper(client, rl) {
     
     console.log('\n\n\u26A0\uFE0F  Menerima sinyal berhenti...');
     console.log('\u{1F4CA} Merangkum laporan...');
-    
+
     reportData.stopped = true;
+    if (lastProcessedId > 0) {
+      reportData.endId = lastProcessedId; // ✅ Fix: Gunakan ID terakhir yang sebenarnya diproses
+    }
     generateReport(reportData);
-    
+
+    // Update scraping history if IDs are set
+    if (reportData.startId > 0 && lastProcessedId > 0) {
+      updateHistory(reportData.parsedChannelId, reportData.startId, lastProcessedId, reportData.deepLinks.length, true);
+    }
+
     console.log('\u2705 Laporan telah disimpan.');
     console.log('\u{1F44B} Bot berhenti dengan aman.');
     
     try {
       await client.disconnect();
-    } catch (e) {
-      // Ignore disconnect errors
-    }
+    } catch (e) {}
   };
 
-  // Register Ctrl+C handler
   process.on('SIGINT', safeExit);
   process.on('SIGTERM', safeExit);
 
   console.log('\n\u{1F517} Mode Deep Link Scraper');
   console.log('\u2500'.repeat(40));
 
-  // Input channel with guard
   if (typeof rl?.question !== 'function') {
     console.error('\u274C Interface readline tidak tersedia.');
     process.exit(1);
   }
-  const channelInput = rl.question('Masukkan username/link channel publik (contoh: contohchannel atau https://t.me/contohchannel): ');
-  let channelId = String(channelInput || '').trim();
-  
-  // Bersihkan input dari URL
-  if (channelId.includes('t.me/')) {
-    const match = channelId.match(/t\.me\/([a-zA-Z0-9_]+)/);
-    channelId = '@' + (match ? match[1] : channelId);
-  } else if (!channelId.startsWith('@')) {
-    channelId = '@' + channelId;
+
+  // Tampilkan daftar channel history
+  const savedChannels = getAllChannels();
+  if (savedChannels.length > 0) {
+    console.log('\n📋 Daftar channel yang pernah discrape:');
+    savedChannels.forEach((ch, idx) => {
+      console.log(`  ${idx + 1}. ${ch.channelName} | ID terakhir: ${ch.lastScrapedId}`);
+    });
+    console.log('\n💡 Masukkan nomor dari daftar, atau input channel baru');
   }
-  
-  // Validate channel input is not empty
-  if (!channelId || channelId === '@') {
+
+  const channelInput = rl.question('\nMasukkan channel: ').trim();
+  let parsedChannelId;
+
+  // Cek apakah input adalah nomor dari daftar
+  if (/^\d+$/.test(channelInput)) {
+    const num = parseInt(channelInput);
+    if (num >= 1 && num <= savedChannels.length) {
+      const selectedChannel = savedChannels[num - 1];
+      parsedChannelId = parseChannelInput(selectedChannel.channelName);
+      console.log(`✅ Memilih channel dari history: ${selectedChannel.channelName}`);
+    } else {
+      console.log('❌ Nomor channel tidak ada di daftar');
+      process.exit(1);
+    }
+  } else {
+    parsedChannelId = parseChannelInput(channelInput);
+  }
+
+  if (!parsedChannelId) {
     console.error('\u274C Channel tidak boleh kosong.');
     console.log('   Masukkan username atau link channel yang valid.');
     process.exit(1);
   }
+
+  reportData.parsedChannelId = parsedChannelId;
   
-  console.log(`Target channel: ${channelId}`);
+  console.log(`Target channel: ${parsedChannelId}`);
   
   // Cek channel terlebih dahulu
-  console.log(`Mengecek channel ${channelId}...`);
+  console.log(`Mengecek channel ${parsedChannelId}...`);
   let channel;
+  
   try {
-    channel = await client.getEntity(channelId);
+    // Use the specialized resolver with fallback
+    channel = await resolveChannelEntity(client, parsedChannelId);
   } catch (e) {
-    console.error(`\u274C Channel ${channelId} tidak ditemukan atau tidak bisa diakses.`);
-    console.log('   Pastikan channel publik dan Anda sudah join.');
+    console.error(`\u274C Channel ${parsedChannelId} tidak ditemukan atau tidak bisa diakses.`);
+    console.log(`   Error: ${e.message}`);
     process.exit(1);
   }
   
-  reportData.channelUsername = channelId;
-  reportData.channelId = channel.id ? channel.id.toString() : 'N/A';
+  // Store channel info
+  reportData.channelUsername = channel.username ? `@${channel.username}` : (typeof parsedChannelId === 'string' ? parsedChannelId : '');
+  reportData.channelId = channel.id ? channel.id.toString() : (typeof parsedChannelId === 'number' ? parsedChannelId.toString() : 'N/A');
   
-  console.log(`\u2705 Channel ditemukan: ${channel.title || channel.username || channelId}`);
+  console.log(`\u2705 Channel ditemukan: ${channel.title || channel.username || channel.id}`);
   
   // Dapatkan info pesan terakhir
   console.log('\nMendapatkan info pesan terakhir...');
@@ -211,37 +349,48 @@ async function deepLinkScraper(client, rl) {
    
   const maxMsgId = messages[0].id;
   console.log(`ID Pesan terakhir: ${maxMsgId}`);
+
+  // Cek apakah ada history untuk channel ini
+  const lastScrapedId = getLastScrapedId(parsedChannelId);
+  let defaultStartId = 1;
+  if (lastScrapedId) {
+    defaultStartId = lastScrapedId + 1;
+    console.log(`\n✅ Ditemukan history: ID terakhir yang discrape = ${lastScrapedId}`);
+    
+    if (defaultStartId > maxMsgId) {
+      console.log(`ℹ️ Semua pesan di channel sudah discrape sampai ID terbaru ${maxMsgId}`);
+      console.log(`✅ Tidak ada pesan baru yang perlu discrape`);
+      process.exit(0);
+    }
+    
+    console.log(`👉 Default akan lanjut dari ID ${defaultStartId}`);
+  } else {
+    console.log('\nℹ️ Channel ini belum pernah discrape sebelumnya');
+  }
   
   // Input range pesan with guards
-  const startInput = rl.question(`Masukkan ID pesan awal (1-${maxMsgId}): `);
-  if (startInput === undefined) {
-    console.error('\u274C Input tidak tersedia.');
-    process.exit(1);
-  }
-  const startId = parseInt(String(startInput), 10) || 1;
+  const startInput = rl.question(`\nMasukkan ID pesan awal (default: ${defaultStartId}): `).trim();
+  let startId = parseInt(String(startInput), 10);
   
-  const endInput = rl.question(`Masukkan ID pesan akhir (${startId}-${maxMsgId}): `);
-  if (endInput === undefined) {
-    console.error('\u274C Input tidak tersedia.');
-    process.exit(1);
+  if (isNaN(startId) || startId < 1 || startId > maxMsgId) {
+    startId = defaultStartId;
   }
+  
+  const endInput = rl.question(`Masukkan ID pesan akhir (default: ${maxMsgId}): `).trim();
   let endId = parseInt(String(endInput), 10);
   
-  if (isNaN(endId) || endId > maxMsgId) {
+  if (isNaN(endId) || endId < startId || endId > maxMsgId) {
     endId = maxMsgId;
   }
   
-  if (startId > endId) {
-    console.log('\u274C ID awal harus lebih kecil dari ID akhir.');
-    process.exit(1);
-  }
+  console.log(`\n✅ Range yang dipilih: ID ${startId} - ${endId}`);
   
   reportData.startId = startId;
   reportData.endId = endId;
   
   console.log('\n' + '='.repeat(40));
   console.log(`\u{1F680} Scraping dimulai...`);
-  console.log(`   Channel: ${channelId}`);
+  console.log(`   Channel: ${parsedChannelId}`);
   console.log(`   Range: ID ${startId} - ${endId}`);
   const minSec = (typeof config.MIN_DELAY === 'number' && !isNaN(config.MIN_DELAY) ? config.MIN_DELAY : 3000) / 1000;
   const maxSec = (typeof config.MAX_DELAY === 'number' && !isNaN(config.MAX_DELAY) ? config.MAX_DELAY : 10000) / 1000;
@@ -251,24 +400,21 @@ async function deepLinkScraper(client, rl) {
   
   const totalToCheck = endId - startId + 1;
   
-  // Proses scraping pesan per pesan
   for (let msgId = startId; msgId <= endId; msgId++) {
     if (!isRunning) return;
     
-    const progress = msgId - startId + 1;
-    console.log(`\n\u{1F4E5} [${progress}/${totalToCheck}] Mengecek pesan ID: ${msgId}...`);
+      const progress = msgId - startId + 1;
+      console.log(`\n\u{1F4E5} [${progress}/${totalToCheck}] Mengecek pesan ID: ${msgId}...`);
+      lastProcessedId = msgId; // ✅ Update setiap loop sebelum proses pesan
     
     try {
-      // Ambil pesan spesifik - GramJS expects array of message IDs
       const msgs = await client.getMessages(channel, { ids: [msgId] });
       
-      // Jika tidak ada pesan di ID tersebut
       if (!msgs || !Array.isArray(msgs) || msgs.length === 0) {
         console.log(`   \u23ED\uFE0F  Tidak ada pesan di ID ${msgId}.`);
         continue;
       }
       
-      // Take first message from array
       const message = msgs[0];
       if (!message || !message.id) {
         console.log(`   \u23ED\uFE0F  Pesan tidak valid di ID ${msgId}.`);
@@ -277,31 +423,26 @@ async function deepLinkScraper(client, rl) {
       
       reportData.totalMessages++;
       
-      // Cek media di pesan channel
       if (hasMedia(message)) {
         reportData.totalMedia++;
         console.log(`   \u{1F5BC}\uFE0F  Pesan mengandung media.`);
       }
       
-      // Cek apakah pesan mengandung text
       const messageText = message.text || '';
       if (messageText) {
         console.log(`   \u{1F4DD} Text: ${messageText.substring(0, 100)}${messageText.length > 100 ? '...' : ''}`);
       }
       
-      // Parse deep links
       const deepLinks = extractDeepLinks(messageText);
       
       if (deepLinks.length > 0) {
         console.log(`   \u{1F517} Ditemukan ${deepLinks.length} deep link!`);
         reportData.totalLinks += deepLinks.length;
         
-        // Proses setiap deep link
         for (const link of deepLinks) {
           console.log(`   \u21B3 Bot: @${link.botUsername}`);
           console.log(`   \u21B3 Start Data: ${link.startData}`);
           
-          // Cari entity bot
           let botPeer;
           try {
             botPeer = await client.getEntity(link.botUsername);
@@ -311,21 +452,15 @@ async function deepLinkScraper(client, rl) {
             continue;
           }
           
-          // Kirim /start
           const startMessage = generateStartMessage(link.botUsername, link.startData);
           console.log(`   \u{1F4E4} Mengirim: ${startMessage}`);
           
           try {
             await client.sendMessage(botPeer, { message: startMessage });
-            
-            // Track timestamp immediately after sending
             lastStartTimestamp = Date.now();
             console.log(`   \u23F3 Menunggu response dari bot...`);
             
-            // Ambil pesan dari bot - pastikan ambil pesan SETELAH kita kirim /start
-            // Filter by sender AND time (after lastStartTimestamp)
             try {
-              // Increase limit to 50 to get more messages from active bots
               const botMessages = await client.getMessages(botPeer, { limit: 50 });
               if (!botMessages || !Array.isArray(botMessages)) {
                 botMessages = [];
@@ -333,22 +468,17 @@ async function deepLinkScraper(client, rl) {
               
               const recentMessages = botMessages.filter(msg => {
                 if (!msg || !msg.date) return false;
-                // msg.date from GramJS is Unix timestamp in seconds, convert to ms
                 const msgTimestamp = typeof msg.date === 'number' ? msg.date * 1000 : new Date(msg.date).getTime();
-                // Message must be AFTER the /start we sent
                 const isAfterStart = msgTimestamp > lastStartTimestamp;
-                // Check if message is FROM the bot (from_id matches)
                 const senderId = msg.fromId ? (msg.fromId.userId || msg.fromId.channelId || msg.fromId.chatId) : null;
                 const isFromBot = senderId && senderId.toString() === botPeer.id.toString();
                 return isAfterStart && isFromBot;
               });
               
-              // Only use messages after our /start
               const response = recentMessages.length > 0 ? recentMessages[0] : null;
               
               if (response) {
                 const hasMediaResponse = hasMedia(response);
-                
                 link.hasMedia = hasMediaResponse;
                 
                 if (hasMediaResponse) {
@@ -360,25 +490,18 @@ async function deepLinkScraper(client, rl) {
                   
                   reportData.noMediaCount++;
                   
-                  // Bot harus stop jika tidak ada media
                   console.log('\n' + '='.repeat(40));
                   console.log('\u26D4 BOT STOP - Response bot tidak mengandung media!');
                   console.log('='.repeat(40));
                   
                   isRunning = false;
                   reportData.stopped = true;
+                  reportData.endId = lastProcessedId; // ✅ Fix: Gunakan ID yang sebenarnya diproses bukan ID input
                   link.hasMedia = false;
-                  
-                  // Push this link before generating report
                   reportData.deepLinks.push(link);
-                  
-                  // Generate report and exit cleanly
                   generateReport(reportData);
                   
-                  try {
-                    await client.disconnect();
-                  } catch (e) {}
-                  
+                  try { await client.disconnect(); } catch (e) {}
                   rl.close();
                   process.exit(0);
                 }
@@ -391,7 +514,6 @@ async function deepLinkScraper(client, rl) {
               link.hasMedia = false;
             }
             
-            // Always push the link after processing (unless already stopped and pushed)
             if (!reportData.stopped) {
               reportData.deepLinks.push(link);
             }
@@ -404,12 +526,13 @@ async function deepLinkScraper(client, rl) {
         }
       }
       
+      
     } catch (e) {
       console.log(`   \u274C Error: ${e.message}`);
       
-      // Cek flood wait - GramJS format: "A wait of X seconds is required" atau "FloodWaitError"
-      // Support decimal wait times (e.g., "wait of 3.5 seconds")
-      const floodMatch = e.message.match(/wait of ([\d.]+)/) || e.message.match(/FLOOD_WAIT_([\d.]+)/) || e.message.match(/FloodWait/);
+      const floodMatch = e.message.match(/wait of ([\d.]+)/) || 
+                         e.message.match(/FLOOD_WAIT_([\d.]+)/) || 
+                         e.message.match(/FloodWait/);
       if (floodMatch) {
         const waitTime = floodMatch[1] ? Math.ceil(parseFloat(floodMatch[1])) : 30;
         console.log(`   \u23F3 Flood wait detected. Tunggu ${waitTime} detik...`);
@@ -418,7 +541,6 @@ async function deepLinkScraper(client, rl) {
       }
     }
     
-    // Delay sebelum pesan berikutnya (human-like behavior)
     if (msgId < endId && isRunning) {
       const minDelay = typeof config.MIN_DELAY === 'number' && !isNaN(config.MIN_DELAY) ? config.MIN_DELAY : 3000;
       const maxDelay = typeof config.MAX_DELAY === 'number' && !isNaN(config.MAX_DELAY) ? config.MAX_DELAY : 10000;
@@ -430,14 +552,35 @@ async function deepLinkScraper(client, rl) {
     }
   }
   
-  // Selesai scraping
   if (isRunning) {
     console.log('\n' + '='.repeat(40));
     console.log('\u2705 Scraping selesai!');
     generateReport(reportData);
+
+    // Update scraping history
+    updateHistory(reportData.parsedChannelId, reportData.startId, reportData.endId, reportData.deepLinks.length, false);
+  } else {
+    // ✅ Fix: Update history juga ketika bot berhenti di tengah
+    updateHistory(reportData.parsedChannelId, reportData.startId, lastProcessedId, reportData.deepLinks.length, true);
   }
   
-  // Remove signal listeners
+  try {
+    const me = await client.getMe();
+    const briefReport = `*Laporan Deep Link Scraping*\n\n` +
+      `*Channel:* ${reportData.channelUsername}\n` +
+      `*Range:* ID ${reportData.startId} - ID ${reportData.endId}\n` +
+      `*Total Pesan:* ${reportData.totalMessages}\n` +
+      `*Total Link:* ${reportData.totalLinks}\n` +
+      `*Total Media:* ${reportData.totalMedia}\n` +
+      `*Tanpa Media:* ${reportData.noMediaCount}\n` +
+      `*Status:* ${reportData.stopped ? '⛔ BOT STOP' : '✅ SELESAI'}\n\n` +
+      `_Report lengkap disimpan di file report.md_`;
+    await client.sendMessage(me.id, { message: briefReport, parseMode: 'markdown' });
+    console.log('\n\u2705 Laporan singkat telah dikirim ke Saved Messages.');
+  } catch (e) {
+    console.log('\n\u26A0\uFE0F Gagal kirim laporan ke Saved Messages:', e.message);
+  }
+  
   process.removeListener('SIGINT', safeExit);
   process.removeListener('SIGTERM', safeExit);
   
@@ -447,3 +590,6 @@ async function deepLinkScraper(client, rl) {
     await client.disconnect();
   } catch (e) {}
 }
+
+module.exports = deepLinkScraper;
+module.exports.parseChannelInput = parseChannelInput;
