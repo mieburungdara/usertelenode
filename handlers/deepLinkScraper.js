@@ -245,7 +245,7 @@ async function deepLinkScraper(client, rl) {
   let lastStartTimestamp = 0;
   let lastProcessedId = 0; // ✅ Track ID terakhir yang berhasil diproses secara realtime
 
-  const safeExit = async () => {
+  const safeExit = () => {
     if (!isRunning) return;
     isRunning = false;
     
@@ -267,8 +267,14 @@ async function deepLinkScraper(client, rl) {
     console.log('\u{1F44B} Bot berhenti dengan aman.');
     
     try {
-      await client.disconnect();
+      client.disconnect();
     } catch (e) {}
+
+    process.removeListener('SIGINT', safeExit);
+    process.removeListener('SIGTERM', safeExit);
+    
+    // ✅ Pastikan proses exit dengan aman setelah semua operasi IO selesai
+    setTimeout(() => process.exit(0), 500);
   };
 
   process.on('SIGINT', safeExit);
@@ -287,18 +293,28 @@ async function deepLinkScraper(client, rl) {
   if (savedChannels.length > 0) {
     // ✅ Sortir channel berdasarkan terakhir diakses (terbaru di atas)
     // Buat copy array agar tidak mengubah data asli
-    [...savedChannels].sort((a, b) => new Date(b.lastScrapedAt) - new Date(a.lastScrapedAt));
+    const sortedChannels = [...savedChannels].sort((a, b) => {
+      const dateA = new Date(a.lastScrapedAt);
+      const dateB = new Date(b.lastScrapedAt);
+      return isNaN(dateB.getTime()) ? -1 : isNaN(dateA.getTime()) ? 1 : dateB - dateA;
+    });
     
     console.log('\n📋 Daftar channel yang pernah discrape:');
-    savedChannels.forEach((ch, idx) => {
-      const lastDate = new Date(ch.lastScrapedAt).toLocaleDateString('id-ID');
-      console.log(`  ${idx + 1}. ${ch.channelName} | ID: ${ch.lastScrapedId} | ${lastDate}`);
+    sortedChannels.forEach((ch, idx) => {
+      const lastDate = new Date(ch.lastScrapedAt);
+      const dateStr = isNaN(lastDate.getTime()) ? 'Tidak diketahui' : lastDate.toLocaleDateString('id-ID');
+      console.log(`  ${idx + 1}. ${ch.channelName} | ID: ${ch.lastScrapedId} | ${dateStr}`);
     });
     console.log('\n💡 Masukkan nomor dari daftar, atau input channel baru');
   }
 
   const channelInput = rl.question('\nMasukkan channel: ').trim();
   let parsedChannelId;
+
+  if (channelInput === '') {
+    console.log('❌ Channel tidak boleh kosong');
+    process.exit(1);
+  }
 
   // Cek apakah input adalah nomor dari daftar
   if (/^\d+$/.test(channelInput.trim())) {
@@ -410,6 +426,13 @@ async function deepLinkScraper(client, rl) {
   console.log('='.repeat(40));
   
   const totalToCheck = endId - startId + 1;
+
+  if (totalToCheck <= 0) {
+    console.log('\n❌ Range ID tidak valid');
+    process.exit(1);
+  }
+  
+  console.log(`\n✅ Akan memproses ${totalToCheck} pesan`);
   
   for (let msgId = startId; msgId <= endId; msgId++) {
     if (!isRunning) return;
