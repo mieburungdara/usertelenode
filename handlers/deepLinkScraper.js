@@ -535,11 +535,10 @@ async function deepLinkScraper(client, rl) {
                   reportData.endId = lastProcessedId; // ✅ Fix: Gunakan ID yang sebenarnya diproses bukan ID input
                   link.hasMedia = false;
                   reportData.deepLinks.push(link);
-                  generateReport(reportData);
-                  
-                  try { await client.disconnect(); } catch (e) {}
-                  rl.close();
-                  process.exit(0);
+
+                  // ✅ Gunakan safeExit untuk exit secara aman dan konsisten
+                  safeExit();
+                  return;
                 }
               } else {
                 console.log(`   \u26A0\uFE0F Tidak ada response dari bot.`);
