@@ -286,7 +286,8 @@ async function deepLinkScraper(client, rl) {
   const savedChannels = getAllChannels();
   if (savedChannels.length > 0) {
     // ✅ Sortir channel berdasarkan terakhir diakses (terbaru di atas)
-    savedChannels.sort((a, b) => new Date(b.lastScrapedAt) - new Date(a.lastScrapedAt));
+    // Buat copy array agar tidak mengubah data asli
+    [...savedChannels].sort((a, b) => new Date(b.lastScrapedAt) - new Date(a.lastScrapedAt));
     
     console.log('\n📋 Daftar channel yang pernah discrape:');
     savedChannels.forEach((ch, idx) => {
@@ -300,7 +301,7 @@ async function deepLinkScraper(client, rl) {
   let parsedChannelId;
 
   // Cek apakah input adalah nomor dari daftar
-  if (/^\d+$/.test(channelInput)) {
+  if (/^\d+$/.test(channelInput.trim())) {
     const num = parseInt(channelInput);
     if (num >= 1 && num <= savedChannels.length) {
       const selectedChannel = savedChannels[num - 1];
@@ -427,11 +428,13 @@ async function deepLinkScraper(client, rl) {
       const message = msgs[0];
       if (!message || !message.id) {
         console.log(`   \u23ED\uFE0F  Pesan tidak valid di ID ${msgId}.`);
+        // ✅ Tetap update ID terakhir bahkan jika pesan kosong / tidak valid
+        lastProcessedId = msgId;
         continue;
       }
       
       reportData.totalMessages++;
-      lastProcessedId = msgId; // ✅ Fix: Update HANYA setelah pesan BERHASIL di proses
+      lastProcessedId = msgId; // ✅ Update HANYA setelah pesan BERHASIL di proses
       
       if (hasMedia(message)) {
         reportData.totalMedia++;
