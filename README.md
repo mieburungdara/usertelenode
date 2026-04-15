@@ -5,7 +5,7 @@ Telegram User Bot berbasis Node.js dengan fitur **Auto Reply** dan **Deep Link S
 ## ✨ Fitur
 
 - **Multi Account Management** - Kelola beberapa akun Telegram dengan String Session
-- **Auto Reply Mode** - Auto reply pesan dari bot tertentu
+- **Auto Reply Mode** - Auto reply pesan dari bot tertentu dengan dukungan multi-line dan random reply
 - **Deep Link Scraper Mode** - Scraping deep link dari channel publik
 - **2FA Support** - Login dengan Cloud Password
 - **Safe Exit** - Ctrl+C menghasilkan report sebelum berhenti
@@ -104,9 +104,14 @@ Bot akan mendengarkan pesan masuk dari bot tertentu dan membalas otomatis.
 **Konfigurasi default:**
 - Target Bot ID: `825312679`
 - Trigger Message: `Partner found 😺`
-- Auto Reply: `cowok`
+- Auto Reply: `cowok` (atau array: `["cowok", "pria", "laki-laki"]` untuk random)
 
-Untuk mengubah konfigurasi, edit file `config.js`.
+**Fitur tambahan:**
+- **Multi-line reply:** Gunakan `\n` untuk garis baru, contoh: `"Baris 1\nBaris 2"`
+- **Markdown formatting:** Tambah `"parseMode": "markdown"` untuk format markdown
+- **Random reply:** Ubah `reply` dari string ke array untuk variasi acak (hindari spam)
+
+Untuk mengubah konfigurasi, edit file `autoreply.json`.
 
 ### 3. Deep Link Scraper Mode
 

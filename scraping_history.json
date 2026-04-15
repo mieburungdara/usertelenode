@@ -1,0 +1,168 @@
+{
+  "channels": {
+    "testchannel": {
+      "channelName": "testchannel",
+      "lastScrapedId": 10,
+      "lastScrapedAt": "2026-04-10T19:14:05.183Z",
+      "totalScraped": 10,
+      "scrapingSessions": [
+        {
+          "startId": 1,
+          "endId": 10,
+          "scrapedAt": "2026-04-10T19:14:05.183Z",
+          "linksFound": 2,
+          "stopped": false
+        }
+      ]
+    },
+    "asupandavina": {
+      "channelName": "@asupandavina",
+      "lastScrapedId": 876,
+      "lastScrapedAt": "2026-04-12T17:27:20.391Z",
+      "totalScraped": 3,
+      "scrapingSessions": [
+        {
+          "startId": 874,
+          "endId": 875,
+          "scrapedAt": "2026-04-11T22:45:18.696Z",
+          "linksFound": 1,
+          "stopped": false
+        },
+        {
+          "startId": 876,
+          "endId": 876,
+          "scrapedAt": "2026-04-12T17:27:20.391Z",
+          "linksFound": 0,
+          "stopped": false
+        }
+      ]
+    },
+    "rategenz": {
+      "channelName": "@rategenz",
+      "lastScrapedId": 2613,
+      "lastScrapedAt": "2026-04-12T01:17:09.367Z",
+      "totalScraped": 61,
+      "scrapingSessions": [
+        {
+          "startId": 2551,
+          "endId": 2610,
+          "scrapedAt": "2026-04-11T22:50:47.304Z",
+          "linksFound": 59,
+          "stopped": false
+        },
+        {
+          "startId": 2613,
+          "endId": 2613,
+          "scrapedAt": "2026-04-12T01:17:09.367Z",
+          "linksFound": 1,
+          "stopped": false
+        }
+      ]
+    },
+    "ometv_S": {
+      "channelName": "@ometv_S",
+      "lastScrapedId": 1723,
+      "lastScrapedAt": "2026-04-11T22:52:52.683Z",
+      "totalScraped": 5,
+      "scrapingSessions": [
+        {
+          "startId": 1719,
+          "endId": 1723,
+          "scrapedAt": "2026-04-11T22:52:52.683Z",
+          "linksFound": 2,
+          "stopped": false
+        }
+      ]
+    },
+    "RateMineplease": {
+      "channelName": "@RateMineplease",
+      "lastScrapedId": 1702,
+      "lastScrapedAt": "2026-04-12T01:06:19.454Z",
+      "totalScraped": 1698,
+      "scrapingSessions": [
+        {
+          "startId": 5,
+          "endId": 1702,
+          "scrapedAt": "2026-04-12T01:06:19.454Z",
+          "linksFound": 1600,
+          "stopped": false
+        }
+      ]
+    },
+    "DYNOCORED2": {
+      "channelName": "@DYNOCORED2",
+      "lastScrapedId": 241,
+      "lastScrapedAt": "2026-04-12T01:21:45.818Z",
+      "totalScraped": 40,
+      "scrapingSessions": [
+        {
+          "startId": 202,
+          "endId": 241,
+          "scrapedAt": "2026-04-12T01:21:45.818Z",
+          "linksFound": 22,
+          "stopped": false
+        }
+      ]
+    },
+    "Asupan_Terbaru_Viral": {
+      "channelName": "@Asupan_Terbaru_Viral",
+      "lastScrapedId": 1569,
+      "lastScrapedAt": "2026-04-12T17:02:15.458Z",
+      "totalScraped": 594,
+      "scrapingSessions": [
+        {
+          "startId": 976,
+          "endId": 1569,
+          "scrapedAt": "2026-04-12T17:02:15.458Z",
+          "linksFound": 612,
+          "stopped": false
+        }
+      ]
+    },
+    "ometv_s": {
+      "channelName": "@ometv_s",
+      "lastScrapedId": 1724,
+      "lastScrapedAt": "2026-04-12T17:28:54.490Z",
+      "totalScraped": 2,
+      "scrapingSessions": [
+        {
+          "startId": 1723,
+          "endId": 1724,
+          "scrapedAt": "2026-04-12T17:28:54.490Z",
+          "linksFound": 0,
+          "stopped": false
+        }
+      ]
+    },
+    "ratemineplease": {
+      "channelName": "@ratemineplease",
+      "lastScrapedId": 3,
+      "lastScrapedAt": "2026-04-12T17:29:37.526Z",
+      "totalScraped": 3,
+      "scrapingSessions": [
+        {
+          "startId": 1,
+          "endId": 3,
+          "scrapedAt": "2026-04-12T17:29:37.526Z",
+          "linksFound": 0,
+          "stopped": true
+        }
+      ]
+    },
+    "papratearea": {
+      "channelName": "@papratearea",
+      "lastScrapedId": 7939,
+      "lastScrapedAt": "2026-04-13T03:04:02.581Z",
+      "totalScraped": 7918,
+      "scrapingSessions": [
+        {
+          "startId": 22,
+          "endId": 7939,
+          "scrapedAt": "2026-04-13T03:04:02.581Z",
+          "linksFound": 7002,
+          "stopped": false
+        }
+      ]
+    }
+  }
+}

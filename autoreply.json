@@ -1,0 +1,44 @@
+{
+  "target_bot_id": "825312679",
+  "debug": true,
+  "auto_replies": [
+    {
+      "name": "partner_found",
+      "description": "Reply when bot sends 'Partner found' message",
+      "triggers": [
+        "Partner found 😺",
+        "Partner found"
+      ],
+      "reply": [
+        "cowok",
+        "pria",
+        "laki-laki",
+        "cowo",
+        "gent"
+      ]
+    },
+    {
+      "name": "co_trigger",
+      "description": "Reply when bot sends standalone 'co'",
+      "triggers": [
+        "co"
+      ],
+      "reply": "/next"
+    },
+    {
+      "name": "partner_stopped",
+      "description": "Reply when bot sends 'Your partner has stopped the chat'",
+      "triggers": [
+        "Your partner has stopped the chat"
+      ],
+      "reply": "/next"
+    },
+    {
+      "name": "multi_line_example",
+      "description": "Example of multi-line reply (supports \\n for new lines)",
+      "triggers": ["example multi"],
+      "reply": "Ini adalah balasan\ndengan beberapa garis\n\n- Point 1\n- Point 2\n- Point 3",
+      "parseMode": "markdown"
+    }
+  ]
+}
