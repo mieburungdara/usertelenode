@@ -62,7 +62,7 @@ function printMainMenu() {
   console.log('📋 Menu Utama:');
   console.log('─'.repeat(40));
   console.log('  1. 🤖 Auto Reply Mode');
-  console.log('  2. 🔗 Deep Link Scraper Mode');
+  console.log('  2. 🔗 Deep Link Scraper Mode (Scrape channel publik dan generate laporan)');
   console.log('  3. ➕ Tambah Akun Baru');
   console.log('  4. ❌ Hapus Akun');
   console.log('  5. 🚪 Keluar');
@@ -165,21 +165,17 @@ async function runDeepLinkScraper() {
     const me = await client.getMe();
     console.log('✅ Terhubung sebagai @' + (me.username || me.firstName || 'unknown'));
 
-    // Create dedicated safe exit handler for this session
-    // deepLinkScraper manages its own signal handlers, so no cleanup needed
-    const safeExitHandler = createSafeExitHandler(client, null);
-    process.on('SIGINT', safeExitHandler);
-    process.on('SIGTERM', safeExitHandler);
-    process.on('SIGBREAK', safeExitHandler);
+    console.log('\nℹ️  Mode Deep Link Scraper akan menangani sinyal Ctrl+C secara internal.');
+    console.log('   Jika ingin berhenti, tekan Ctrl+C saat proses scraping berjalan.');
 
     // Jalankan scraper
-    // Note: deepLinkScraper now manages its own signal handlers internally
     await deepLinkScraper(client, rl);
-    
-    // Clean up our handlers after scraper exits (if not already removed by scraper)
-    process.removeListener('SIGINT', safeExitHandler);
-    process.removeListener('SIGTERM', safeExitHandler);
-    process.removeListener('SIGBREAK', safeExitHandler);
+
+    // Tutup koneksi jika scraper selesai normal tanpa exit paksa
+    await disconnectWithTimeout(client, 5000);
+
+    // Setelah selesai normal, kembali ke menu utama
+    rl.question('\nTekan Enter untuk kembali ke menu utama...');
 
   } catch (error) {
     console.error('❌ Gagal menghubungkan client:', error.message);

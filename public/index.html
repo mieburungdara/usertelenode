@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>UserTeleNode Web</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>UserTeleNode Web</h1>
+      <p>Kelola akun Telegram dan lihat riwayat scraping langsung dari browser.</p>
+    </header>
+
+    <div id="loadingOverlay" class="loading-overlay hidden">
+      <div class="loading-box">
+        <div class="spinner"></div>
+        <span id="loadingMessage">Loading...</span>
+      </div>
+    </div>
+
+    <section class="card">
+      <div class="card-header">
+        <h2>Akun Terdaftar</h2>
+        <button id="refreshAccounts" class="button small">Refresh</button>
+      </div>
+      <div id="accountsList" class="list"></div>
+      <form id="addAccountForm" class="form-inline">
+        <input type="text" name="id" placeholder="User ID" required />
+        <input type="text" name="phone" placeholder="Nomor telepon" required />
+        <input type="text" name="username" placeholder="Username" required />
+        <input type="text" name="sessionString" placeholder="Session String" required />
+        <button type="submit" class="button">Tambah Akun</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <div class="card-header">
+        <h2>History Scraping</h2>
+        <button id="refreshHistory" class="button small">Refresh</button>
+      </div>
+      <div id="historyList" class="list"></div>
+    </section>
+
+    <footer>
+      <small>Untuk fitur scraping penuh, jalankan `npm run web` dan buka browser.</small>
+    </footer>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

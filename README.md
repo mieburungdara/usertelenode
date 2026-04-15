@@ -57,6 +57,14 @@ API_HASH=your_api_hash_here
 npm start
 ```
 
+### Jalankan Web UI
+
+```bash
+npm run web
+```
+
+Buka browser ke `http://localhost:3000` untuk mengelola akun dan melihat history scraping.
+
 ### Menu Utama
 
 ```
