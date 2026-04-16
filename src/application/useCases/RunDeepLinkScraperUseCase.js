@@ -24,8 +24,10 @@ class RunDeepLinkScraperUseCase {
 
     const channelInput = this.ui.getChannelInput();
     const channel = channelInput; // Simplified
-    const startId = this.ui.getStartId();
-    const results = await this.scrapingService.scrapeChannel(channel, startId);
+    // Default start: last scraped ID, end: last message ID
+    const startId = selectedChannel.lastScrapedId || 0;
+    const endId = selectedChannel.lastMessageId || 0;
+    const results = await this.scrapingService.scrapeChannel(channel, startId, endId);
     this.ui.displayResults(results);
   }
 }

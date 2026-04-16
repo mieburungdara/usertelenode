@@ -1,7 +1,7 @@
 // src/domain/services/ScrapingService.js
 // Interface: IScrapingService
 class IScrapingService {
-  async scrapeChannel(channel, startId) { throw new Error('Not implemented'); }
+  async scrapeChannel(channel, startId, endId) { throw new Error('Not implemented'); }
 }
 
 // Utility function
@@ -23,13 +23,31 @@ class ScrapingService {
     this.historyRepo = historyRepo;
   }
 
-  async scrapeChannel(channel, startId) {
+  async scrapeChannel(channel, startId, endId = null) {
     // Core scraping logic
-    const messages = await this.telegramClient.getMessages(channel, { limit: 100, offsetId: startId });
-    const deepLinks = messages.filter(msg => msg.text && msg.text.includes('t.me/'));
+    let offsetId = startId;
+    let allMessages = [];
+    let deepLinksCount = 0;
+
+    while (true) {
+      const messages = await this.telegramClient.getMessages(channel, { limit: 100, offsetId });
+      if (messages.length === 0) break;
+
+      allMessages.push(...messages);
+      deepLinksCount += messages.filter(msg => msg.text && msg.text.includes('t.me/')).length;
+
+      // Stop if reached endId or no more messages
+      const lastId = messages[messages.length - 1].id;
+      if (endId && lastId <= endId) break;
+
+      offsetId = lastId - 1; // Continue from previous
+      if (allMessages.length >= 1000) break; // Safety limit
+    }
+
+    const endScrapedId = allMessages[allMessages.length - 1]?.id || startId;
     // Update history
-    await this.historyRepo.saveHistory(channel, startId, messages[messages.length - 1]?.id || startId);
-    return { messages: messages.length, deepLinks: deepLinks.length };
+    await this.historyRepo.saveHistory(channel, startId, endScrapedId);
+    return { messages: allMessages.length, deepLinks: deepLinksCount };
   }
 
   async getAvailableChannels() {
