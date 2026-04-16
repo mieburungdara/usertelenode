@@ -349,17 +349,22 @@ async function deepLinkScraper(client, rl) {
         console.log(`✅ Checked ${ch.channelName}: ${msg ? `ID ${msg.id}` : 'Kosong'}`);
         // Note: lastScrapedId is from scraping history and updated only after successful scraping
       } catch (e) {
+        let status = 'Tidak dapat diakses';
+        if (e.message && e.message.includes('TIMEOUT')) {
+          status = 'Timeout';
+        }
         channelCache.push({
           channelId: null,
           channelName: ch.channelName,
           lastMessageId: null,
+          lastScrapedId: ch.lastScrapedId,
           lastMessageTimestamp: null,
-          status: 'Tidak dapat diakses'
+          status: status
         });
         console.log(`❌ Failed to check ${ch.channelName}: ${e.message}`);
       }
-      // Light delay to avoid rate limit
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Increased delay to avoid rate limit
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
     // Sort cache by lastMessageTimestamp descending (nulls last)
