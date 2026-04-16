@@ -312,6 +312,7 @@ async function deepLinkScraper(client, rl) {
 
   // Tampilkan daftar channel history
   const savedChannels = getAllChannels();
+  let channelCache = [];
   if (savedChannels.length > 0) {
     // Function to format relative time in Indonesian
     const formatRelativeTime = (date) => {
@@ -332,7 +333,6 @@ async function deepLinkScraper(client, rl) {
     };
 
     console.log('🔄 Checking latest message IDs for all channels...');
-    const channelCache = [];
     for (const ch of savedChannels) {
       try {
         const entity = await client.getEntity(parseChannelInput(ch.channelName));
@@ -342,6 +342,7 @@ async function deepLinkScraper(client, rl) {
           channelId: entity.id,
           channelName: ch.channelName,
           lastMessageId: msg ? msg.id : null,
+          lastScrapedId: ch.lastScrapedId,
           lastMessageTimestamp: msg ? msg.date : null,
           status: msg ? 'Punya pesan' : 'Kosong'
         });
@@ -375,7 +376,8 @@ async function deepLinkScraper(client, rl) {
     // Calculate column widths
     const noWidth = Math.max(2, String(channelCache.length).length);
     const nameWidth = Math.max(7, Math.max(...channelCache.map(ch => ch.channelName.length)));
-    const idWidth = Math.max(15, Math.max(...channelCache.map(ch => ch.lastMessageId ? String(ch.lastMessageId).length : 4))); // "null" is 4
+    const idWidth = Math.max(15, Math.max(...channelCache.map(ch => ch.lastMessageId ? String(ch.lastMessageId).length : 3))); // "N/A" is 3
+    const scrapedIdWidth = Math.max(15, Math.max(...channelCache.map(ch => String(ch.lastScrapedId).length)));
     const timeWidth = 40; // For formatted time + relative
     const statusWidth = Math.max(6, Math.max(...channelCache.map(ch => ch.status.length)));
 
@@ -398,8 +400,8 @@ async function deepLinkScraper(client, rl) {
     };
 
     // Table header
-    const separator = '+' + '-'.repeat(noWidth + 2) + '+' + '-'.repeat(nameWidth + 2) + '+' + '-'.repeat(idWidth + 2) + '+' + '-'.repeat(timeWidth + 2) + '+' + '-'.repeat(statusWidth + 2) + '+';
-    const header = '| ' + pad('No', noWidth, 'center') + ' | ' + pad('Channel', nameWidth, 'center') + ' | ' + pad('Last Message ID', idWidth, 'center') + ' | ' + pad('Last Message Time', timeWidth, 'center') + ' | ' + pad('Status', statusWidth, 'center') + ' |';
+    const separator = '+' + '-'.repeat(noWidth + 2) + '+' + '-'.repeat(nameWidth + 2) + '+' + '-'.repeat(idWidth + 2) + '+' + '-'.repeat(scrapedIdWidth + 2) + '+' + '-'.repeat(timeWidth + 2) + '+' + '-'.repeat(statusWidth + 2) + '+';
+    const header = '| ' + pad('No', noWidth, 'center') + ' | ' + pad('Channel', nameWidth, 'center') + ' | ' + pad('Last Message ID', idWidth, 'center') + ' | ' + pad('Last Scraped ID', scrapedIdWidth, 'center') + ' | ' + pad('Last Message Time', timeWidth, 'center') + ' | ' + pad('Status', statusWidth, 'center') + ' |';
 
     console.log(separator);
     console.log(header);
@@ -423,7 +425,8 @@ async function deepLinkScraper(client, rl) {
         timeStr = 'N/A';
       }
       const idStr = ch.lastMessageId !== null ? String(ch.lastMessageId) : 'N/A';
-      const row = '| ' + pad(idx + 1, noWidth, 'center') + ' | ' + pad(ch.channelName, nameWidth) + ' | ' + pad(idStr, idWidth, 'right') + ' | ' + pad(timeStr, timeWidth, 'center') + ' | ' + pad(ch.status, statusWidth, 'center') + ' |';
+      const scrapedIdStr = String(ch.lastScrapedId);
+      const row = '| ' + pad(idx + 1, noWidth, 'center') + ' | ' + pad(ch.channelName, nameWidth) + ' | ' + pad(idStr, idWidth, 'right') + ' | ' + pad(scrapedIdStr, scrapedIdWidth, 'right') + ' | ' + pad(timeStr, timeWidth) + ' | ' + pad(ch.status, statusWidth, 'center') + ' |';
       console.log(row);
     });
 
