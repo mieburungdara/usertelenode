@@ -402,7 +402,7 @@ async function deepLinkScraper(client, rl) {
 
     // Table header
     const separator = '+' + '-'.repeat(noWidth + 2) + '+' + '-'.repeat(nameWidth + 2) + '+' + '-'.repeat(idWidth + 2) + '+' + '-'.repeat(scrapedIdWidth + 2) + '+' + '-'.repeat(timeWidth + 2) + '+' + '-'.repeat(statusWidth + 2) + '+';
-    const header = '| ' + pad('No', noWidth, 'center') + ' | ' + pad('Channel', nameWidth, 'center') + ' | ' + pad('Last Message ID', idWidth, 'center') + ' | ' + pad('Last Scraped ID', scrapedIdWidth, 'center') + ' | ' + pad('Last Message Time', timeWidth, 'center') + ' | ' + pad('Status', statusWidth, 'center') + ' |';
+    const header = '| ' + pad('No', noWidth, 'center') + ' | ' + pad('Channel', nameWidth, 'center') + ' | ' + pad('Last Scraped ID', scrapedIdWidth, 'center') + ' | ' + pad('Last Message ID', idWidth, 'center') + ' | ' + pad('Last Message Time', timeWidth, 'center') + ' | ' + pad('Status', statusWidth, 'center') + ' |';
 
     console.log(separator);
     console.log(header);
@@ -427,7 +427,7 @@ async function deepLinkScraper(client, rl) {
       }
       const idStr = ch.lastMessageId !== null ? String(ch.lastMessageId) : 'N/A';
       const scrapedIdStr = String(ch.lastScrapedId);
-      const row = '| ' + pad(idx + 1, noWidth, 'center') + ' | ' + pad(ch.channelName, nameWidth) + ' | ' + pad(idStr, idWidth, 'right') + ' | ' + pad(scrapedIdStr, scrapedIdWidth, 'right') + ' | ' + pad(timeStr, timeWidth) + ' | ' + pad(ch.status, statusWidth, 'center') + ' |';
+      const row = '| ' + pad(idx + 1, noWidth, 'center') + ' | ' + pad(ch.channelName, nameWidth) + ' | ' + pad(scrapedIdStr, scrapedIdWidth, 'right') + ' | ' + pad(idStr, idWidth, 'right') + ' | ' + pad(timeStr, timeWidth) + ' | ' + pad(ch.status, statusWidth, 'center') + ' |';
       console.log(row);
     });
 
