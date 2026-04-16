@@ -97,6 +97,8 @@ function updateLastScrapedId(channel, messageId) {
       channelName: String(channel),
       lastScrapedId: messageId,
       lastScrapedAt: new Date().toISOString(),
+      lastMessageId: null,
+      lastMessageTimestamp: null,
       totalScraped: 0,
       scrapingSessions: []
     };
@@ -105,6 +107,31 @@ function updateLastScrapedId(channel, messageId) {
     history.channels[key].lastScrapedAt = new Date().toISOString();
   }
   
+  return saveHistory(history);
+}
+
+/**
+ * Update lastMessageId dan timestamp untuk cache
+ */
+function updateLastMessageId(channel, messageId, timestamp) {
+  const history = loadHistory();
+  const key = getChannelKey(channel);
+
+  if (!history.channels[key]) {
+    history.channels[key] = {
+      channelName: String(channel),
+      lastScrapedId: null,
+      lastScrapedAt: null,
+      lastMessageId: messageId,
+      lastMessageTimestamp: timestamp,
+      totalScraped: 0,
+      scrapingSessions: []
+    };
+  } else {
+    history.channels[key].lastMessageId = messageId;
+    history.channels[key].lastMessageTimestamp = timestamp;
+  }
+
   return saveHistory(history);
 }
 
@@ -121,6 +148,8 @@ function updateHistory(channel, startId, endId, linksFound, stopped = false) {
       channelName: String(channel),
       lastScrapedId: endId,
       lastScrapedAt: now,
+      lastMessageId: null,
+      lastMessageTimestamp: null,
       totalScraped: (endId - startId + 1),
       scrapingSessions: []
     };
@@ -148,6 +177,7 @@ module.exports = {
   getChannelHistory,
   getAllChannels,
   updateLastScrapedId,
+  updateLastMessageId,
   updateHistory,
   deleteChannelHistory
 };

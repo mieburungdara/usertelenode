@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const { extractDeepLinks, generateStartMessage } = require('../utils/linkParser');
-const { updateHistory, getAllChannels, getLastScrapedId, updateLastScrapedId } = require('../utils/scrapingHistory');
+const { updateHistory, getAllChannels, getLastScrapedId, updateLastScrapedId, updateLastMessageId } = require('../utils/scrapingHistory');
 const config = require('../config');
 
 const reportFileName = (typeof config.REPORT_FILE === 'string' && config.REPORT_FILE.trim()) ? config.REPORT_FILE : 'report.md';
@@ -313,7 +313,6 @@ async function deepLinkScraper(client, rl) {
   // Tampilkan daftar channel history
   const savedChannels = getAllChannels();
   let channelCache = [];
-  if (savedChannels.length > 0) {
     // Function to format relative time in Indonesian
     const formatRelativeTime = (date) => {
       const now = new Date();
@@ -333,26 +332,65 @@ async function deepLinkScraper(client, rl) {
     };
 
     console.log('🔄 Checking latest message IDs for all channels...');
+    const now = new Date();
+    const CACHE_TTL = 60 * 60 * 1000; // 1 hour in milliseconds
+
     for (const ch of savedChannels) {
-      try {
-        const entity = await client.getEntity(parseChannelInput(ch.channelName));
-        const messages = await client.getMessages(entity, { limit: 1 });
-        const msg = messages.length > 0 ? messages[0] : null;
+      const cachedTimestamp = ch.lastMessageTimestamp ? new Date(ch.lastMessageTimestamp) : null;
+      const isCacheValid = cachedTimestamp && (now - cachedTimestamp) < CACHE_TTL;
+
+      if (isCacheValid) {
+        // Use cached data
         channelCache.push({
-          channelId: entity.id,
+          channelId: null, // Not fetched
           channelName: ch.channelName,
-          lastMessageId: msg ? msg.id : null,
+          lastMessageId: ch.lastMessageId,
           lastScrapedId: ch.lastScrapedId,
-          lastMessageTimestamp: msg ? msg.date : null,
-          status: msg ? 'Punya pesan' : 'Kosong'
+          lastMessageTimestamp: ch.lastMessageTimestamp,
+          status: ch.lastMessageId ? 'Punya pesan (cache)' : 'Kosong (cache)'
         });
-        console.log(`✅ Checked ${ch.channelName}: ${msg ? `ID ${msg.id}` : 'Kosong'}`);
-        // Note: lastScrapedId is from scraping history and updated only after successful scraping
-      } catch (e) {
-        let status = 'Tidak dapat diakses';
-        if (e.message && e.message.includes('TIMEOUT')) {
-          status = 'Timeout';
+        console.log(`📋 Used cache for ${ch.channelName}: ID ${ch.lastMessageId || 'N/A'}`);
+      } else {
+        // Fetch from API
+        try {
+          const entity = await client.getEntity(parseChannelInput(ch.channelName));
+          const messages = await client.getMessages(entity, { limit: 1 });
+          const msg = messages.length > 0 ? messages[0] : null;
+          const messageId = msg ? msg.id : null;
+          const messageTimestamp = msg ? msg.date : null;
+
+          channelCache.push({
+            channelId: entity.id,
+            channelName: ch.channelName,
+            lastMessageId: messageId,
+            lastScrapedId: ch.lastScrapedId,
+            lastMessageTimestamp: messageTimestamp,
+            status: msg ? 'Punya pesan' : 'Kosong'
+          });
+
+          // Update cache
+          updateLastMessageId(ch.channelName, messageId, messageTimestamp ? new Date(messageTimestamp * 1000).toISOString() : null);
+
+          console.log(`✅ Checked ${ch.channelName}: ${msg ? `ID ${msg.id}` : 'Kosong'}`);
+        } catch (e) {
+          let status = 'Tidak dapat diakses';
+          if (e.message && e.message.includes('TIMEOUT')) {
+            status = 'Timeout';
+          }
+          channelCache.push({
+            channelId: null,
+            channelName: ch.channelName,
+            lastMessageId: null,
+            lastScrapedId: ch.lastScrapedId,
+            lastMessageTimestamp: null,
+            status: status
+          });
+          console.log(`❌ Failed to check ${ch.channelName}: ${e.message}`);
         }
+      }
+      // Increased delay to avoid rate limit
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
         channelCache.push({
           channelId: null,
           channelName: ch.channelName,
@@ -438,9 +476,6 @@ async function deepLinkScraper(client, rl) {
 
     console.log(separator);
     console.log('\n💡 Masukkan nomor dari daftar, atau input channel baru');
-    const channelStatuses = [];
-
-  }
 
   let channelInput = rl.question('\nMasukkan channel: ').trim();
   let parsedChannelId;
