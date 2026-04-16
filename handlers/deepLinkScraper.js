@@ -223,6 +223,28 @@ async function resolveChannelEntity(client, parsedChannelId) {
 }
 
 /**
+ * Fetch the latest message ID for a channel from Telegram.
+ * Returns null when channel is unavailable or has no messages.
+ */
+async function fetchLatestMessageId(client, channelName) {
+  const parsedChannelId = parseChannelInput(channelName);
+  if (!parsedChannelId) {
+    return { latestMessageId: null, error: 'Invalid channel name' };
+  }
+
+  try {
+    const channel = await client.getEntity(parsedChannelId);
+    const messages = await client.getMessages(channel, { limit: 1 });
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      return { latestMessageId: null, error: 'Tidak ada pesan' };
+    }
+    return { latestMessageId: messages[0].id, error: null };
+  } catch (error) {
+    return { latestMessageId: null, error: error.message || 'Tidak dapat diakses' };
+  }
+}
+
+/**
  * Deep Link Scraper
  * @param {TelegramClient} client - Instance Telegram client
  */
@@ -414,9 +436,11 @@ async function deepLinkScraper(client, rl) {
 
     console.log(separator);
     console.log('\n💡 Masukkan nomor dari daftar, atau input channel baru');
+    const channelStatuses = [];
+
   }
 
-  const channelInput = rl.question('\nMasukkan channel: ').trim();
+  let channelInput = rl.question('\nMasukkan channel: ').trim();
   let parsedChannelId;
 
   if (channelInput === '') {
@@ -438,8 +462,13 @@ async function deepLinkScraper(client, rl) {
         console.log('⚠️  Peringatan: Channel ini tidak dapat diakses. Proses scraping mungkin gagal.');
       }
     } else {
-      console.log('❌ Nomor channel tidak ada di daftar');
-      process.exit(1);
+      console.log('❌ Nomor channel tidak ada di daftar. Silakan masukkan channel secara manual.');
+      channelInput = rl.question('\nMasukkan channel baru: ').trim();
+      if (channelInput === '') {
+        console.log('❌ Channel tidak boleh kosong');
+        process.exit(1);
+      }
+      parsedChannelId = parseChannelInput(channelInput);
     }
   } else {
     parsedChannelId = parseChannelInput(channelInput);
@@ -490,14 +519,13 @@ async function deepLinkScraper(client, rl) {
   let defaultStartId = 1;
   if (lastScrapedId) {
     defaultStartId = lastScrapedId + 1;
-    console.log(`\n✅ Ditemukan history: ID terakhir yang discrape = ${lastScrapedId}`);
-    
-    if (defaultStartId > maxMsgId) {
+    console.log(`\n✅ ID terakhir yang discrape dari history: ${lastScrapedId}`);
+    if (lastScrapedId >= maxMsgId) {
       console.log(`ℹ️ Semua pesan di channel sudah discrape sampai ID terbaru ${maxMsgId}`);
       console.log(`✅ Tidak ada pesan baru yang perlu discrape`);
       process.exit(0);
     }
-    
+    console.log(`   Terdapat ${maxMsgId - lastScrapedId} pesan baru sejak terakhir discrape.`);
     console.log(`👉 Default akan lanjut dari ID ${defaultStartId}`);
   } else {
     console.log('\nℹ️ Channel ini belum pernah discrape sebelumnya');

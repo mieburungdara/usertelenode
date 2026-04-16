@@ -33,6 +33,19 @@ function saveHistory(data) {
 }
 
 /**
+ * Hapus history untuk channel tertentu
+ */
+function deleteChannelHistory(channel) {
+  const history = loadHistory();
+  const key = getChannelKey(channel);
+  if (!history.channels[key]) {
+    return false;
+  }
+  delete history.channels[key];
+  return saveHistory(history);
+}
+
+/**
  * Get normalized channel key untuk storage
  */
 function getChannelKey(channel) {
@@ -135,5 +148,6 @@ module.exports = {
   getChannelHistory,
   getAllChannels,
   updateLastScrapedId,
-  updateHistory
+  updateHistory,
+  deleteChannelHistory
 };
