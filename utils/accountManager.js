@@ -1,11 +1,47 @@
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const readlineSync = require('readline-sync');
 const { TelegramClient } = require('telegram');
 const { StringSession } = require('telegram/sessions');
 const config = require('../config');
 
 const ACCOUNTS_FILE = path.resolve(__dirname, '..', config.ACCOUNTS_FILE);
+
+// Encryption key for session strings
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY || 'default-key-change-this';
+const ALGORITHM = 'aes-256-gcm';
+
+// Encrypt session string
+function encrypt(text) {
+  if (!text) return text;
+  const iv = crypto.randomBytes(16);
+  const cipher = crypto.createCipher(ALGORITHM, ENCRYPTION_KEY);
+  let encrypted = cipher.update(text, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  const authTag = cipher.getAuthTag();
+  return iv.toString('hex') + ':' + encrypted + ':' + authTag.toString('hex');
+}
+
+// Decrypt session string
+function decrypt(encrypted) {
+  if (!encrypted) return encrypted;
+  const parts = encrypted.split(':');
+  if (parts.length !== 3) return encrypted; // Assume not encrypted
+  try {
+    const iv = Buffer.from(parts[0], 'hex');
+    const encryptedText = parts[1];
+    const authTag = Buffer.from(parts[2], 'hex');
+    const decipher = crypto.createDecipher(ALGORITHM, ENCRYPTION_KEY);
+    decipher.setAuthTag(authTag);
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+  } catch (error) {
+    console.warn('Failed to decrypt session string, assuming plain text:', error.message);
+    return encrypted;
+  }
+}
 
 // Default readline-sync interface for backward compatibility
 const defaultRL = {
@@ -233,7 +269,7 @@ async function addAccount() {
       id: userId,
       phone: phoneNumber,
       username: username,
-      sessionString: sessionStr
+      sessionString: encrypt(sessionStr)
     };
 
     data.accounts.push(newAccount);
@@ -273,7 +309,7 @@ async function loadClient(account) {
   if (!account || !account.sessionString) {
     throw new Error('Akun tidak valid atau session string kosong.');
   }
-  const session = new StringSession(account.sessionString);
+  const session = new StringSession(decrypt(account.sessionString));
   
   const client = new TelegramClient(session, config.API_ID, config.API_HASH, {
     connectionRetries: 5,

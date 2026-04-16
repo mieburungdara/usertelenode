@@ -560,7 +560,7 @@ async function deepLinkScraper(client, rl) {
                 const msgTimestamp = typeof msg.date === 'number' ? msg.date * 1000 : new Date(msg.date).getTime();
                 const isAfterStart = msgTimestamp > lastStartTimestamp;
                 const senderId = msg.fromId ? (msg.fromId.userId || msg.fromId.channelId || msg.fromId.chatId) : null;
-                const isFromBot = senderId && senderId.toString() === botPeer.id.toString();
+                const isFromBot = senderId && String(senderId) === String(botPeer.id);
                 return isAfterStart && isFromBot;
               });
               
@@ -621,11 +621,12 @@ async function deepLinkScraper(client, rl) {
     } catch (e) {
       console.log(`   \u274C Error: ${e.message}`);
       
-      const floodMatch = e.message.match(/wait of ([\d.]+)/) || 
-                         e.message.match(/FLOOD_WAIT_([\d.]+)/) || 
-                         e.message.match(/FloodWait/);
+      const floodMatch = e.message.match(/wait of ([\d.]+)/i) ||
+                         e.message.match(/flood[_ ]wait[_ ]?(\d+)/i) ||
+                         e.message.match(/floodwait/i);
       if (floodMatch) {
-        const waitTime = floodMatch[1] ? Math.ceil(parseFloat(floodMatch[1])) : 30;
+        let waitTime = floodMatch[1] ? Math.ceil(parseFloat(floodMatch[1])) : 30;
+        waitTime = Math.min(waitTime, 300); // Cap at 5 minutes
         console.log(`   \u23F3 Flood wait detected. Tunggu ${waitTime} detik...`);
         await new Promise(r => setTimeout(r, waitTime * 1000));
         continue;
@@ -675,5 +676,343 @@ async function deepLinkScraper(client, rl) {
   
 }
 
+/**
+ * Web scraper function that accepts parameters directly (for web interface)
+ */
+async function webScraper(client, channel, startId = null, endId = null, progressCallback = null) {
+  const reportData = {
+    channelUsername: '',
+    channelId: '',
+    parsedChannelId: '',
+    startId: 0,
+    endId: 0,
+    totalMessages: 0,
+    totalLinks: 0,
+    totalMedia: 0,
+    noMediaCount: 0,
+    deepLinks: [],
+    stopped: false
+  };
+
+  let isRunning = true;
+  let lastStartTimestamp = 0;
+  let lastProcessedId = 0;
+
+  const safeExit = async () => {
+    if (!isRunning) return;
+    isRunning = false;
+
+    console.log('\n\n\u26A0\uFE0F  Scraping stopped...');
+    console.log('\u{1F4CA} Generating report...');
+
+    if (progressCallback) {
+      progressCallback({
+        type: 'status',
+        status: 'generating_report',
+        message: 'Generating report...'
+      });
+    }
+
+    reportData.stopped = true;
+    if (lastProcessedId > 0) {
+      reportData.endId = lastProcessedId;
+    }
+    generateReport(reportData);
+
+    if (reportData.startId > 0 && lastProcessedId > 0) {
+      updateHistory(reportData.parsedChannelId, reportData.startId, lastProcessedId, reportData.deepLinks.length, true);
+    }
+
+    console.log('\u2705 Report saved.');
+    console.log('\u{1F44B} Scraping completed safely.');
+
+    if (progressCallback) {
+      progressCallback({
+        type: 'completed',
+        reportData,
+        message: 'Scraping completed!'
+      });
+    }
+
+    try {
+      await client.disconnect();
+    } catch (e) {}
+  };
+
+  try {
+    const parsedChannelId = parseChannelInput(channel);
+    if (!parsedChannelId) {
+      throw new Error('Invalid channel format');
+    }
+
+    reportData.parsedChannelId = parsedChannelId;
+
+    console.log(`Target channel: ${parsedChannelId}`);
+
+    console.log(`Checking channel ${parsedChannelId}...`);
+    let channelEntity;
+
+    try {
+      channelEntity = await resolveChannelEntity(client, parsedChannelId);
+    } catch (e) {
+      throw new Error(`Channel ${parsedChannelId} not found or inaccessible: ${e.message}`);
+    }
+
+    reportData.channelUsername = channelEntity.username ? `@${channelEntity.username}` : (typeof parsedChannelId === 'string' ? parsedChannelId : '');
+    reportData.channelId = channelEntity.id ? channelEntity.id.toString() : (typeof parsedChannelId === 'number' ? parsedChannelId.toString() : 'N/A');
+
+    console.log(`\u2705 Channel found: ${channelEntity.title || channelEntity.username || channelEntity.id}`);
+
+    console.log('\nGetting latest message info...');
+    const messages = await client.getMessages(channelEntity, { limit: 1 });
+    if (!messages || !Array.isArray(messages) || messages.length === 0) {
+      throw new Error('No messages in this channel.');
+    }
+
+    const maxMsgId = messages[0].id;
+    console.log(`Latest message ID: ${maxMsgId}`);
+
+    const lastScrapedId = getLastScrapedId(parsedChannelId);
+    let defaultStartId = 1;
+    if (lastScrapedId) {
+      defaultStartId = lastScrapedId + 1;
+      console.log(`\n✅ Last scraped ID from history: ${lastScrapedId}`);
+      if (lastScrapedId >= maxMsgId) {
+        console.log(`ℹ️ All messages up to latest ID ${maxMsgId} have been scraped`);
+        console.log(`✅ No new messages to scrape`);
+        return;
+      }
+      console.log(`   There are ${maxMsgId - lastScrapedId} new messages since last scrape.`);
+      console.log(`👉 Will continue from ID ${defaultStartId}`);
+    } else {
+      console.log('\nℹ️ This channel has never been scraped before');
+    }
+
+    let startIdNum = startId ? parseInt(startId, 10) : defaultStartId;
+    if (isNaN(startIdNum) || startIdNum < 1 || startIdNum > maxMsgId) {
+      startIdNum = defaultStartId;
+    }
+
+    if (lastScrapedId && startIdNum <= lastScrapedId) {
+      console.log(`\n⚠️  WARNING: ID ${startIdNum} has been scraped before`);
+      console.log(`   This will cause re-scraping of already processed messages`);
+    }
+
+    let endIdNum = endId ? parseInt(endId, 10) : maxMsgId;
+    if (isNaN(endIdNum) || endIdNum < startIdNum || endIdNum > maxMsgId) {
+      endIdNum = maxMsgId;
+    }
+
+    console.log(`\n✅ Selected range: ID ${startIdNum} - ${endIdNum}`);
+
+    reportData.startId = startIdNum;
+    reportData.endId = endIdNum;
+
+    console.log('\n' + '='.repeat(40));
+    console.log(`\u{1F680} Scraping started...`);
+    console.log(`   Channel: ${parsedChannelId}`);
+    console.log(`   Range: ID ${startIdNum} - ${endIdNum}`);
+    const minSec = (typeof config.MIN_DELAY === 'number' ? config.MIN_DELAY : 3000) / 1000;
+    const maxSec = (typeof config.MAX_DELAY === 'number' ? config.MAX_DELAY : 10000) / 1000;
+    console.log(`   Delay: ${minSec.toFixed(1)}-${maxSec.toFixed(1)} second per message`);
+    console.log('='.repeat(40));
+
+    const totalToCheck = endIdNum - startIdNum + 1;
+
+    if (totalToCheck <= 0) {
+      throw new Error('Invalid ID range');
+    }
+
+    console.log(`\n✅ Will process ${totalToCheck} messages`);
+
+    if (progressCallback) {
+      progressCallback({
+        type: 'started',
+        channel: parsedChannelId,
+        startId: startIdNum,
+        endId: endIdNum,
+        totalMessages: totalToCheck,
+        message: `Started scraping ${totalToCheck} messages from ${parsedChannelId}`
+      });
+    }
+
+    for (let msgId = startIdNum; msgId <= endIdNum && isRunning; msgId++) {
+      const progress = msgId - startIdNum + 1;
+      console.log(`\n\u{1F4E5} [${progress}/${totalToCheck}] Checking message ID: ${msgId}...`);
+
+      if (progressCallback) {
+        progressCallback({
+          type: 'progress',
+          currentMessage: msgId,
+          progress,
+          totalMessages: totalToCheck,
+          message: `Processing message ${msgId} (${progress}/${totalToCheck})`
+        });
+      }
+
+      try {
+        const msgs = await client.getMessages(channelEntity, { ids: [msgId] });
+
+        if (!msgs || !Array.isArray(msgs) || msgs.length === 0) {
+          console.log(`   Message ID ${msgId} not found or deleted`);
+          lastProcessedId = msgId;
+          continue;
+        }
+
+        const message = msgs[0];
+        reportData.totalMessages++;
+
+        const deepLinks = extractDeepLinks(message.message || '');
+
+        if (deepLinks.length > 0) {
+          console.log(`   Found ${deepLinks.length} deep link(s)`);
+
+          if (progressCallback) {
+            progressCallback({
+              type: 'links_found',
+              messageId: msgId,
+              linksCount: deepLinks.length,
+              message: `Found ${deepLinks.length} deep link(s) in message ${msgId}`
+            });
+          }
+
+          for (const link of deepLinks) {
+            reportData.totalLinks++;
+            console.log(`   Processing link: ${link.fullUrl}`);
+
+            if (progressCallback) {
+              progressCallback({
+                type: 'processing_link',
+                messageId: msgId,
+                link: link.fullUrl,
+                message: `Processing link: ${link.fullUrl}`
+              });
+            }
+
+            try {
+              const response = await client.invoke({
+                _: 'messages.startBot',
+                bot: await client.getInputEntity(link.botUsername),
+                peer: await client.getInputEntity(link.botUsername),
+                startParam: link.startData,
+                randomId: Math.floor(Math.random() * 0x100000000)
+              });
+
+              if (response && response.updates) {
+                let hasMedia = false;
+                for (const update of response.updates) {
+                  if (update.message && hasMedia(update.message)) {
+                    hasMedia = true;
+                    reportData.totalMedia++;
+                    break;
+                  }
+                }
+
+                if (hasMedia) {
+                  console.log(`   ✅ Response has media`);
+                  if (progressCallback) {
+                    progressCallback({
+                      type: 'link_success',
+                      messageId: msgId,
+                      link: link.fullUrl,
+                      hasMedia: true,
+                      message: `✅ Link ${link.fullUrl} has media`
+                    });
+                  }
+                } else {
+                  console.log(`   ❌ Response has no media`);
+                  reportData.noMediaCount++;
+                  if (progressCallback) {
+                    progressCallback({
+                      type: 'link_success',
+                      messageId: msgId,
+                      link: link.fullUrl,
+                      hasMedia: false,
+                      message: `❌ Link ${link.fullUrl} has no media`
+                    });
+                  }
+                  if (reportData.noMediaCount >= 3) {
+                    console.log(`   \u26A0\uFE0F 3 responses without media, stopping...`);
+                    if (progressCallback) {
+                      progressCallback({
+                        type: 'stopping',
+                        reason: 'too_many_no_media',
+                        message: 'Stopping due to 3 responses without media'
+                      });
+                    }
+                    isRunning = false;
+                    break;
+                  }
+                }
+
+                reportData.deepLinks.push({
+                  ...link,
+                  hasMedia
+                });
+              }
+            } catch (e) {
+              console.log(`   Error processing link: ${e.message}`);
+              if (progressCallback) {
+                progressCallback({
+                  type: 'link_error',
+                  messageId: msgId,
+                  link: link.fullUrl,
+                  error: e.message,
+                  message: `Error processing link ${link.fullUrl}: ${e.message}`
+                });
+              }
+            }
+          }
+        } else {
+          console.log(`   No deep links found`);
+        }
+
+        lastProcessedId = msgId;
+
+        if (msgId < endIdNum) {
+          console.log(`   Waiting ${Math.round(await randomDelay() / 1000)} seconds...`);
+        }
+
+      } catch (e) {
+        console.log(`   Error processing message ${msgId}: ${e.message}`);
+        lastProcessedId = msgId;
+        if (progressCallback) {
+          progressCallback({
+            type: 'message_error',
+            messageId: msgId,
+            error: e.message,
+            message: `Error processing message ${msgId}: ${e.message}`
+          });
+        }
+      }
+    }
+
+    console.log('\n' + '='.repeat(40));
+    console.log('\u2705 Scraping completed!');
+    generateReport(reportData);
+
+    if (reportData.startId > 0 && lastProcessedId > 0) {
+      updateHistory(reportData.parsedChannelId, reportData.startId, lastProcessedId, reportData.deepLinks.length, false);
+    }
+
+    if (progressCallback) {
+      progressCallback({
+        type: 'completed',
+        reportData,
+        message: 'Scraping completed successfully!'
+      });
+    }
+
+    try {
+      await client.disconnect();
+    } catch (e) {}
+
+  } catch (error) {
+    console.error('Scraping error:', error.message);
+    throw error;
+  }
+}
+
 module.exports = deepLinkScraper;
 module.exports.parseChannelInput = parseChannelInput;
+module.exports.webScraper = webScraper;

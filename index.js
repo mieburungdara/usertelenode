@@ -165,6 +165,12 @@ async function runDeepLinkScraper() {
     const me = await client.getMe();
     console.log('✅ Terhubung sebagai @' + (me.username || me.firstName || 'unknown'));
 
+    // Create dedicated safe exit handler for this session
+    const safeExitHandler = createSafeExitHandler(client);
+    process.on('SIGINT', safeExitHandler);
+    process.on('SIGTERM', safeExitHandler);
+    process.on('SIGBREAK', safeExitHandler);
+
     console.log('\nℹ️  Mode Deep Link Scraper akan menangani sinyal Ctrl+C secara internal.');
     console.log('   Jika ingin berhenti, tekan Ctrl+C saat proses scraping berjalan.');
 

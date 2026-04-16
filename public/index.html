@@ -35,18 +35,170 @@
       </form>
     </section>
 
-    <section class="card">
-      <div class="card-header">
-        <h2>History Scraping</h2>
-        <button id="refreshHistory" class="button small">Refresh</button>
-      </div>
-      <div id="historyList" class="list"></div>
-    </section>
+     <section class="card">
+       <div class="card-header">
+         <h2>Deep Link Scraper</h2>
+         <button id="refreshHistory" class="button small">Refresh</button>
+       </div>
+       <form id="scraperForm" class="form-inline">
+         <div style="position: relative; flex: 2;">
+           <input type="text" id="channelInput" name="channel" placeholder="Channel (contoh: @channelname)" required autocomplete="off" />
+           <button type="button" id="showChannelsBtn" class="button small" title="Tampilkan channel history" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); height: 32px; padding: 0 8px; font-size: 0.8rem;">📋</button>
+           <div id="channelSuggestions" class="suggestions-dropdown" style="display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 1000;">
+             <div class="suggestion-header">Channel yang pernah di-scrape:</div>
+             <div id="channelSuggestionsList"></div>
+           </div>
+         </div>
+         <input type="number" name="startId" placeholder="Start ID (optional)" />
+         <input type="number" name="endId" placeholder="End ID (optional)" />
+         <button type="submit" class="button">Mulai Scraping</button>
+       </form>
+       <div id="channelHistoryPreview" style="margin-top: 12px;">
+         <div style="font-size: 0.9rem; color: var(--text); margin-bottom: 8px;">
+           <strong>📋 Channel History:</strong>
+           <button id="toggleHistoryBtn" class="button small" style="margin-left: 8px;">Toggle</button>
+         </div>
+         <div id="channelHistoryList" style="max-height: 200px; overflow-y: auto; background: var(--card); border: 1px solid var(--border); border-radius: 8px; padding: 12px;"></div>
+       </div>
+       <div id="scraperStatus" style="margin-top: 16px; display: none;">
+         <div id="progressContainer">
+           <div class="progress-bar">
+             <div id="progressBar" class="progress-fill"></div>
+           </div>
+           <div id="progressText">0%</div>
+         </div>
+         <div id="scraperLog" class="log-container"></div>
+       </div>
+     </section>
 
-    <footer>
+      <section class="card">
+        <div class="card-header">
+          <h2>History Scraping</h2>
+        </div>
+        <div id="historyList" class="list"></div>
+      </section>
+
+      <section class="card">
+        <div class="card-header">
+          <h2>Daftar Channel</h2>
+        </div>
+        <table id="channelTable" style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background-color: var(--card-hover);">
+              <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Channel Name</th>
+              <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Last Scraped ID</th>
+              <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Last Scraped At</th>
+              <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Total Scraped</th>
+              <th style="border: 1px solid var(--border); padding: 8px; text-align: left;">Links Found (Total)</th>
+            </tr>
+          </thead>
+          <tbody id="channelTableBody">
+            <tr>
+              <td style="border: 1px solid var(--border); padding: 8px;">@asupandavina</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">876</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">2026-04-12T17:27:20.391Z</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">3</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">1</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid var(--border); padding: 8px;">@rategenz</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">2613</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">2026-04-12T01:17:09.367Z</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">61</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">60</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid var(--border); padding: 8px;">@ometv_S</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">1723</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">2026-04-11T22:52:52.683Z</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">5</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">2</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid var(--border); padding: 8px;">@RateMineplease</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">1702</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">2026-04-12T01:06:19.454Z</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">1698</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">1600</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid var(--border); padding: 8px;">@DYNOCORED2</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">241</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">2026-04-12T01:21:45.818Z</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">40</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">22</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid var(--border); padding: 8px;">@Asupan_Terbaru_Viral</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">1569</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">2026-04-12T17:02:15.458Z</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">594</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">612</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid var(--border); padding: 8px;">@ometv_s</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">1724</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">2026-04-12T17:28:54.490Z</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">2</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">0</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid var(--border); padding: 8px;">@ratemineplease</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">3</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">2026-04-12T17:29:37.526Z</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">3</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">0</td>
+            </tr>
+            <tr>
+              <td style="border: 1px solid var(--border); padding: 8px;">@papratearea</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">7939</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">2026-04-13T03:04:02.581Z</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">7918</td>
+              <td style="border: 1px solid var(--border); padding: 8px;">7002</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+     <footer>
       <small>Untuk fitur scraping penuh, jalankan `npm run web` dan buka browser.</small>
     </footer>
   </div>
   <script src="app.js"></script>
+  <script>
+    function formatRelativeTime(dateString) {
+      const now = new Date();
+      const date = new Date(dateString);
+      const diffMs = now - date;
+      const diffSeconds = Math.floor(diffMs / 1000);
+      const diffMinutes = Math.floor(diffSeconds / 60);
+      const diffHours = Math.floor(diffMinutes / 60);
+      const diffDays = Math.floor(diffHours / 24);
+
+      if (diffDays > 0) {
+        return `${diffDays} hari lalu`;
+      } else if (diffHours > 0) {
+        return `${diffHours} jam lalu`;
+      } else if (diffMinutes > 0) {
+        return `${diffMinutes} menit lalu`;
+      } else {
+        return 'baru saja';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const rows = document.querySelectorAll('#channelTableBody tr');
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 3) {
+          const timestampCell = cells[2];
+          const timestamp = timestampCell.textContent.trim();
+          if (timestamp) {
+            timestampCell.textContent = formatRelativeTime(timestamp);
+          }
+        }
+      });
+    });
+  </script>
 </body>
 </html>
