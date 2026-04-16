@@ -68,11 +68,11 @@ class ConsoleUI {
 
     // Calculate column widths
     const noWidth = Math.max(2, String(channelCache.length).length);
-    const nameWidth = Math.max(7, Math.max(...channelCache.map(ch => ch.channelName.length)));
-    const idWidth = Math.max(15, Math.max(...channelCache.map(ch => ch.lastMessageId ? String(ch.lastMessageId).length : 3)));
-    const scrapedIdWidth = Math.max(15, Math.max(...channelCache.map(ch => String(ch.lastScrapedId).length)));
-    const timeWidth = 40;
-    const statusWidth = Math.max(6, Math.max(...channelCache.map(ch => ch.status.length)));
+    const nameWidth = Math.max(7, channelCache.length > 0 ? Math.max(...channelCache.map(ch => ch.channelName.length)) : 7);
+    const idWidth = Math.max(15, channelCache.length > 0 ? Math.max(...channelCache.map(ch => ch.lastMessageId ? String(ch.lastMessageId).length : 3)) : 15); // "N/A" is 3
+    const scrapedIdWidth = Math.max(15, channelCache.length > 0 ? Math.max(...channelCache.map(ch => String(ch.lastScrapedId).length)) : 15);
+    const timeWidth = 40; // For formatted time + relative
+    const statusWidth = Math.max(6, channelCache.length > 0 ? Math.max(...channelCache.map(ch => ch.status.length)) : 6);
 
     // Table header
     const separator = '+' + '-'.repeat(noWidth + 2) + '+' + '-'.repeat(nameWidth + 2) + '+' + '-'.repeat(scrapedIdWidth + 2) + '+' + '-'.repeat(idWidth + 2) + '+' + '-'.repeat(timeWidth + 2) + '+' + '-'.repeat(statusWidth + 2) + '+';
