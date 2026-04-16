@@ -8,15 +8,15 @@ class RunDeepLinkScraperUseCase {
   async execute(account) {
     // Check and get channel cache
     const savedChannels = await this.scrapingService.getAvailableChannels();
-    // Filter unique channels by name
+    // Filter unique channels by normalized name
     const uniqueChannels = savedChannels.filter((ch, index, arr) =>
-      arr.findIndex(c => c.channelName === ch.channelName) === index
+      arr.findIndex(c => c.channelName.trim().toLowerCase() === ch.channelName.trim().toLowerCase()) === index
     );
     const channelCache = await this.scrapingService.checkChannels(uniqueChannels);
 
-    // Filter unique by channelName after check
+    // Filter unique by normalized channelName after check
     const finalChannelCache = channelCache.filter((ch, index, arr) =>
-      arr.findIndex(c => c.channelName === ch.channelName) === index
+      arr.findIndex(c => c.channelName.trim().toLowerCase() === ch.channelName.trim().toLowerCase()) === index
     );
 
     // Display table
