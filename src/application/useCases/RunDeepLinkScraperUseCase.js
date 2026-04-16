@@ -24,11 +24,18 @@ class RunDeepLinkScraperUseCase {
 
     const channelInput = this.ui.getChannelInput();
     const channel = channelInput; // Simplified
-    // Default start: last scraped ID, end: last message ID
-    const startId = selectedChannel.lastScrapedId || 0;
-    const endId = selectedChannel.lastMessageId || 0;
-    const results = await this.scrapingService.scrapeChannel(channel, startId, endId);
-    this.ui.displayResults(results);
+    // Use finalChannelCache for selection
+    const num = parseInt(channelInput);
+    if (num >= 1 && num <= finalChannelCache.length) {
+      const selectedChannel = finalChannelCache[num - 1];
+      // Default start: last scraped ID, end: last message ID
+      const startId = selectedChannel.lastScrapedId || 0;
+      const endId = selectedChannel.lastMessageId || 0;
+      const results = await this.scrapingService.scrapeChannel(channel, startId, endId);
+      this.ui.displayResults(results);
+    } else {
+      console.log('❌ Nomor channel tidak valid.');
+    }
   }
 }
 
