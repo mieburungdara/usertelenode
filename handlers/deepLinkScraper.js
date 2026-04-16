@@ -248,6 +248,79 @@ async function fetchLatestMessageId(client, channelName) {
  * Deep Link Scraper
  * @param {TelegramClient} client - Instance Telegram client
  */
+async function checkChannels(client, savedChannels, channelCache) {
+  console.log('🔄 Checking latest message IDs for all channels...');
+  const now = new Date();
+  const CACHE_TTL = 60 * 60 * 1000; // 1 hour in milliseconds
+
+  for (const ch of savedChannels) {
+    const cachedTimestamp = ch.lastMessageTimestamp ? new Date(ch.lastMessageTimestamp) : null;
+    const isCacheValid = cachedTimestamp && (now - cachedTimestamp) < CACHE_TTL;
+
+    if (isCacheValid) {
+      // Use cached data
+      channelCache.push({
+        channelId: null, // Not fetched
+        channelName: ch.channelName,
+        lastMessageId: ch.lastMessageId,
+        lastScrapedId: ch.lastScrapedId,
+        lastMessageTimestamp: ch.lastMessageTimestamp,
+        status: ch.lastMessageId ? 'Punya pesan (cache)' : 'Kosong (cache)'
+      });
+      console.log(`📋 Used cache for ${ch.channelName}: ID ${ch.lastMessageId || 'N/A'}`);
+    } else {
+      // Fetch from API
+      try {
+        const entity = await client.getEntity(parseChannelInput(ch.channelName));
+        const messages = await client.getMessages(entity, { limit: 1 });
+        const msg = messages.length > 0 ? messages[0] : null;
+        const messageId = msg ? msg.id : null;
+        const messageTimestamp = msg ? msg.date : null;
+
+        channelCache.push({
+          channelId: entity.id,
+          channelName: ch.channelName,
+          lastMessageId: messageId,
+          lastScrapedId: ch.lastScrapedId,
+          lastMessageTimestamp: messageTimestamp,
+          status: msg ? 'Punya pesan' : 'Kosong'
+        });
+
+        // Update cache
+        updateLastMessageId(ch.channelName, messageId, messageTimestamp ? new Date(messageTimestamp * 1000).toISOString() : null);
+
+        console.log(`✅ Checked ${ch.channelName}: ${msg ? `ID ${msg.id}` : 'Kosong'}`);
+      } catch (e) {
+        let status = 'Tidak dapat diakses';
+        if (e.message && e.message.includes('TIMEOUT')) {
+          status = 'Timeout';
+        }
+        channelCache.push({
+          channelId: null,
+          channelName: ch.channelName,
+          lastMessageId: null,
+          lastScrapedId: ch.lastScrapedId,
+          lastMessageTimestamp: null,
+          status: status
+        });
+        console.log(`❌ Failed to check ${ch.channelName}: ${e.message}`);
+      }
+    }
+    // Increased delay to avoid rate limit
+    await new Promise(resolve => setTimeout(resolve, 1000));
+  }
+
+  // Sort cache by lastMessageTimestamp descending (nulls last)
+  channelCache.sort((a, b) => {
+    if (a.lastMessageTimestamp && b.lastMessageTimestamp) {
+      return new Date(b.lastMessageTimestamp) - new Date(a.lastMessageTimestamp);
+    }
+    if (a.lastMessageTimestamp) return -1;
+    if (b.lastMessageTimestamp) return 1;
+    return 0;
+  });
+}
+
 async function deepLinkScraper(client, rl) {
   const reportData = {
     channelUsername: '',
@@ -313,70 +386,88 @@ async function deepLinkScraper(client, rl) {
   // Tampilkan daftar channel history
   const savedChannels = getAllChannels();
   let channelCache = [];
-    // Function to format relative time in Indonesian
-    const formatRelativeTime = (date) => {
-      const now = new Date();
-      const diffMs = now - date;
-      const diffSec = Math.floor(diffMs / 1000);
-      const diffMin = Math.floor(diffSec / 60);
-      const diffHour = Math.floor(diffMin / 60);
-      const diffDay = Math.floor(diffHour / 24);
+  await checkChannels(client, savedChannels, channelCache);
 
-      if (diffSec < 60) return 'baru saja';
-      if (diffMin < 60) return `${diffMin} menit yang lalu`;
-      if (diffHour < 24) return `${diffHour} jam yang lalu`;
-      if (diffDay < 7) return `${diffDay} hari yang lalu`;
-      if (diffDay < 30) return `${Math.floor(diffDay / 7)} minggu yang lalu`;
-      if (diffDay < 365) return `${Math.floor(diffDay / 30)} bulan yang lalu`;
-      return `${Math.floor(diffDay / 365)} tahun yang lalu`;
-    };
-
-    console.log('🔄 Checking latest message IDs for all channels...');
+  // Function to format relative time in Indonesian
+  const formatRelativeTime = (date) => {
     const now = new Date();
-    const CACHE_TTL = 60 * 60 * 1000; // 1 hour in milliseconds
+    const diffMs = now - date;
+    const diffSec = Math.floor(diffMs / 1000);
+    const diffMin = Math.floor(diffSec / 60);
+    const diffHour = Math.floor(diffMin / 60);
+    const diffDay = Math.floor(diffHour / 24);
 
-    for (const ch of savedChannels) {
-      const cachedTimestamp = ch.lastMessageTimestamp ? new Date(ch.lastMessageTimestamp) : null;
-      const isCacheValid = cachedTimestamp && (now - cachedTimestamp) < CACHE_TTL;
+    if (diffSec < 60) return 'baru saja';
+    if (diffMin < 60) return `${diffMin} menit yang lalu`;
+    if (diffHour < 24) return `${diffHour} jam yang lalu`;
+    if (diffDay < 7) return `${diffDay} hari yang lalu`;
+    if (diffDay < 30) return `${Math.floor(diffDay / 7)} minggu yang lalu`;
+    if (diffDay < 365) return `${Math.floor(diffDay / 30)} bulan yang lalu`;
+    return `${Math.floor(diffDay / 365)} tahun yang lalu`;
+  };
 
-      if (isCacheValid) {
-        // Use cached data
-        channelCache.push({
-          channelId: null, // Not fetched
-          channelName: ch.channelName,
-          lastMessageId: ch.lastMessageId,
-          lastScrapedId: ch.lastScrapedId,
-          lastMessageTimestamp: ch.lastMessageTimestamp,
-          status: ch.lastMessageId ? 'Punya pesan (cache)' : 'Kosong (cache)'
-        });
-        console.log(`📋 Used cache for ${ch.channelName}: ID ${ch.lastMessageId || 'N/A'}`);
-      } else {
-        // Fetch from API
-        try {
-          const entity = await client.getEntity(parseChannelInput(ch.channelName));
-          const messages = await client.getMessages(entity, { limit: 1 });
-          const msg = messages.length > 0 ? messages[0] : null;
-          const messageId = msg ? msg.id : null;
-          const messageTimestamp = msg ? msg.date : null;
+  console.log('\n📋 Daftar channel yang tersedia:');
 
-          channelCache.push({
-            channelId: entity.id,
-            channelName: ch.channelName,
-            lastMessageId: messageId,
-            lastScrapedId: ch.lastScrapedId,
-            lastMessageTimestamp: messageTimestamp,
-            status: msg ? 'Punya pesan' : 'Kosong'
-          });
+  // Calculate column widths
+  const noWidth = Math.max(2, String(channelCache.length).length);
+  const nameWidth = Math.max(7, Math.max(...channelCache.map(ch => ch.channelName.length)));
+  const idWidth = Math.max(15, Math.max(...channelCache.map(ch => ch.lastMessageId ? String(ch.lastMessageId).length : 3))); // "N/A" is 3
+  const scrapedIdWidth = Math.max(15, Math.max(...channelCache.map(ch => String(ch.lastScrapedId).length)));
+  const timeWidth = 40; // For formatted time + relative
+  const statusWidth = Math.max(6, Math.max(...channelCache.map(ch => ch.status.length)));
 
-          // Update cache
-          updateLastMessageId(ch.channelName, messageId, messageTimestamp ? new Date(messageTimestamp * 1000).toISOString() : null);
+  // Helper function to pad string
+  const pad = (str, width, align = 'left') => {
+    str = String(str);
+    if (str.length > width) {
+      str = str.substring(0, width);
+    }
+    if (align === 'right') {
+      return str.padStart(width);
+    } else if (align === 'center') {
+      const totalPad = width - str.length;
+      const leftPad = Math.floor(totalPad / 2);
+      const rightPad = totalPad - leftPad;
+      return ' '.repeat(leftPad) + str + ' '.repeat(rightPad);
+    } else {
+      return str.padEnd(width);
+    }
+  };
 
-          console.log(`✅ Checked ${ch.channelName}: ${msg ? `ID ${msg.id}` : 'Kosong'}`);
-        } catch (e) {
-          let status = 'Tidak dapat diakses';
-          if (e.message && e.message.includes('TIMEOUT')) {
-            status = 'Timeout';
-          }
+  // Table header
+  const separator = '+' + '-'.repeat(noWidth + 2) + '+' + '-'.repeat(nameWidth + 2) + '+' + '-'.repeat(scrapedIdWidth + 2) + '+' + '-'.repeat(idWidth + 2) + '+' + '-'.repeat(timeWidth + 2) + '+' + '-'.repeat(statusWidth + 2) + '+';
+  const header = '| ' + pad('No', noWidth, 'center') + ' | ' + pad('Channel', nameWidth, 'center') + ' | ' + pad('Last Scraped ID', scrapedIdWidth, 'center') + ' | ' + pad('Last Message ID', idWidth, 'center') + ' | ' + pad('Last Message Time', timeWidth, 'center') + ' | ' + pad('Status', statusWidth, 'center') + ' |';
+
+  console.log(separator);
+  console.log(header);
+  console.log(separator);
+
+  // Table rows
+  channelCache.forEach((ch, idx) => {
+    let timeStr;
+    if (ch.lastMessageTimestamp) {
+      const date = new Date(ch.lastMessageTimestamp);
+      const dateTimeStr = date.toLocaleString('id-ID', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+      const relative = formatRelativeTime(date);
+      timeStr = `${dateTimeStr} (${relative})`;
+    } else {
+      timeStr = 'N/A';
+    }
+    const idStr = ch.lastMessageId !== null ? String(ch.lastMessageId) : 'N/A';
+    const scrapedIdStr = String(ch.lastScrapedId);
+    const row = '| ' + pad(idx + 1, noWidth, 'center') + ' | ' + pad(ch.channelName, nameWidth) + ' | ' + pad(scrapedIdStr, scrapedIdWidth, 'right') + ' | ' + pad(idStr, idWidth, 'right') + ' | ' + pad(timeStr, timeWidth) + ' | ' + pad(ch.status, statusWidth, 'center') + ' |';
+    console.log(row);
+  });
+
+  console.log(separator);
+
+  console.log('\n💡 Masukkan nomor dari daftar, atau input channel baru');
           channelCache.push({
             channelId: null,
             channelName: ch.channelName,
@@ -405,10 +496,11 @@ async function deepLinkScraper(client, rl) {
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
+    /*
     // Sort cache by lastMessageTimestamp descending (nulls last)
     channelCache.sort((a, b) => {
       if (a.lastMessageTimestamp && b.lastMessageTimestamp) {
-        return b.lastMessageTimestamp - a.lastMessageTimestamp;
+        return new Date(b.lastMessageTimestamp) - new Date(a.lastMessageTimestamp);
       }
       if (a.lastMessageTimestamp) return -1;
       if (b.lastMessageTimestamp) return 1;
@@ -416,7 +508,9 @@ async function deepLinkScraper(client, rl) {
     });
 
     console.log('\n📋 Daftar channel yang tersedia:');
+    */
 
+    /*
     // Calculate column widths
     const noWidth = Math.max(2, String(channelCache.length).length);
     const nameWidth = Math.max(7, Math.max(...channelCache.map(ch => ch.channelName.length)));
@@ -443,6 +537,24 @@ async function deepLinkScraper(client, rl) {
       }
     };
 
+    // Function to format relative time in Indonesian
+    const formatRelativeTime = (date) => {
+      const now = new Date();
+      const diffMs = now - date;
+      const diffSec = Math.floor(diffMs / 1000);
+      const diffMin = Math.floor(diffSec / 60);
+      const diffHour = Math.floor(diffMin / 60);
+      const diffDay = Math.floor(diffHour / 24);
+
+      if (diffSec < 60) return 'baru saja';
+      if (diffMin < 60) return `${diffMin} menit yang lalu`;
+      if (diffHour < 24) return `${diffHour} jam yang lalu`;
+      if (diffDay < 7) return `${diffDay} hari yang lalu`;
+      if (diffDay < 30) return `${Math.floor(diffDay / 7)} minggu yang lalu`;
+      if (diffDay < 365) return `${Math.floor(diffDay / 30)} bulan yang lalu`;
+      return `${Math.floor(diffDay / 365)} tahun yang lalu`;
+    };
+
     // Table header
     const separator = '+' + '-'.repeat(noWidth + 2) + '+' + '-'.repeat(nameWidth + 2) + '+' + '-'.repeat(idWidth + 2) + '+' + '-'.repeat(scrapedIdWidth + 2) + '+' + '-'.repeat(timeWidth + 2) + '+' + '-'.repeat(statusWidth + 2) + '+';
     const header = '| ' + pad('No', noWidth, 'center') + ' | ' + pad('Channel', nameWidth, 'center') + ' | ' + pad('Last Scraped ID', scrapedIdWidth, 'center') + ' | ' + pad('Last Message ID', idWidth, 'center') + ' | ' + pad('Last Message Time', timeWidth, 'center') + ' | ' + pad('Status', statusWidth, 'center') + ' |';
@@ -455,7 +567,7 @@ async function deepLinkScraper(client, rl) {
     channelCache.forEach((ch, idx) => {
       let timeStr;
       if (ch.lastMessageTimestamp) {
-        const date = new Date(ch.lastMessageTimestamp * 1000); // Telegram timestamps are in seconds
+        const date = new Date(ch.lastMessageTimestamp * 1000);
         const dateTimeStr = date.toLocaleString('id-ID', {
           year: 'numeric',
           month: '2-digit',
@@ -475,7 +587,9 @@ async function deepLinkScraper(client, rl) {
     });
 
     console.log(separator);
+
     console.log('\n💡 Masukkan nomor dari daftar, atau input channel baru');
+    */
 
   let channelInput = rl.question('\nMasukkan channel: ').trim();
   let parsedChannelId;
