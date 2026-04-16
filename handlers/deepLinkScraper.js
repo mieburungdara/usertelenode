@@ -347,6 +347,7 @@ async function deepLinkScraper(client, rl) {
           status: msg ? 'Punya pesan' : 'Kosong'
         });
         console.log(`✅ Checked ${ch.channelName}: ${msg ? `ID ${msg.id}` : 'Kosong'}`);
+        // Note: lastScrapedId is from scraping history and updated only after successful scraping
       } catch (e) {
         channelCache.push({
           channelId: null,
