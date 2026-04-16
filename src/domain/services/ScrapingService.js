@@ -91,7 +91,22 @@ class ScrapingService {
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
-    return channelCache;
+    // Filter unique by normalized channelName
+    const uniqueCache = channelCache.filter((ch, index, arr) =>
+      arr.findIndex(c => c.channelName.trim().toLowerCase() === ch.channelName.trim().toLowerCase()) === index
+    );
+
+    // Sort cache by lastMessageTimestamp descending (nulls last)
+    uniqueCache.sort((a, b) => {
+      if (a.lastMessageTimestamp && b.lastMessageTimestamp) {
+        return new Date(b.lastMessageTimestamp) - new Date(a.lastMessageTimestamp);
+      }
+      if (a.lastMessageTimestamp) return -1;
+      if (b.lastMessageTimestamp) return 1;
+      return 0;
+    });
+
+    return uniqueCache;
   }
 }
 
