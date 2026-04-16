@@ -23,42 +23,52 @@ class ScrapingService {
     this.historyRepo = historyRepo;
   }
 
-  async scrapeChannel(channel, startId, endId = null) {
-    // Core scraping logic
-    let offsetId = startId;
-    let allMessages = [];
-    let deepLinks = [];
+  async scrapeChannel(channel, startId, endId, botInteractionService) {
+    let processedMessages = 0;
+    let totalInteractions = 0;
 
-    while (true) {
-      const messages = await this.telegramClient.getMessages(channel, { limit: 100, offsetId });
-      if (messages.length === 0) break;
+    for (let currentId = startId; currentId <= endId; currentId++) {
+      try {
+        // Fetch single message by ID
+        const messages = await this.telegramClient.getMessages(channel, { ids: [currentId] });
+        if (messages.length === 0) continue; // Skip if no message
 
-      allMessages.push(...messages);
-      for (const msg of messages) {
+        const msg = messages[0];
+        processedMessages++;
+
         if (msg.text) {
-          const links = msg.text.match(/t\.me\/[^\s]+/g);
-          if (links) {
-            deepLinks.push(...links.map(link => ({
-              link,
-              messageId: msg.id,
-              timestamp: msg.date
-            })));
+          // Extract ?start= links
+          const startLinks = msg.text.match(/t\.me\/([a-zA-Z0-9_]+)\?start=([^\s]+)/g);
+          if (startLinks) {
+            for (const fullLink of startLinks) {
+              const match = fullLink.match(/t\.me\/([a-zA-Z0-9_]+)\?start=([^\s]+)/);
+              if (match) {
+                const botUsername = match[1];
+                const startParam = match[2];
+
+                // Immediate interaction
+                const result = await botInteractionService.interactWithBot(botUsername, startParam);
+                if (result.success) {
+                  totalInteractions++;
+                }
+
+                // Delay between interactions
+                await new Promise(resolve => setTimeout(resolve, 3000)); // 3s delay
+              }
+            }
           }
         }
+      } catch (error) {
+        console.log(`⚠️ Error processing message ${currentId}: ${error.message}`);
       }
 
-      // Stop if reached endId or no more messages
-      const lastId = messages[messages.length - 1].id;
-      if (endId && lastId <= endId) break;
-
-      offsetId = lastId - 1; // Continue from previous
-      if (allMessages.length >= 1000) break; // Safety limit
+      // Delay between message checks
+      await new Promise(resolve => setTimeout(resolve, 1000)); // 1s delay
     }
 
-    const endScrapedId = allMessages[allMessages.length - 1]?.id || startId;
-    // Update history
-    await this.historyRepo.saveHistory(channel, startId, endScrapedId);
-    return { messages: allMessages.length, deepLinks };
+    // Update history with new endId
+    await this.historyRepo.saveHistory(channel, startId, endId);
+    return { messages: processedMessages, interactions: totalInteractions };
   }
 
   async getAvailableChannels() {

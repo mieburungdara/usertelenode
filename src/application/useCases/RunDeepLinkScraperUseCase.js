@@ -1,7 +1,8 @@
 // src/application/useCases/RunDeepLinkScraperUseCase.js
 class RunDeepLinkScraperUseCase {
-  constructor(scrapingService, ui) {
+  constructor(scrapingService, botInteractionService, ui) {
     this.scrapingService = scrapingService;
+    this.botInteractionService = botInteractionService;
     this.ui = ui;
   }
 
@@ -27,21 +28,11 @@ class RunDeepLinkScraperUseCase {
     if (num >= 1 && num <= finalChannelCache.length) {
       const selectedChannel = finalChannelCache[num - 1];
       const channel = selectedChannel.channelName;
-      // Default start: last scraped ID, end: last message ID
-      const startId = selectedChannel.lastScrapedId || 0;
-      const endId = selectedChannel.lastMessageId || 0;
-      const results = await this.scrapingService.scrapeChannel(channel, startId, endId);
+      // Get range from user
+      const startId = parseInt(this.ui.getStartId()) || (selectedChannel.lastScrapedId + 1) || 1;
+      const endId = parseInt(this.ui.getEndId()) || selectedChannel.lastMessageId || startId + 100;
+      const results = await this.scrapingService.scrapeChannel(channel, startId, endId, this.botInteractionService);
       this.ui.displayResults(results);
-
-      // Generate simple report
-      if (results.deepLinks.length > 0) {
-        console.log('\n📄 Laporan Deep Links:');
-        console.log(`Channel: ${channel}`);
-        console.log(`Total Messages: ${results.messages}`);
-        console.log(`Deep Links Found: ${results.deepLinks.length}`);
-        console.log('Sample Links:');
-        results.deepLinks.slice(0, 10).forEach(link => console.log(`- ${link.link} (Msg ID: ${link.messageId})`));
-      }
     } else {
       console.log('❌ Nomor channel tidak valid.');
     }

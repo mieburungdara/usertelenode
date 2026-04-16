@@ -31,6 +31,7 @@ const { AccountRepository } = require('./src/infrastructure/repositories/Account
 const { ScrapingHistoryRepository } = require('./src/infrastructure/repositories/ScrapingHistoryRepository');
 const { ScrapingService } = require('./src/domain/services/ScrapingService');
 const { ReplyService } = require('./src/domain/services/ReplyService');
+const BotInteractionService = require('./src/domain/services/BotInteractionService');
 const RunDeepLinkScraperUseCase = require('./src/application/useCases/RunDeepLinkScraperUseCase');
 const ConsoleUI = require('./src/presentation/ConsoleUI');
 
@@ -189,8 +190,9 @@ async function runDeepLinkScraper() {
     // Setup new architecture
     const telegramAdapter = new TelegramClientAdapter(client);
     const scrapingService = new ScrapingService(telegramAdapter, historyRepo);
+    const botInteractionService = new BotInteractionService(telegramAdapter);
     const ui = new ConsoleUI(rl);
-    const useCase = new RunDeepLinkScraperUseCase(scrapingService, ui);
+    const useCase = new RunDeepLinkScraperUseCase(scrapingService, botInteractionService, ui);
 
     await useCase.execute(account);
 
