@@ -23,7 +23,27 @@ const rl = {
   close: () => {}
 };
 
-// Import modules
+// Import new modular modules
+const Config = require('./src/infrastructure/Config');
+const { FileStorageAdapter } = require('./src/infrastructure/adapters/FileStorageAdapter');
+const { TelegramClientAdapter } = require('./src/infrastructure/adapters/TelegramClientAdapter');
+const { AccountRepository } = require('./src/infrastructure/repositories/AccountRepository');
+const { ScrapingHistoryRepository } = require('./src/infrastructure/repositories/ScrapingHistoryRepository');
+const { ScrapingService } = require('./src/domain/services/ScrapingService');
+const { ReplyService } = require('./src/domain/services/ReplyService');
+const RunDeepLinkScraperUseCase = require('./src/application/useCases/RunDeepLinkScraperUseCase');
+const ConsoleUI = require('./src/presentation/ConsoleUI');
+
+// Setup DI
+const config = new Config();
+const storage = new FileStorageAdapter(require('fs'), require('path'));
+const accountRepo = new AccountRepository(storage);
+const historyRepo = new ScrapingHistoryRepository(storage);
+
+// For simplicity, assume client is created here
+// const telegramClient = new TelegramClientAdapter(client);
+
+// Import legacy for now
 let addAccount, listAccounts, selectAccount, deleteAccount, loadClient;
 let setupAutoReply, deepLinkScraper;
 try {
@@ -151,6 +171,7 @@ async function runAutoReplyMode() {
 
 // Mode 2: Deep Link Scraper
 async function runDeepLinkScraper() {
+  // Use new modular architecture
   const account = selectAccount(rl);
   if (!account) {
     rl.question('\nTekan Enter untuk kembali ke menu utama...');
@@ -165,25 +186,23 @@ async function runDeepLinkScraper() {
     const me = await client.getMe();
     console.log('✅ Terhubung sebagai @' + (me.username || me.firstName || 'unknown'));
 
-    console.log('\nℹ️  Mode Deep Link Scraper akan menangani sinyal Ctrl+C secara internal.');
-    console.log('   Jika ingin berhenti, tekan Ctrl+C saat proses scraping berjalan.');
+    // Setup new architecture
+    const telegramAdapter = new TelegramClientAdapter(client);
+    const scrapingService = new ScrapingService(telegramAdapter, historyRepo);
+    const ui = new ConsoleUI(rl);
+    const useCase = new RunDeepLinkScraperUseCase(scrapingService, ui);
 
-    // Jalankan scraper
-    await deepLinkScraper(client, rl);
+    await useCase.execute(account);
 
-    // Tutup koneksi jika scraper selesai normal tanpa exit paksa
     await disconnectWithTimeout(client, 5000);
-
-    // Setelah selesai normal, kembali ke menu utama
     rl.question('\nTekan Enter untuk kembali ke menu utama...');
 
   } catch (error) {
-    console.error('❌ Gagal menghubungkan client:', error.message);
+    console.error('❌ Error:', error.message);
     if (client) {
       await disconnectWithTimeout(client, 5000);
     }
     rl.question('\nTekan Enter untuk kembali ke menu utama...');
-    return;
   }
 }
 
