@@ -306,20 +306,10 @@ async function checkChannels(client, savedChannels, channelCache) {
         console.log(`❌ Failed to check ${ch.channelName}: ${e.message}`);
       }
     }
-    // Increased delay to avoid rate limit
-    await new Promise(resolve => setTimeout(resolve, 1000));
-  }
-
-  // Sort cache by lastMessageTimestamp descending (nulls last)
-  channelCache.sort((a, b) => {
-    if (a.lastMessageTimestamp && b.lastMessageTimestamp) {
-      return new Date(b.lastMessageTimestamp) - new Date(a.lastMessageTimestamp);
+      // Increased delay to avoid rate limit
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
-    if (a.lastMessageTimestamp) return -1;
-    if (b.lastMessageTimestamp) return 1;
-    return 0;
-  });
-}
+  }
 
 async function deepLinkScraper(client, rl) {
   const reportData = {
@@ -387,6 +377,16 @@ async function deepLinkScraper(client, rl) {
   const savedChannels = getAllChannels();
   let channelCache = [];
   await checkChannels(client, savedChannels, channelCache);
+
+  // Sort cache by lastMessageTimestamp descending (nulls last)
+  channelCache.sort((a, b) => {
+    if (a.lastMessageTimestamp && b.lastMessageTimestamp) {
+      return new Date(b.lastMessageTimestamp) - new Date(a.lastMessageTimestamp);
+    }
+    if (a.lastMessageTimestamp) return -1;
+    if (b.lastMessageTimestamp) return 1;
+    return 0;
+  });
 
   // Function to format relative time in Indonesian
   const formatRelativeTime = (date) => {
@@ -506,9 +506,6 @@ async function deepLinkScraper(client, rl) {
       if (b.lastMessageTimestamp) return 1;
       return 0;
     });
-
-    console.log('\n📋 Daftar channel yang tersedia:');
-    */
 
     /*
     // Calculate column widths
