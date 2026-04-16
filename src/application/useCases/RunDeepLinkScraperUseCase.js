@@ -6,9 +6,12 @@ class RunDeepLinkScraperUseCase {
   }
 
   async execute(account) {
-    // Display available channels from history
-    const channels = await this.scrapingService.getAvailableChannels(); // Need to add this
-    this.ui.displayChannels(channels);
+    // Check and get channel cache
+    const savedChannels = await this.scrapingService.getAvailableChannels();
+    const channelCache = await this.scrapingService.checkChannels(savedChannels);
+
+    // Display table
+    this.ui.displayChannelTable(channelCache);
 
     const channelInput = this.ui.getChannelInput();
     const channel = channelInput; // Simplified
