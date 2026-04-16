@@ -14,8 +14,13 @@ class RunDeepLinkScraperUseCase {
     );
     const channelCache = await this.scrapingService.checkChannels(uniqueChannels);
 
+    // Filter unique by channelName after check
+    const finalChannelCache = channelCache.filter((ch, index, arr) =>
+      arr.findIndex(c => c.channelName === ch.channelName) === index
+    );
+
     // Display table
-    this.ui.displayChannelTable(channelCache);
+    this.ui.displayChannelTable(finalChannelCache);
 
     const channelInput = this.ui.getChannelInput();
     const channel = channelInput; // Simplified
