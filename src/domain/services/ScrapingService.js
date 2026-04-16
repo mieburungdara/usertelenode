@@ -27,14 +27,25 @@ class ScrapingService {
     // Core scraping logic
     let offsetId = startId;
     let allMessages = [];
-    let deepLinksCount = 0;
+    let deepLinks = [];
 
     while (true) {
       const messages = await this.telegramClient.getMessages(channel, { limit: 100, offsetId });
       if (messages.length === 0) break;
 
       allMessages.push(...messages);
-      deepLinksCount += messages.filter(msg => msg.text && msg.text.includes('t.me/')).length;
+      for (const msg of messages) {
+        if (msg.text) {
+          const links = msg.text.match(/t\.me\/[^\s]+/g);
+          if (links) {
+            deepLinks.push(...links.map(link => ({
+              link,
+              messageId: msg.id,
+              timestamp: msg.date
+            })));
+          }
+        }
+      }
 
       // Stop if reached endId or no more messages
       const lastId = messages[messages.length - 1].id;
@@ -47,7 +58,7 @@ class ScrapingService {
     const endScrapedId = allMessages[allMessages.length - 1]?.id || startId;
     // Update history
     await this.historyRepo.saveHistory(channel, startId, endScrapedId);
-    return { messages: allMessages.length, deepLinks: deepLinksCount };
+    return { messages: allMessages.length, deepLinks };
   }
 
   async getAvailableChannels() {

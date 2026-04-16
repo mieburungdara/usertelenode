@@ -111,7 +111,12 @@ class ConsoleUI {
   }
 
   displayResults(results) {
-    console.log(`Scraped ${results.messages} messages, found ${results.deepLinks} deep links.`);
+    console.log(`Scraped ${results.messages} messages, found ${results.deepLinks.length} deep links.`);
+    if (results.deepLinks.length > 0) {
+      console.log('Deep links found:');
+      results.deepLinks.slice(0, 5).forEach(link => console.log(`- ${link.link}`));
+      if (results.deepLinks.length > 5) console.log(`... and ${results.deepLinks.length - 5} more`);
+    }
   }
 }
 

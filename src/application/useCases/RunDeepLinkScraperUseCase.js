@@ -32,6 +32,16 @@ class RunDeepLinkScraperUseCase {
       const endId = selectedChannel.lastMessageId || 0;
       const results = await this.scrapingService.scrapeChannel(channel, startId, endId);
       this.ui.displayResults(results);
+
+      // Generate simple report
+      if (results.deepLinks.length > 0) {
+        console.log('\n📄 Laporan Deep Links:');
+        console.log(`Channel: ${channel}`);
+        console.log(`Total Messages: ${results.messages}`);
+        console.log(`Deep Links Found: ${results.deepLinks.length}`);
+        console.log('Sample Links:');
+        results.deepLinks.slice(0, 10).forEach(link => console.log(`- ${link.link} (Msg ID: ${link.messageId})`));
+      }
     } else {
       console.log('❌ Nomor channel tidak valid.');
     }
