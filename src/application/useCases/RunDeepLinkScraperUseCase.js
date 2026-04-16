@@ -23,11 +23,10 @@ class RunDeepLinkScraperUseCase {
     this.ui.displayChannelTable(finalChannelCache);
 
     const channelInput = this.ui.getChannelInput();
-    const channel = channelInput; // Simplified
-    // Use finalChannelCache for selection
     const num = parseInt(channelInput);
     if (num >= 1 && num <= finalChannelCache.length) {
       const selectedChannel = finalChannelCache[num - 1];
+      const channel = selectedChannel.channelName;
       // Default start: last scraped ID, end: last message ID
       const startId = selectedChannel.lastScrapedId || 0;
       const endId = selectedChannel.lastMessageId || 0;
