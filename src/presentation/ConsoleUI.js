@@ -4,11 +4,11 @@ class ConsoleUI {
     this.rl = rl;
   }
 
-  async getChannelInput() {
+  getChannelInput() {
     return this.rl.question('Masukkan channel: ');
   }
 
-  async getStartId() {
+  getStartId() {
     return parseInt(this.rl.question('Start ID: ')) || 0;
   }
 

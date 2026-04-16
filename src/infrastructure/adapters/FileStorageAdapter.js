@@ -13,13 +13,13 @@ class FileStorageAdapter {
 
   async save(key, data) {
     const filePath = this.path.resolve(__dirname, '..', '..', '..', `${key}.json`);
-    await this.fs.writeFile(filePath, JSON.stringify(data, null, 2));
+    this.fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
   }
 
   async load(key) {
     const filePath = this.path.resolve(__dirname, '..', '..', '..', `${key}.json`);
     if (!this.fs.existsSync(filePath)) return null;
-    const data = await this.fs.readFile(filePath, 'utf-8');
+    const data = this.fs.readFileSync(filePath, 'utf-8');
     return JSON.parse(data);
   }
 }
