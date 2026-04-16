@@ -12,7 +12,16 @@ function loadHistory() {
       return { channels: {} };
     }
     const data = fs.readFileSync(HISTORY_FILE, 'utf-8');
-    return JSON.parse(data);
+    const history = JSON.parse(data);
+
+    // Migrate existing channels to include new fields if missing
+    for (const key in history.channels) {
+      const ch = history.channels[key];
+      if (ch.lastMessageId === undefined) ch.lastMessageId = null;
+      if (ch.lastMessageTimestamp === undefined) ch.lastMessageTimestamp = null;
+    }
+
+    return history;
   } catch (error) {
     console.error('❌ Gagal membaca history:', error.message);
     return { channels: {} };

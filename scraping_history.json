@@ -1,20 +1,5 @@
 {
   "channels": {
-    "testchannel": {
-      "channelName": "testchannel",
-      "lastScrapedId": 10,
-      "lastScrapedAt": "2026-04-10T19:14:05.183Z",
-      "totalScraped": 10,
-      "scrapingSessions": [
-        {
-          "startId": 1,
-          "endId": 10,
-          "scrapedAt": "2026-04-10T19:14:05.183Z",
-          "linksFound": 2,
-          "stopped": false
-        }
-      ]
-    },
     "asupandavina": {
       "channelName": "@asupandavina",
       "lastScrapedId": 876,
@@ -91,15 +76,22 @@
     },
     "DYNOCORED2": {
       "channelName": "@DYNOCORED2",
-      "lastScrapedId": 241,
-      "lastScrapedAt": "2026-04-12T01:21:45.818Z",
-      "totalScraped": 40,
+      "lastScrapedId": 243,
+      "lastScrapedAt": "2026-04-16T12:45:08.849Z",
+      "totalScraped": 42,
       "scrapingSessions": [
         {
           "startId": 202,
           "endId": 241,
           "scrapedAt": "2026-04-12T01:21:45.818Z",
           "linksFound": 22,
+          "stopped": false
+        },
+        {
+          "startId": 242,
+          "endId": 243,
+          "scrapedAt": "2026-04-16T12:45:08.849Z",
+          "linksFound": 1,
           "stopped": false
         }
       ]
@@ -151,15 +143,29 @@
     },
     "papratearea": {
       "channelName": "@papratearea",
-      "lastScrapedId": 7939,
-      "lastScrapedAt": "2026-04-13T03:04:02.581Z",
-      "totalScraped": 7918,
+      "lastScrapedId": 8102,
+      "lastScrapedAt": "2026-04-16T12:35:09.596Z",
+      "totalScraped": 8081,
       "scrapingSessions": [
         {
           "startId": 22,
           "endId": 7939,
           "scrapedAt": "2026-04-13T03:04:02.581Z",
           "linksFound": 7002,
+          "stopped": false
+        },
+        {
+          "startId": 7940,
+          "endId": 8099,
+          "scrapedAt": "2026-04-16T12:18:07.300Z",
+          "linksFound": 150,
+          "stopped": false
+        },
+        {
+          "startId": 8100,
+          "endId": 8102,
+          "scrapedAt": "2026-04-16T12:35:09.596Z",
+          "linksFound": 3,
           "stopped": false
         }
       ]
