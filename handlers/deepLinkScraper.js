@@ -312,16 +312,7 @@ async function deepLinkScraper(client, rl) {
 
   // Tampilkan daftar channel history
   const savedChannels = getAllChannels();
-  let sortedChannels = [];
   if (savedChannels.length > 0) {
-    // ✅ Sortir channel berdasarkan terakhir diakses (terbaru di atas)
-    // Buat copy array agar tidak mengubah data asli
-    sortedChannels = [...savedChannels].sort((a, b) => {
-      const dateA = new Date(a.lastScrapedAt);
-      const dateB = new Date(b.lastScrapedAt);
-      return isNaN(dateB.getTime()) ? -1 : isNaN(dateA.getTime()) ? 1 : dateB - dateA;
-    });
-
     // Function to format relative time in Indonesian
     const formatRelativeTime = (date) => {
       const now = new Date();
@@ -342,7 +333,7 @@ async function deepLinkScraper(client, rl) {
 
     console.log('🔄 Checking latest message IDs for all channels...');
     const channelCache = [];
-    for (const ch of sortedChannels) {
+    for (const ch of savedChannels) {
       try {
         const entity = await client.getEntity(parseChannelInput(ch.channelName));
         const messages = await client.getMessages(entity, { limit: 1 });
@@ -385,7 +376,7 @@ async function deepLinkScraper(client, rl) {
     const noWidth = Math.max(2, String(channelCache.length).length);
     const nameWidth = Math.max(7, Math.max(...channelCache.map(ch => ch.channelName.length)));
     const idWidth = Math.max(15, Math.max(...channelCache.map(ch => ch.lastMessageId ? String(ch.lastMessageId).length : 4))); // "null" is 4
-    const timeWidth = 20; // For formatted time
+    const timeWidth = 40; // For formatted time + relative
     const statusWidth = Math.max(6, Math.max(...channelCache.map(ch => ch.status.length)));
 
     // Helper function to pad string
@@ -419,13 +410,15 @@ async function deepLinkScraper(client, rl) {
       let timeStr;
       if (ch.lastMessageTimestamp) {
         const date = new Date(ch.lastMessageTimestamp * 1000); // Telegram timestamps are in seconds
-        timeStr = date.toLocaleString('id-ID', {
+        const dateTimeStr = date.toLocaleString('id-ID', {
           year: 'numeric',
           month: '2-digit',
           day: '2-digit',
           hour: '2-digit',
           minute: '2-digit'
         });
+        const relative = formatRelativeTime(date);
+        timeStr = `${dateTimeStr} (${relative})`;
       } else {
         timeStr = 'N/A';
       }
