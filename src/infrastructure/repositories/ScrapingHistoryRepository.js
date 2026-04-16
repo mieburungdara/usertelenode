@@ -30,7 +30,10 @@ class ScrapingHistoryRepository {
 
   async getAllChannels() {
     const history = await this.storage.load('scraping_history') || { channels: {} };
-    return Object.values(history.channels);
+    const channels = Object.values(history.channels);
+    // Filter valid channels and remove duplicates by name
+    return channels.filter(ch => ch && ch.channelName && ch.channelName.trim() !== '')
+      .filter((ch, index, arr) => arr.findIndex(c => c.channelName === ch.channelName) === index);
   }
 }
 
