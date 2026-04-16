@@ -18,6 +18,10 @@ class ScrapingService {
     await this.historyRepo.saveHistory(channel, startId, messages[messages.length - 1]?.id || startId);
     return { messages: messages.length, deepLinks: deepLinks.length };
   }
+
+  async getAvailableChannels() {
+    return await this.historyRepo.getAllChannels();
+  }
 }
 
 module.exports = { ScrapingService, IScrapingService };

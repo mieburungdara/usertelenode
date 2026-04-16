@@ -24,8 +24,13 @@ class ScrapingHistoryRepository {
 
   async getLastScrapedId(channel) {
     const history = await this.storage.load('scraping_history') || { channels: {} };
-    const key = channel.replace('@', '');
+    const key = getChannelKey(channel);
     return history.channels[key]?.lastScrapedId || null;
+  }
+
+  async getAllChannels() {
+    const history = await this.storage.load('scraping_history') || { channels: {} };
+    return Object.values(history.channels);
   }
 }
 

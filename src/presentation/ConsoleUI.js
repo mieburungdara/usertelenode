@@ -12,7 +12,19 @@ class ConsoleUI {
     return parseInt(this.rl.question('Start ID: ')) || 0;
   }
 
-  async displayResults(results) {
+  async   displayChannels(channels) {
+    if (channels.length === 0) {
+      console.log('Tidak ada channel tersimpan.');
+      return;
+    }
+    console.log('\n📋 Daftar channel tersimpan:');
+    channels.forEach((ch, idx) => {
+      console.log(`  ${idx + 1}. ${ch.channelName} | Last Scraped ID: ${ch.lastScrapedId || 'N/A'}`);
+    });
+    console.log('');
+  }
+
+  displayResults(results) {
     console.log(`Scraped ${results.messages} messages, found ${results.deepLinks} deep links.`);
   }
 
