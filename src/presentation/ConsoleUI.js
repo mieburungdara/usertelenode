@@ -96,15 +96,19 @@ class ConsoleUI {
       let timeStr;
       if (ch.lastMessageTimestamp) {
         const date = new Date(ch.lastMessageTimestamp);
-        const dateTimeStr = date.toLocaleString('id-ID', {
-          year: 'numeric',
-          month: '2-digit',
-          day: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit'
-        });
-        const relative = formatRelativeTime(date);
-        timeStr = `${dateTimeStr} (${relative})`;
+        if (isNaN(date.getTime())) {
+          timeStr = 'N/A';
+        } else {
+          const dateTimeStr = date.toLocaleString('id-ID', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          const relative = formatRelativeTime(date);
+          timeStr = `${dateTimeStr} (${relative})`;
+        }
       } else {
         timeStr = 'N/A';
       }
