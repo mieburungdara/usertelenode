@@ -22,7 +22,9 @@
         }
       ],
       "lastMessageId": 884,
-      "lastMessageTimestamp": "2026-04-17T16:08:52.000Z"
+      "lastMessageTimestamp": "2026-04-17T16:08:52.000Z",
+      "channelTitle": "ASUPAN DAVINA",
+      "lastCheckedAt": "2026-04-17T23:24:58.903Z"
     },
     "rategenz": {
       "channelName": "@rategenz",
@@ -46,7 +48,9 @@
         }
       ],
       "lastMessageId": 2940,
-      "lastMessageTimestamp": "2026-04-17T18:17:25.000Z"
+      "lastMessageTimestamp": "2026-04-17T18:17:25.000Z",
+      "channelTitle": "𝐑𝐀𝐓𝐄 𝐏𝐀𝐏 𝐆𝐄𝐍 𝐙",
+      "lastCheckedAt": "2026-04-17T23:25:00.107Z"
     },
     "ometv_S": {
       "channelName": "@ometv_S",
@@ -63,7 +67,9 @@
         }
       ],
       "lastMessageId": 1751,
-      "lastMessageTimestamp": "2026-04-17T16:06:38.000Z"
+      "lastMessageTimestamp": "2026-04-17T16:06:38.000Z",
+      "channelTitle": "OME TV",
+      "lastCheckedAt": "2026-04-17T23:25:01.295Z"
     },
     "RateMineplease": {
       "channelName": "@RateMineplease",
@@ -80,7 +86,9 @@
         }
       ],
       "lastMessageId": 1727,
-      "lastMessageTimestamp": "2026-04-17T17:00:34.000Z"
+      "lastMessageTimestamp": "2026-04-17T17:00:34.000Z",
+      "channelTitle": "Rate My Pap",
+      "lastCheckedAt": "2026-04-17T23:25:02.479Z"
     },
     "DYNOCORED2": {
       "channelName": "@DYNOCORED2",
@@ -104,7 +112,9 @@
         }
       ],
       "lastMessageId": 242,
-      "lastMessageTimestamp": "2026-04-13T17:03:14.000Z"
+      "lastMessageTimestamp": "2026-04-13T17:03:14.000Z",
+      "channelTitle": "𝗥𝗘𝗗 𝗗𝗬𝗡𝗢𝗖𝗢 𝟮",
+      "lastCheckedAt": "2026-04-17T23:25:03.673Z"
     },
     "Asupan_Terbaru_Viral": {
       "channelName": "@Asupan_Terbaru_Viral",
@@ -121,7 +131,9 @@
         }
       ],
       "lastMessageId": 1571,
-      "lastMessageTimestamp": "2026-04-16T18:27:08.000Z"
+      "lastMessageTimestamp": "2026-04-16T18:27:08.000Z",
+      "channelTitle": "𝐌𝐄𝐃𝐈𝐀 𝟗𝟔𝟗",
+      "lastCheckedAt": "2026-04-17T23:25:04.853Z"
     },
     "ometv_s": {
       "channelName": "@ometv_s",
@@ -185,22 +197,28 @@
           "stopped": false
         }
       ],
-      "lastMessageId": 8157,
-      "lastMessageTimestamp": "2026-04-17T19:43:01.000Z"
+      "lastMessageId": 8161,
+      "lastMessageTimestamp": "2026-04-17T23:17:05.000Z",
+      "channelTitle": "PAP RATE AREA",
+      "lastCheckedAt": "2026-04-17T23:25:06.027Z"
     },
     "-1002064393292": {
       "channelName": -1002064393292,
       "lastScrapedId": 12387,
       "lastScrapedAt": "2026-04-17T22:14:22.234Z",
-      "lastMessageId": 12387,
-      "lastMessageTimestamp": "2026-04-17T21:04:02.000Z"
+      "lastMessageId": 12388,
+      "lastMessageTimestamp": "2026-04-17T23:05:06.000Z",
+      "channelTitle": "fav",
+      "lastCheckedAt": "2026-04-17T23:25:07.281Z"
     },
     "jjratearea": {
       "channelName": "@jjratearea",
       "lastScrapedId": 192,
       "lastScrapedAt": "2026-04-17T20:20:02.783Z",
       "lastMessageId": 192,
-      "lastMessageTimestamp": "2026-04-15T14:58:44.000Z"
+      "lastMessageTimestamp": "2026-04-15T14:58:44.000Z",
+      "channelTitle": "JJ RATE AREA",
+      "lastCheckedAt": "2026-04-17T23:25:08.476Z"
     }
   }
 }
