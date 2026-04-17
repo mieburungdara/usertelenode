@@ -29,12 +29,12 @@ function parseChannelInput (input) {
   if (!input) { return null; }
   let cleaned = String(input).trim();
   if (!cleaned) { return null; }
-  
+
   // Handle numeric channel ID (dengan atau tanpa prefix -100)
   if (/^-?\d+$/.test(cleaned)) {
     return parseInt(cleaned, 10);
   }
-  
+
   // Cek format URL private: t.me/c/123456789 (dikonversi ke -100123456789)
   const privateMatch = cleaned.match(/t\.me\/c\/(\d+)/i);
   if (privateMatch) {
@@ -46,12 +46,12 @@ function parseChannelInput (input) {
   if (publicMatch && publicMatch[1].toLowerCase() !== 'c') {
     cleaned = publicMatch[1];
   }
-  
+
   // Handle username dengan atau tanpa @, abaikan jika sudah berupa angka
   if (!/^-?\d+$/.test(cleaned) && !cleaned.startsWith('@')) {
     cleaned = '@' + cleaned;
   }
-  
+
   return /^-?\d+$/.test(cleaned) ? parseInt(cleaned, 10) : cleaned;
 }
 
@@ -125,7 +125,7 @@ class ScrapingService {
 
         const validMsgs = messages.filter(m => m && m.className !== 'MessageEmpty');
         const emptyCount = idsToFetch.length - validMsgs.length;
-        
+
         if (emptyCount > 0) {
           deletedMessages += emptyCount;
           console.log(`ℹ️ Terdapat ${emptyCount} pesan Kosong/Dihapus pada rentang ${batchStart}-${batchEnd}`);
@@ -187,7 +187,7 @@ class ScrapingService {
 
     // Update history with true successful point
     await this.historyRepo.saveHistory(channel, startId, savedEndId);
-    
+
     // Simpan rincian sesi scraping ke database
     if (typeof this.historyRepo.addScrapingSession === 'function') {
       await this.historyRepo.addScrapingSession(channel, {
@@ -244,36 +244,60 @@ class ScrapingService {
     try {
       // Validate dan parse input
       const parsedChannel = parseChannelInput(channel);
-      
+
       if (!parsedChannel) {
         return {
+          /**
+           *
+           */
           success: false,
-          message: 'Format channel tidak valid. Gunakan @username atau ID numeric (-1001234567890)'
+          /**
+           *
+           */
+          message: 'Format channel tidak valid. Gunakan @username atau ID numeric (-1001234567890)',
         };
       }
 
       // Test koneksi ke channel untuk validasi
       const entity = await this.telegramClient.getEntity(parsedChannel);
       const title = entity.title || String(parsedChannel);
-      
+
       // Tambahkan ke repository
       const added = await this.historyRepo.addChannel(parsedChannel, title);
-      
+
       if (added) {
         return {
+          /**
+           *
+           */
           success: true,
-          message: `Channel ${parsedChannel} (${title}) berhasil ditambahkan`
+          /**
+           *
+           */
+          message: `Channel ${parsedChannel} (${title}) berhasil ditambahkan`,
         };
       } else {
         return {
+          /**
+           *
+           */
           success: false,
-          message: `Channel ${parsedChannel} sudah ada dalam daftar`
+          /**
+           *
+           */
+          message: `Channel ${parsedChannel} sudah ada dalam daftar`,
         };
       }
     } catch (error) {
       return {
+        /**
+         *
+         */
         success: false,
-        message: `Gagal menambahkan channel: ${error.message}`
+        /**
+         *
+         */
+        message: `Gagal menambahkan channel: ${error.message}`,
       };
     }
   }
@@ -299,13 +323,37 @@ class ScrapingService {
       if (isCacheValid) {
         console.log(`📦 Using cached data for ${ch.channelTitle || ch.channelName}`);
         channelCache.push({
+          /**
+           *
+           */
           channelId: null,
+          /**
+           *
+           */
           channelName: ch.channelName,
+          /**
+           *
+           */
           channelTitle: ch.channelTitle || ch.channelName,
+          /**
+           *
+           */
           lastMessageId: ch.lastMessageId || null,
+          /**
+           *
+           */
           lastScrapedId: ch.lastScrapedId,
+          /**
+           *
+           */
           lastMessageTimestamp: ch.lastMessageTimestamp || null,
+          /**
+           *
+           */
           lastCheckedAt: ch.lastCheckedAt || null,
+          /**
+           *
+           */
           status: ch.lastMessageId ? 'Punya pesan (Cached)' : 'Kosong (Cached)',
         });
       } else {
@@ -313,6 +361,9 @@ class ScrapingService {
           console.log(`🌐 Fetching latest message from ${ch.channelName}...`);
           const entity = await this.telegramClient.getEntity(parseChannelInput(ch.channelName));
           const messages = await this.telegramClient.getMessages(entity, {
+            /**
+             *
+             */
             limit: 1,
           });
           const msg = messages.length > 0 ? messages[0] : null;
@@ -327,13 +378,37 @@ class ScrapingService {
           console.log(`✅ Got latest message ID ${messageId} for ${title || ch.channelName}`);
 
           channelCache.push({
+            /**
+             *
+             */
             channelId: entity.id,
+            /**
+             *
+             */
             channelName: ch.channelName,
+            /**
+             *
+             */
             channelTitle: title,
+            /**
+             *
+             */
             lastMessageId: messageId,
+            /**
+             *
+             */
             lastScrapedId: ch.lastScrapedId,
+            /**
+             *
+             */
             lastMessageTimestamp: timestampISO,
+            /**
+             *
+             */
             lastCheckedAt: new Date().toISOString(),
+            /**
+             *
+             */
             status: msg ? 'Punya pesan' : 'Kosong',
           });
         } catch (e) {
@@ -346,13 +421,37 @@ class ScrapingService {
 
           // Fallback: Gunakan data yang sudah ada jika ada, jangan null
           channelCache.push({
+            /**
+             *
+             */
             channelId: null,
+            /**
+             *
+             */
             channelName: ch.channelName,
+            /**
+             *
+             */
             channelTitle: ch.channelTitle || ch.channelName,
+            /**
+             *
+             */
             lastMessageId: ch.lastMessageId || null,
+            /**
+             *
+             */
             lastScrapedId: ch.lastScrapedId,
+            /**
+             *
+             */
             lastMessageTimestamp: ch.lastMessageTimestamp || null,
+            /**
+             *
+             */
             lastCheckedAt: ch.lastCheckedAt || null,
+            /**
+             *
+             */
             status: `${status} (using cached)`,
           });
         }
@@ -360,15 +459,15 @@ class ScrapingService {
 
       // Rate limit delay - always delay between channels (even cached) to avoid Telegram rate limits
       if (index < totalChannels - 1) {
-        console.log(`⏳ Waiting 1s before next channel...`);
+        console.log('⏳ Waiting 1s before next channel...');
         await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
 
-  // Filter unique by normalized channelName (handle both string and numeric IDs)
-  const uniqueCache = channelCache.filter((ch, index, arr) =>
-    arr.findIndex(c => String(c.channelName).trim().toLowerCase() === String(ch.channelName).trim().toLowerCase()) === index,
-  );
+    // Filter unique by normalized channelName (handle both string and numeric IDs)
+    const uniqueCache = channelCache.filter((ch, index, arr) =>
+      arr.findIndex(c => String(c.channelName).trim().toLowerCase() === String(ch.channelName).trim().toLowerCase()) === index,
+    );
 
     // Sort cache by lastMessageTimestamp descending (nulls last)
     uniqueCache.sort((a, b) => {
@@ -388,7 +487,16 @@ class ScrapingService {
 }
 
 module.exports = {
+  /**
+   *
+   */
   ScrapingService,
+  /**
+   *
+   */
   IScrapingService,
+  /**
+   *
+   */
   parseChannelInput,
 };

@@ -20,15 +20,19 @@ class BotInteractionService {
   async interactWithBot (botUsername, startParam) {
     try {
       const chat = await this.telegramClient.getEntity(`@${botUsername}`);
-      
+
       // Kirim pesan tanpa await (fire-and-forget) dan tangkap error agar tidak crash
-      this.telegramClient.sendMessage(chat, { message: `/start ${startParam}` })
+      this.telegramClient.sendMessage(chat, { /**
+       *
+       */
+        message: `/start ${startParam}`,
+      })
         .then(() => console.log(`✅ Sent /start ${startParam} to @${botUsername}`))
         .catch(err => {
           if (err?.message?.includes('TIMEOUT')) {
-             console.log(`⏱️ Timeout pengiriman link @${botUsername} (diabaikan)`);
+            console.log(`⏱️ Timeout pengiriman link @${botUsername} (diabaikan)`);
           } else {
-             console.log(`❌ Error Background pengiriman ke @${botUsername}: ${err.message}`);
+            console.log(`❌ Error Background pengiriman ke @${botUsername}: ${err.message}`);
           }
         });
 

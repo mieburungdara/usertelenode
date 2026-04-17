@@ -45,7 +45,7 @@ class RunDeepLinkScraperUseCase {
     console.log('');
 
     const channelInput = this.ui.getChannelInput().trim();
-    
+
     if (!channelInput) {
       console.log('❌ Input kosong dibatalkan.');
       return;
@@ -70,37 +70,41 @@ class RunDeepLinkScraperUseCase {
       // Cek apakah inputnya merupakan link pesan spesifik (baik public maupun private)
       const privateMsgUrlMatch = channelInput.match(/(?:https?:\/\/)?t\.me\/c\/(\d+)\/(\d+)/i);
       const publicMsgUrlMatch = channelInput.match(/(?:https?:\/\/)?t\.me\/([a-zA-Z0-9_]+)\/(\d+)/i);
-      
+
       let targetChannelStr = null;
       let startId = null;
 
       if (privateMsgUrlMatch) {
-         targetChannelStr = parseInt(`-100${privateMsgUrlMatch[1]}`, 10);
-         startId = parseInt(privateMsgUrlMatch[2], 10);
+        targetChannelStr = parseInt(`-100${privateMsgUrlMatch[1]}`, 10);
+        startId = parseInt(privateMsgUrlMatch[2], 10);
       } else if (publicMsgUrlMatch && publicMsgUrlMatch[1].toLowerCase() !== 'c') {
-         targetChannelStr = '@' + publicMsgUrlMatch[1];
-         startId = parseInt(publicMsgUrlMatch[2], 10);
+        targetChannelStr = '@' + publicMsgUrlMatch[1];
+        startId = parseInt(publicMsgUrlMatch[2], 10);
       }
 
       if (targetChannelStr) {
-        console.log(`\n🔗 Tautan pesan terdeteksi!`);
+        console.log('\n🔗 Tautan pesan terdeteksi!');
         console.log(`📌 Mempersiapkan channel ${targetChannelStr} untuk ditarik...`);
-        
+
         // Daftarkan channel jika belum ada
         await this.scrapingService.addChannel(targetChannelStr);
-        
+
         // Dapatkan update ID terakhir pada channel tersebut
         console.log(`🌐 Mengambil informasi pesan terbaru dari ${targetChannelStr}...`);
-        const checks = await this.scrapingService.checkChannels([{ channelName: targetChannelStr }]);
+        const checks = await this.scrapingService.checkChannels([{ /**
+         *
+         */
+          channelName: targetChannelStr,
+        }]);
         const endId = (checks.length > 0 && checks[0].lastMessageId) ? checks[0].lastMessageId : startId + 100;
-        
+
         console.log(`🚀 Memulai AUTO-SCRAPE untuk ${targetChannelStr}`);
         console.log(`📊 Memproses ID pesan ${startId} hingga ${endId}...`);
-        
+
         // Langsung scrape tanpa pertanyaan
         const results = await this.scrapingService.scrapeChannel(targetChannelStr, startId, endId, this.botInteractionService);
         this.ui.displayResults(results);
-        
+
         console.log('\n🔄 Mengembalikan ke menu utama...');
         return await this.execute(_account);
       } else {
@@ -108,7 +112,7 @@ class RunDeepLinkScraperUseCase {
         console.log(`\n🔄 Mencoba memproses channel: ${channelInput}...`);
         const result = await this.scrapingService.addChannel(channelInput);
         this.ui.displayAddChannelResult(result);
-        
+
         // Jika sukses menambah atau channel ternyata sudah ada di database, kita muat ulang.
         if (result.success || (result.message && result.message.includes('sudah ada'))) {
           console.log('\n🔄 Memuat ulang daftar channel...');

@@ -44,6 +44,9 @@ class ReplyService {
     // Core reply logic
     if (message.text.includes('hello')) {
       await this.telegramClient.sendMessage(message.chatId, {
+        /**
+         *
+         */
         message: 'Hi there!',
       });
     }

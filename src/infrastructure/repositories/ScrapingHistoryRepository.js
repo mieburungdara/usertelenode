@@ -38,14 +38,26 @@ class ScrapingHistoryRepository {
    */
   async saveHistory (channel, startId, endId) {
     const history = await this.storage.load('scraping_history') || {
+      /**
+       *
+       */
       channels: {},
     };
     // Gunakan string sebagai key (untuk ID numeric juga)
     const key = typeof channel === 'number' ? String(channel) : channel.replace('@', '');
     if (!history.channels[key]) {
       history.channels[key] = {
+        /**
+         *
+         */
         channelName: channel,
+        /**
+         *
+         */
         lastScrapedId: endId,
+        /**
+         *
+         */
         lastScrapedAt: new Date().toISOString(),
       };
     } else {
@@ -61,6 +73,9 @@ class ScrapingHistoryRepository {
    */
   async getLastScrapedId (channel) {
     const history = await this.storage.load('scraping_history') || {
+      /**
+       *
+       */
       channels: {},
     };
     // Gunakan string sebagai key (untuk ID numeric juga)
@@ -92,6 +107,9 @@ class ScrapingHistoryRepository {
    */
   async updateLastMessageId (channelName, lastMessageId, lastMessageTimestamp, channelTitle) {
     const history = await this.storage.load('scraping_history') || {
+      /**
+       *
+       */
       channels: {},
     };
     // Gunakan string sebagai key (untuk ID numeric juga)
@@ -99,16 +117,37 @@ class ScrapingHistoryRepository {
 
     if (!history.channels[key]) {
       history.channels[key] = {
+        /**
+         *
+         */
         channelName,
+        /**
+         *
+         */
         channelTitle,
+        /**
+         *
+         */
         lastScrapedId: null,
+        /**
+         *
+         */
         lastScrapedAt: null,
+        /**
+         *
+         */
         lastMessageId,
+        /**
+         *
+         */
         lastMessageTimestamp,
+        /**
+         *
+         */
         lastCheckedAt: new Date().toISOString(),
       };
     } else {
-      if (channelTitle) history.channels[key].channelTitle = channelTitle;
+      if (channelTitle) { history.channels[key].channelTitle = channelTitle; }
       history.channels[key].lastMessageId = lastMessageId;
       history.channels[key].lastMessageTimestamp = lastMessageTimestamp;
       history.channels[key].lastCheckedAt = new Date().toISOString();
@@ -125,12 +164,15 @@ class ScrapingHistoryRepository {
    */
   async addChannel (channel, title) {
     const history = await this.storage.load('scraping_history') || {
+      /**
+       *
+       */
       channels: {},
     };
-    
+
     // Gunakan string sebagai key (untuk ID numeric juga)
     const key = typeof channel === 'number' ? String(channel) : channel.replace('@', '');
-    
+
     if (history.channels[key]) {
       // Channel sudah ada
       if (title && !history.channels[key].channelTitle) {
@@ -139,20 +181,50 @@ class ScrapingHistoryRepository {
       }
       return false;
     }
-    
+
     history.channels[key] = {
+      /**
+       *
+       */
       channelName: channel,
+      /**
+       *
+       */
       channelTitle: title || channel,
+      /**
+       *
+       */
       lastScrapedId: null,
+      /**
+       *
+       */
       lastScrapedAt: null,
+      /**
+       *
+       */
       lastMessageId: null,
+      /**
+       *
+       */
       lastMessageTimestamp: null,
+      /**
+       *
+       */
       lastCheckedAt: null,
+      /**
+       *
+       */
       totalLinksFound: 0,
+      /**
+       *
+       */
       totalMessagesScraped: 0,
+      /**
+       *
+       */
       scrapingSessions: [],
     };
-    
+
     await this.storage.save('scraping_history', history);
     return true;
   }
@@ -163,7 +235,11 @@ class ScrapingHistoryRepository {
    * @param {Object} sessionData - Objek berisi { date, startId, endId, processed, linksFound, noLinks, deleted, interactions }
    */
   async addScrapingSession (channelName, sessionData) {
-    const history = await this.storage.load('scraping_history') || { channels: {} };
+    const history = await this.storage.load('scraping_history') || { /**
+     *
+     */
+      channels: {},
+    };
     const key = typeof channelName === 'number' ? String(channelName) : channelName.replace('@', '');
 
     if (history.channels[key]) {
@@ -181,7 +257,7 @@ class ScrapingHistoryRepository {
       history.channels[key].scrapingSessions.push(sessionData);
       history.channels[key].totalLinksFound += (sessionData.linksFound || 0);
       history.channels[key].totalMessagesScraped += (sessionData.processed || 0);
-      
+
       await this.storage.save('scraping_history', history);
     }
   }

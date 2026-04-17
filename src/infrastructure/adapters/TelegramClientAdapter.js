@@ -42,26 +42,26 @@ class TelegramClientAdapter {
    * @param {number} baseDelay - Base delay in ms between retries
    * @returns {Promise<any>} Result of the function
    */
-  async _withRetries(fn, maxRetries = 3, baseDelay = 1000) {
+  async _withRetries (fn, maxRetries = 3, baseDelay = 1000) {
     let lastError;
-    
+
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
         return await fn();
       } catch (error) {
         lastError = error;
-        
+
         if (attempt === maxRetries) {
           throw error;
         }
-        
+
         // Exponential backoff
         const delay = baseDelay * Math.pow(2, attempt - 1);
         console.log(`⚠️ API call failed (attempt ${attempt}/${maxRetries}), retrying in ${delay}ms: ${error.message}`);
         await new Promise(resolve => setTimeout(resolve, delay));
       }
     }
-    
+
     throw lastError;
   }
 
@@ -92,6 +92,9 @@ class TelegramClientAdapter {
    */
   async sendMessage (chatId, message) {
     return await this._withRetries(() => this.client.sendMessage(chatId, {
+      /**
+       *
+       */
       message,
     }));
   }
