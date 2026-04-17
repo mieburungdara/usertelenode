@@ -101,17 +101,18 @@ class ScrapingService {
           const messageId = msg ? msg.id : null;
           const messageTimestamp = msg ? msg.date : null;
 
+          // Update cache first
+          const timestampISO = messageTimestamp ? new Date(messageTimestamp * 1000).toISOString() : null;
+          await this.historyRepo.updateLastMessageId(ch.channelName, messageId, timestampISO);
+
           channelCache.push({
             channelId: entity.id,
             channelName: ch.channelName,
             lastMessageId: messageId,
             lastScrapedId: ch.lastScrapedId,
-            lastMessageTimestamp: messageTimestamp,
+            lastMessageTimestamp: timestampISO,
             status: msg ? 'Punya pesan' : 'Kosong'
           });
-
-          // Update cache
-          await this.historyRepo.updateLastMessageId(ch.channelName, messageId, messageTimestamp ? new Date(messageTimestamp * 1000).toISOString() : null);
         } catch (e) {
           let status = 'Tidak dapat diakses';
           if (e.message && e.message.includes('TIMEOUT')) {
