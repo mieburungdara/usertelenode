@@ -31,7 +31,7 @@ class ScrapingService {
       try {
         // Fetch single message by ID
         const messages = await this.telegramClient.getMessages(channel, { ids: [currentId] });
-        if (messages.length === 0) continue; // Skip if no message
+        if (messages.length === 0 || !messages[0]) continue;
 
         const msg = messages[0];
         processedMessages++;
