@@ -8,12 +8,16 @@ class ConsoleUI {
     return this.rl.question('Masukkan channel: ');
   }
 
-  getStartId() {
-    return this.rl.question('Start ID: ');
+  getStartId(defaultValue = '') {
+    const prompt = defaultValue ? `Start ID (default: ${defaultValue}): ` : 'Start ID: ';
+    const input = this.rl.question(prompt);
+    return input.trim() || defaultValue;
   }
 
-  getEndId() {
-    return this.rl.question('End ID: ');
+  getEndId(defaultValue = '') {
+    const prompt = defaultValue ? `End ID (default: ${defaultValue}): ` : 'End ID: ';
+    const input = this.rl.question(prompt);
+    return input.trim() || defaultValue;
   }
 
   displayChannels(channels) {

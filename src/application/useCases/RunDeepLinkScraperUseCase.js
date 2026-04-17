@@ -28,9 +28,14 @@ class RunDeepLinkScraperUseCase {
     if (num >= 1 && num <= finalChannelCache.length) {
       const selectedChannel = finalChannelCache[num - 1];
       const channel = selectedChannel.channelName;
-      // Get range from user
-      const startId = parseInt(this.ui.getStartId()) || (selectedChannel.lastScrapedId + 1) || 1;
-      const endId = parseInt(this.ui.getEndId()) || selectedChannel.lastMessageId || startId + 100;
+      // Suggest last message ID as default for both
+      const suggestedStart = selectedChannel.lastMessageId || (selectedChannel.lastScrapedId + 1) || 1;
+      const suggestedEnd = selectedChannel.lastMessageId || suggestedStart + 100;
+      // Get range from user with suggestions
+      const startIdInput = this.ui.getStartId(suggestedStart);
+      const endIdInput = this.ui.getEndId(suggestedEnd);
+      const startId = parseInt(startIdInput) || suggestedStart;
+      const endId = parseInt(endIdInput) || suggestedEnd;
       const results = await this.scrapingService.scrapeChannel(channel, startId, endId, this.botInteractionService);
       this.ui.displayResults(results);
     } else {
