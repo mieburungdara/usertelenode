@@ -6,7 +6,10 @@
   "scripts": {
     "start": "node index.js",
     "web": "node web.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint src/ --ext .js",
+    "lint:fix": "eslint src/ --ext .js --fix",
+    "lint:check": "npm run lint -- --max-warnings 0"
   },
   "dependencies": {
     "dotenv": "^17.4.1",
@@ -25,5 +28,11 @@
   "bugs": {
     "url": "https://github.com/mieburungdara/usertelenode/issues"
   },
-  "homepage": "https://github.com/mieburungdara/usertelenode#readme"
+  "homepage": "https://github.com/mieburungdara/usertelenode#readme",
+  "devDependencies": {
+    "eslint": "^8.57.1",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-boundaries": "^6.0.2",
+    "eslint-plugin-jsdoc": "^62.9.0"
+  }
 }

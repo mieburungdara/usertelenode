@@ -193,7 +193,8 @@ async function addAccount() {
     // Buat client dengan StringSession kosong
     const sessionString = new StringSession('');
     client = new TelegramClient(sessionString, config.API_ID, config.API_HASH, {
-      connectionRetries: 5,
+      connectionRetries: 10,
+      timeout: 30000,
       deviceModel: 'UserTeleNode',
     });
 
@@ -276,7 +277,8 @@ async function loadClient(account) {
   const session = new StringSession(account.sessionString);
   
   const client = new TelegramClient(session, config.API_ID, config.API_HASH, {
-    connectionRetries: 5,
+    connectionRetries: 10,
+    timeout: 30000,
     deviceModel: 'UserTeleNode',
     autoReconnect: true,
     retryDelay: 3000,

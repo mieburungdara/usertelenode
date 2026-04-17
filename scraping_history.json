@@ -2,8 +2,8 @@
   "channels": {
     "asupandavina": {
       "channelName": "@asupandavina",
-      "lastScrapedId": 876,
-      "lastScrapedAt": "2026-04-12T17:27:20.391Z",
+      "lastScrapedId": 881,
+      "lastScrapedAt": "2026-04-17T01:29:08.912Z",
       "totalScraped": 3,
       "scrapingSessions": [
         {
@@ -20,12 +20,14 @@
           "linksFound": 0,
           "stopped": false
         }
-      ]
+      ],
+      "lastMessageId": 884,
+      "lastMessageTimestamp": "2026-04-17T16:08:52.000Z"
     },
     "rategenz": {
       "channelName": "@rategenz",
-      "lastScrapedId": 2613,
-      "lastScrapedAt": "2026-04-12T01:17:09.367Z",
+      "lastScrapedId": 2902,
+      "lastScrapedAt": "2026-04-17T09:16:45.682Z",
       "totalScraped": 61,
       "scrapingSessions": [
         {
@@ -42,12 +44,14 @@
           "linksFound": 1,
           "stopped": false
         }
-      ]
+      ],
+      "lastMessageId": 2940,
+      "lastMessageTimestamp": "2026-04-17T18:17:25.000Z"
     },
     "ometv_S": {
       "channelName": "@ometv_S",
-      "lastScrapedId": 1723,
-      "lastScrapedAt": "2026-04-11T22:52:52.683Z",
+      "lastScrapedId": 1742,
+      "lastScrapedAt": "2026-04-17T01:14:23.037Z",
       "totalScraped": 5,
       "scrapingSessions": [
         {
@@ -57,12 +61,14 @@
           "linksFound": 2,
           "stopped": false
         }
-      ]
+      ],
+      "lastMessageId": 1751,
+      "lastMessageTimestamp": "2026-04-17T16:06:38.000Z"
     },
     "RateMineplease": {
       "channelName": "@RateMineplease",
-      "lastScrapedId": 1702,
-      "lastScrapedAt": "2026-04-12T01:06:19.454Z",
+      "lastScrapedId": 1725,
+      "lastScrapedAt": "2026-04-17T04:16:14.756Z",
       "totalScraped": 1698,
       "scrapingSessions": [
         {
@@ -72,12 +78,14 @@
           "linksFound": 1600,
           "stopped": false
         }
-      ]
+      ],
+      "lastMessageId": 1727,
+      "lastMessageTimestamp": "2026-04-17T17:00:34.000Z"
     },
     "DYNOCORED2": {
       "channelName": "@DYNOCORED2",
-      "lastScrapedId": 243,
-      "lastScrapedAt": "2026-04-16T12:45:08.849Z",
+      "lastScrapedId": 242,
+      "lastScrapedAt": "2026-04-17T04:13:32.889Z",
       "totalScraped": 42,
       "scrapingSessions": [
         {
@@ -94,12 +102,14 @@
           "linksFound": 1,
           "stopped": false
         }
-      ]
+      ],
+      "lastMessageId": 242,
+      "lastMessageTimestamp": "2026-04-13T17:03:14.000Z"
     },
     "Asupan_Terbaru_Viral": {
       "channelName": "@Asupan_Terbaru_Viral",
-      "lastScrapedId": 1569,
-      "lastScrapedAt": "2026-04-12T17:02:15.458Z",
+      "lastScrapedId": 1571,
+      "lastScrapedAt": "2026-04-17T01:10:42.869Z",
       "totalScraped": 594,
       "scrapingSessions": [
         {
@@ -109,7 +119,9 @@
           "linksFound": 612,
           "stopped": false
         }
-      ]
+      ],
+      "lastMessageId": 1571,
+      "lastMessageTimestamp": "2026-04-16T18:27:08.000Z"
     },
     "ometv_s": {
       "channelName": "@ometv_s",
@@ -124,7 +136,9 @@
           "linksFound": 0,
           "stopped": false
         }
-      ]
+      ],
+      "lastMessageId": null,
+      "lastMessageTimestamp": null
     },
     "ratemineplease": {
       "channelName": "@ratemineplease",
@@ -139,12 +153,14 @@
           "linksFound": 0,
           "stopped": true
         }
-      ]
+      ],
+      "lastMessageId": null,
+      "lastMessageTimestamp": null
     },
     "papratearea": {
       "channelName": "@papratearea",
-      "lastScrapedId": 7998,
-      "lastScrapedAt": "2026-04-16T15:05:28.726Z",
+      "lastScrapedId": 8122,
+      "lastScrapedAt": "2026-04-17T04:49:37.619Z",
       "totalScraped": 8081,
       "scrapingSessions": [
         {
@@ -168,7 +184,23 @@
           "linksFound": 3,
           "stopped": false
         }
-      ]
+      ],
+      "lastMessageId": 8157,
+      "lastMessageTimestamp": "2026-04-17T19:43:01.000Z"
+    },
+    "-1002064393292": {
+      "channelName": -1002064393292,
+      "lastScrapedId": 12387,
+      "lastScrapedAt": "2026-04-17T22:14:22.234Z",
+      "lastMessageId": 12387,
+      "lastMessageTimestamp": "2026-04-17T21:04:02.000Z"
+    },
+    "jjratearea": {
+      "channelName": "@jjratearea",
+      "lastScrapedId": 192,
+      "lastScrapedAt": "2026-04-17T20:20:02.783Z",
+      "lastMessageId": 192,
+      "lastMessageTimestamp": "2026-04-15T14:58:44.000Z"
     }
   }
 }
