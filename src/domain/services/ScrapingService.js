@@ -76,17 +76,68 @@ class ScrapingService {
    * @param {number} startId - ID pesan awal untuk scraping
    * @param {number} endId - ID pesan akhir untuk scraping
    * @param {IBotInteractionService} botInteractionService - Service untuk interaksi bot
+   */
   async scrapeChannel (channel, startId, endId, botInteractionService) {
     let processedMessages = 0;
     let messagesWithLink = 0;
     let messagesWithoutLink = 0;
     let deletedMessages = 0;
     let totalInteractions = 0;
-    let finalEndId = startId - 1; // ID terakhir yang sukses diperiksa penuh
+    
+    let lastFetchedId = startId - 1; // ID tercapai di loop fetcher
     let errorOccurred = null;
 
     const totalToProcess = Math.max(0, (endId - startId) + 1);
     console.log(`\n📊 Estimasi jumlah ID pesan yang akan diperiksa: ${totalToProcess}`);
+
+    // --- PAUSE & DECOUPLED QUEUE SYSTEM ---
+    let isPaused = false;
+    let isFetchingFinished = false;
+    const interactionQueue = [];
+
+    const stdInHandler = (data) => {
+      const char = data.toString();
+      if (char === ' ') {
+        isPaused = !isPaused;
+        if (isPaused) {
+          console.log('\n⏸️ STATUS: PENGIRIMAN DIJEDA... (Membaca pesan tetap berjalan) Tekan SPASI untuk lanjut.\n');
+        } else {
+          console.log('\n▶️ STATUS: PENGIRIMAN DILANJUTKAN.\n');
+        }
+      } else if (char === '\x03') {
+        process.emit('SIGINT');
+      }
+    };
+
+    if (process.stdin.isTTY) {
+      process.stdin.setRawMode(true);
+      process.stdin.resume();
+      process.stdin.on('data', stdInHandler);
+    }
+
+    const workerPromise = (async () => {
+      while (!isFetchingFinished || interactionQueue.length > 0) {
+        if (isPaused || interactionQueue.length === 0) {
+          await new Promise(r => setTimeout(r, 500));
+          continue;
+        }
+
+        const task = interactionQueue.shift();
+        try {
+          console.log(`🎯 Executing [Sisa Antrean: ${interactionQueue.length}]: @${task.botUsername}?start=${task.startParam}`);
+          const result = await botInteractionService.interactWithBot(task.botUsername, task.startParam);
+          if (result.success) {
+            totalInteractions++;
+          }
+        } catch (e) {
+          console.log(`⚠️ Gagal interaksi @${task.botUsername}: ${e.message}`);
+        }
+        
+        // Delay 3 detik demi limit Telegram hanya ketika mengeksekusi
+        await new Promise(r => setTimeout(r, 3000));
+      }
+    })();
+    // --- END SYSTEM ---
 
     const BATCH_SIZE = 50;
 
@@ -111,9 +162,9 @@ class ScrapingService {
           } catch (error) {
             retries++;
             if (error.message && error.message.includes('TIMEOUT')) {
-              console.log(`⏱️ Timeout pada batch ${batchStart}-${batchEnd}, mencoba ulang (${retries}/3)...`);
+              console.log(`⏱️ Timeout fetch batch ${batchStart}-${batchEnd}, mencoba ulang (${retries}/3)...`);
             } else {
-              console.log(`⚠️ Error pada batch ${batchStart}-${batchEnd}: ${error.message}, mencoba ulang (${retries}/3)...`);
+              console.log(`⚠️ Error fetch batch ${batchStart}-${batchEnd}: ${error.message}, mencoba ulang (${retries}/3)...`);
             }
             await new Promise(resolve => setTimeout(resolve, 2000 * retries));
           }
@@ -125,13 +176,11 @@ class ScrapingService {
 
         const validMsgs = messages.filter(m => m && m.className !== 'MessageEmpty');
         const emptyCount = idsToFetch.length - validMsgs.length;
-
+        
         if (emptyCount > 0) {
           deletedMessages += emptyCount;
-          console.log(`ℹ️ Terdapat ${emptyCount} pesan Kosong/Dihapus pada rentang ${batchStart}-${batchEnd}`);
         }
 
-        // Sortir secara Ascending agar eksekusi logis (id kecil ke besar)
         validMsgs.sort((a, b) => a.id - b.id);
 
         for (const msg of validMsgs) {
@@ -139,43 +188,33 @@ class ScrapingService {
           processedMessages++;
 
           if (msg.text) {
-            // Extract ?start= links - handle both https://t.me/ and t.me/ formats
             const startLinks = msg.text.match(/(?:https?:\/\/)?t\.me\/([a-zA-Z0-9_]+)\?start=([^\s]+)/g);
             if (startLinks && startLinks.length > 0) {
               messagesWithLink++;
-              console.log(`🔗 Pesan ${currentId}: Terdapat ${startLinks.length} tautan aktif.`);
+              console.log(`🔗 Pesan ${currentId} terbaca: Ditemukan ${startLinks.length} tautan (Dimasukkan ke Antrean).`);
               for (const fullLink of startLinks) {
                 const match = fullLink.match(/(?:https?:\/\/)?t\.me\/([a-zA-Z0-9_]+)\?start=([^\s]+)/);
                 if (match) {
-                  const botUsername = match[1];
-                  const startParam = match[2];
-                  console.log(`🎯 Processing: @${botUsername}?start=${startParam}`);
-
-                  // Immediate interaction
-                  const result = await botInteractionService.interactWithBot(botUsername, startParam);
-                  if (result.success) {
-                    totalInteractions++;
-                  }
-
-                  // Delay between interactions
-                  await new Promise(resolve => setTimeout(resolve, 3000));
+                  interactionQueue.push({
+                    botUsername: match[1],
+                    startParam: match[2],
+                    msgId: currentId
+                  });
                 }
               }
             } else {
               messagesWithoutLink++;
-              console.log(`📝 Pesan ${currentId}: Tidak ada tautan target bot.`);
             }
           } else {
             messagesWithoutLink++;
-            console.log(`🖼️ Pesan ${currentId}: Tanpa teks (Media/Lainnya).`);
           }
         }
 
-        finalEndId = batchEnd; // Catat sejauh apa loop ini aman diselesaikan
+        lastFetchedId = batchEnd;
 
-        // Delay between batch fetch
+        // Delay antar fetch diperkecil krn eksekusi dilakukan terpisah
         if (batchEnd < endId) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 500));
         }
       }
     } catch (e) {
@@ -183,6 +222,36 @@ class ScrapingService {
       errorOccurred = e.message;
     }
 
+    // Tunggu antrean habis (Hanya jika tidak ada error fatal)
+    isFetchingFinished = true;
+    if (!errorOccurred && interactionQueue.length > 0) {
+       console.log(`\n✅ Pengambilan pesan selesai! Menunggu ${interactionQueue.length} interaksi dari dalam antrean dikirim...`);
+    }
+    
+    // Tunggu Worker Selesai atau putus jika error, minimal beri sedikit waktu.
+    try {
+      if (!errorOccurred) {
+        await workerPromise;
+      }
+    } catch(err) {
+      console.log('Worker Error:', err);
+    }
+
+    // MATIKAN RAW MODE STDIN (wajib agar CLI tidak bertingkah aneh ke depan)
+    if (process.stdin.isTTY) {
+      process.stdin.removeListener('data', stdInHandler);
+      process.stdin.setRawMode(false);
+      process.stdin.pause();
+    }
+
+    // --- SAFE STATE CALCULATION ---
+    // Titik aman terakhir = jika error mendadak, cek apakaha ada antrean yg batal dieksekusi?
+    let finalEndId = lastFetchedId;
+    if (interactionQueue.length > 0) {
+       // Titik belum selesai = ID pertama di antrian kurangi 1
+       finalEndId = interactionQueue[0].msgId - 1;
+    }
+    
     const savedEndId = Math.max(startId, finalEndId);
 
     // Update history with true successful point
