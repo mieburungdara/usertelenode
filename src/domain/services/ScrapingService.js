@@ -126,10 +126,10 @@ class ScrapingService {
             lastMessageTimestamp: null,
             status: status
           });
-        }
-      }
-      await new Promise(resolve => setTimeout(resolve, 1000));
     }
+    // Increased delay to avoid rate limit
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
 
     // Filter unique by normalized channelName
     const uniqueCache = channelCache.filter((ch, index, arr) =>
