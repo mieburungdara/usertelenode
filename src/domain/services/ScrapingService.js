@@ -148,6 +148,21 @@ class ScrapingService {
 
     return uniqueCache;
   }
+  }
+
+async function checkChannels(client, savedChannels, channelCache) {
+  console.log('🔄 Checking latest message IDs for all channels...');
+  for (const ch of savedChannels) {
+    channelCache.push({
+      channelId: null,
+      channelName: ch.channelName,
+      lastMessageId: ch.lastMessageId || null,
+      lastScrapedId: ch.lastScrapedId,
+      lastMessageTimestamp: ch.lastMessageTimestamp || null,
+      status: 'Belum dicek'
+    });
+  }
+  return channelCache;
 }
 
-module.exports = { ScrapingService, IScrapingService };
+module.exports = { ScrapingService, IScrapingService, checkChannels };
