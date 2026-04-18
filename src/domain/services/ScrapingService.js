@@ -286,7 +286,7 @@ class ScrapingService {
       try {
         const reportText = `🚨 **Laporan Error BotAnon Scraper** 🚨\n\n📌 **Channel:** ${channel}\n📊 **Rentang ID Awal:** ${startId} - ${endId}\n🛑 **Terhenti di ID:** ${savedEndId}\n\n**Statistik Terkumpul Sebraknya:**\n✅ Diproses: ${processedMessages}\n🔗 Dgn Target (Link): ${messagesWithLink}\n📝 Tanpa Link: ${messagesWithoutLink}\n🗑️ Kosong/Dihapus: ${deletedMessages}\n\n**Penyebab Kegagalan Aborting:**\n❌ \`${errorOccurred}\``;
         console.log(`\n📨 Mengirim laporan darurat ke akun log @fernathan...`);
-        await this.telegramClient.sendMessage('@fernathan', { message: reportText });
+        await this.telegramClient.sendMessage('@fernathan', reportText);
         console.log(`✅ Laporan kegagalan berhasil dikirim ke @fernathan.`);
       } catch (dmErr) {
         console.log(`⚠️ Gagal mengirim Telegram DM ke @fernathan: ${dmErr.message}`);

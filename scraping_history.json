@@ -24,7 +24,7 @@
       "lastMessageId": 884,
       "lastMessageTimestamp": "2026-04-17T16:08:52.000Z",
       "channelTitle": "ASUPAN DAVINA",
-      "lastCheckedAt": "2026-04-17T23:24:58.903Z"
+      "lastCheckedAt": "2026-04-18T00:41:31.757Z"
     },
     "rategenz": {
       "channelName": "@rategenz",
@@ -50,7 +50,7 @@
       "lastMessageId": 2940,
       "lastMessageTimestamp": "2026-04-17T18:17:25.000Z",
       "channelTitle": "𝐑𝐀𝐓𝐄 𝐏𝐀𝐏 𝐆𝐄𝐍 𝐙",
-      "lastCheckedAt": "2026-04-17T23:25:00.107Z"
+      "lastCheckedAt": "2026-04-18T00:41:32.932Z"
     },
     "ometv_S": {
       "channelName": "@ometv_S",
@@ -69,7 +69,7 @@
       "lastMessageId": 1751,
       "lastMessageTimestamp": "2026-04-17T16:06:38.000Z",
       "channelTitle": "OME TV",
-      "lastCheckedAt": "2026-04-17T23:25:01.295Z"
+      "lastCheckedAt": "2026-04-18T00:41:34.106Z"
     },
     "RateMineplease": {
       "channelName": "@RateMineplease",
@@ -88,7 +88,7 @@
       "lastMessageId": 1727,
       "lastMessageTimestamp": "2026-04-17T17:00:34.000Z",
       "channelTitle": "Rate My Pap",
-      "lastCheckedAt": "2026-04-17T23:25:02.479Z"
+      "lastCheckedAt": "2026-04-18T00:41:35.463Z"
     },
     "DYNOCORED2": {
       "channelName": "@DYNOCORED2",
@@ -114,7 +114,7 @@
       "lastMessageId": 242,
       "lastMessageTimestamp": "2026-04-13T17:03:14.000Z",
       "channelTitle": "𝗥𝗘𝗗 𝗗𝗬𝗡𝗢𝗖𝗢 𝟮",
-      "lastCheckedAt": "2026-04-17T23:25:03.673Z"
+      "lastCheckedAt": "2026-04-18T00:41:36.619Z"
     },
     "Asupan_Terbaru_Viral": {
       "channelName": "@Asupan_Terbaru_Viral",
@@ -133,7 +133,7 @@
       "lastMessageId": 1571,
       "lastMessageTimestamp": "2026-04-16T18:27:08.000Z",
       "channelTitle": "𝐌𝐄𝐃𝐈𝐀 𝟗𝟔𝟗",
-      "lastCheckedAt": "2026-04-17T23:25:04.853Z"
+      "lastCheckedAt": "2026-04-18T00:41:37.787Z"
     },
     "ometv_s": {
       "channelName": "@ometv_s",
@@ -197,10 +197,10 @@
           "stopped": false
         }
       ],
-      "lastMessageId": 8161,
-      "lastMessageTimestamp": "2026-04-17T23:17:05.000Z",
+      "lastMessageId": 8165,
+      "lastMessageTimestamp": "2026-04-18T00:38:22.000Z",
       "channelTitle": "PAP RATE AREA",
-      "lastCheckedAt": "2026-04-17T23:25:06.027Z"
+      "lastCheckedAt": "2026-04-18T00:41:38.950Z"
     },
     "-1002064393292": {
       "channelName": -1002064393292,
@@ -209,7 +209,7 @@
       "lastMessageId": 12388,
       "lastMessageTimestamp": "2026-04-17T23:05:06.000Z",
       "channelTitle": "fav",
-      "lastCheckedAt": "2026-04-17T23:25:07.281Z"
+      "lastCheckedAt": "2026-04-18T00:41:40.188Z"
     },
     "jjratearea": {
       "channelName": "@jjratearea",
@@ -218,7 +218,66 @@
       "lastMessageId": 192,
       "lastMessageTimestamp": "2026-04-15T14:58:44.000Z",
       "channelTitle": "JJ RATE AREA",
-      "lastCheckedAt": "2026-04-17T23:25:08.476Z"
+      "lastCheckedAt": "2026-04-18T00:41:41.349Z"
+    },
+    "Lendirgenz": {
+      "channelName": "@Lendirgenz",
+      "channelTitle": "𝐋𝐄𝐍𝐃𝐈𝐑 𝐆𝐄𝐍 𝐙",
+      "lastScrapedId": 1855,
+      "lastScrapedAt": "2026-04-17T23:57:59.943Z",
+      "lastMessageId": 1855,
+      "lastMessageTimestamp": "2026-04-17T23:05:15.000Z",
+      "lastCheckedAt": "2026-04-17T23:57:22.378Z",
+      "totalLinksFound": 24,
+      "totalMessagesScraped": 24,
+      "scrapingSessions": [
+        {
+          "date": "2026-04-17T23:27:48.276Z",
+          "startId": 1843,
+          "endId": 1855,
+          "processed": 12,
+          "linksFound": 12,
+          "noLinks": 0,
+          "deleted": 1,
+          "interactions": 12,
+          "error": null
+        },
+        {
+          "date": "2026-04-17T23:57:59.945Z",
+          "startId": 1843,
+          "endId": 1855,
+          "processed": 12,
+          "linksFound": 12,
+          "noLinks": 0,
+          "deleted": 1,
+          "interactions": 12,
+          "error": null
+        }
+      ]
+    },
+    "topindoratepap": {
+      "channelName": "@topindoratepap",
+      "channelTitle": "Top Indo rate pap",
+      "lastScrapedId": 845,
+      "lastScrapedAt": "2026-04-18T00:41:31.585Z",
+      "lastMessageId": 845,
+      "lastMessageTimestamp": "2026-04-16T14:32:38.000Z",
+      "lastCheckedAt": "2026-04-17T23:59:59.677Z",
+      "totalLinksFound": 803,
+      "totalMessagesScraped": 815,
+      "scrapingSessions": [
+        {
+          "date": "2026-04-18T00:41:31.589Z",
+          "startId": 8,
+          "endId": 845,
+          "processed": 815,
+          "linksFound": 803,
+          "noLinks": 12,
+          "deleted": 23,
+          "interactions": 806,
+          "error": null
+        }
+      ]
     }
   }
 }
