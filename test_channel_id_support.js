@@ -1,59 +1,153 @@
 // Test for new channel ID functionality
 console.log('=== Testing Channel ID Support ===\n');
 
-const { parseChannelInput } = require('./src/domain/services/ScrapingService');
+const { /**
+ *
+ */
+  parseChannelInput,
+} = require('./src/domain/services/ScrapingService');
 
 const testCases = [
   {
+    /**
+     *
+     */
     input: '@username',
+    /**
+     *
+     */
     expected: '@username',
-    description: 'Username with @ prefix'
+    /**
+     *
+     */
+    description: 'Username with @ prefix',
   },
   {
+    /**
+     *
+     */
     input: 'username',
+    /**
+     *
+     */
     expected: '@username',
-    description: 'Username without @ prefix'
+    /**
+     *
+     */
+    description: 'Username without @ prefix',
   },
   {
+    /**
+     *
+     */
     input: 't.me/username',
+    /**
+     *
+     */
     expected: '@username',
-    description: 'Short t.me URL'
+    /**
+     *
+     */
+    description: 'Short t.me URL',
   },
   {
+    /**
+     *
+     */
     input: 'https://t.me/username',
+    /**
+     *
+     */
     expected: '@username',
-    description: 'Full t.me URL'
+    /**
+     *
+     */
+    description: 'Full t.me URL',
   },
   {
+    /**
+     *
+     */
     input: '-1001234567890',
+    /**
+     *
+     */
     expected: -1001234567890,
-    description: 'Channel ID with -100 prefix'
+    /**
+     *
+     */
+    description: 'Channel ID with -100 prefix',
   },
   {
+    /**
+     *
+     */
     input: '1234567890',
+    /**
+     *
+     */
     expected: 1234567890,
-    description: 'Numeric ID without prefix'
+    /**
+     *
+     */
+    description: 'Numeric ID without prefix',
   },
   {
+    /**
+     *
+     */
     input: '-123456789',
+    /**
+     *
+     */
     expected: -123456789,
-    description: 'Negative numeric ID'
+    /**
+     *
+     */
+    description: 'Negative numeric ID',
   },
   {
+    /**
+     *
+     */
     input: '',
+    /**
+     *
+     */
     expected: null,
-    description: 'Empty string'
+    /**
+     *
+     */
+    description: 'Empty string',
   },
   {
+    /**
+     *
+     */
     input: '   ',
+    /**
+     *
+     */
     expected: null,
-    description: 'Only whitespace'
+    /**
+     *
+     */
+    description: 'Only whitespace',
   },
   {
+    /**
+     *
+     */
     input: '  -1001234567890  ',
+    /**
+     *
+     */
     expected: -1001234567890,
-    description: 'Channel ID with surrounding spaces'
-  }
+    /**
+     *
+     */
+    description: 'Channel ID with surrounding spaces',
+  },
 ];
 
 let passed = 0;
@@ -62,7 +156,7 @@ let failed = 0;
 testCases.forEach((test, index) => {
   const result = parseChannelInput(test.input);
   const success = result === test.expected;
-  
+
   if (success) {
     console.log(`✅ Test ${index + 1}: ${test.description}`);
     console.log(`  Input: "${test.input}"`);

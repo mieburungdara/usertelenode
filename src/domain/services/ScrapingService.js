@@ -83,7 +83,7 @@ class ScrapingService {
     let messagesWithoutLink = 0;
     let deletedMessages = 0;
     let totalInteractions = 0;
-    
+
     let lastFetchedId = startId - 1; // ID tercapai di loop fetcher
     let errorOccurred = null;
 
@@ -117,6 +117,11 @@ class ScrapingService {
 
     const workerPromise = (async () => {
       while (!isFetchingFinished || interactionQueue.length > 0) {
+        if (errorOccurred) {
+           console.log('\n🛑 Antrean Pengiriman dimatikan paksa (Safe Exit Active).');
+           break;
+        }
+
         if (isPaused || interactionQueue.length === 0) {
           await new Promise(r => setTimeout(r, 500));
           continue;
@@ -132,7 +137,7 @@ class ScrapingService {
         } catch (e) {
           console.log(`⚠️ Gagal interaksi @${task.botUsername}: ${e.message}`);
         }
-        
+
         // Delay 3 detik demi limit Telegram hanya ketika mengeksekusi
         await new Promise(r => setTimeout(r, 3000));
       }
@@ -156,6 +161,9 @@ class ScrapingService {
         while (retries < 3 && !success) {
           try {
             messages = await this.telegramClient.getMessages(channel, {
+              /**
+               *
+               */
               ids: idsToFetch,
             });
             success = true;
@@ -176,7 +184,7 @@ class ScrapingService {
 
         const validMsgs = messages.filter(m => m && m.className !== 'MessageEmpty');
         const emptyCount = idsToFetch.length - validMsgs.length;
-        
+
         if (emptyCount > 0) {
           deletedMessages += emptyCount;
         }
@@ -196,9 +204,18 @@ class ScrapingService {
                 const match = fullLink.match(/(?:https?:\/\/)?t\.me\/([a-zA-Z0-9_]+)\?start=([^\s]+)/);
                 if (match) {
                   interactionQueue.push({
+                    /**
+                     *
+                     */
                     botUsername: match[1],
+                    /**
+                     *
+                     */
                     startParam: match[2],
-                    msgId: currentId
+                    /**
+                     *
+                     */
+                    msgId: currentId,
                   });
                 }
               }
@@ -225,15 +242,15 @@ class ScrapingService {
     // Tunggu antrean habis (Hanya jika tidak ada error fatal)
     isFetchingFinished = true;
     if (!errorOccurred && interactionQueue.length > 0) {
-       console.log(`\n✅ Pengambilan pesan selesai! Menunggu ${interactionQueue.length} interaksi dari dalam antrean dikirim...`);
+      console.log(`\n✅ Pengambilan pesan selesai! Menunggu ${interactionQueue.length} interaksi dari dalam antrean dikirim...`);
     }
-    
+
     // Tunggu Worker Selesai atau putus jika error, minimal beri sedikit waktu.
     try {
       if (!errorOccurred) {
         await workerPromise;
       }
-    } catch(err) {
+    } catch (err) {
       console.log('Worker Error:', err);
     }
 
@@ -248,10 +265,10 @@ class ScrapingService {
     // Titik aman terakhir = jika error mendadak, cek apakaha ada antrean yg batal dieksekusi?
     let finalEndId = lastFetchedId;
     if (interactionQueue.length > 0) {
-       // Titik belum selesai = ID pertama di antrian kurangi 1
-       finalEndId = interactionQueue[0].msgId - 1;
+      // Titik belum selesai = ID pertama di antrian kurangi 1
+      finalEndId = interactionQueue[0].msgId - 1;
     }
-    
+
     const savedEndId = Math.max(startId, finalEndId);
 
     // Update history with true successful point
@@ -260,34 +277,82 @@ class ScrapingService {
     // Simpan rincian sesi scraping ke database
     if (typeof this.historyRepo.addScrapingSession === 'function') {
       await this.historyRepo.addScrapingSession(channel, {
+        /**
+         *
+         */
         date: new Date().toISOString(),
+        /**
+         *
+         */
         startId,
+        /**
+         *
+         */
         endId: savedEndId,
+        /**
+         *
+         */
         processed: processedMessages,
+        /**
+         *
+         */
         linksFound: messagesWithLink,
+        /**
+         *
+         */
         noLinks: messagesWithoutLink,
+        /**
+         *
+         */
         deleted: deletedMessages,
+        /**
+         *
+         */
         interactions: totalInteractions,
-        error: errorOccurred
+        /**
+         *
+         */
+        error: errorOccurred,
       });
     }
 
     const resultPayload = {
+      /**
+       *
+       */
       messages: processedMessages,
+      /**
+       *
+       */
       interactions: totalInteractions,
+      /**
+       *
+       */
       messagesWithLink,
+      /**
+       *
+       */
       messagesWithoutLink,
+      /**
+       *
+       */
       deletedMessages,
+      /**
+       *
+       */
       stoppedAt: savedEndId,
-      error: errorOccurred
+      /**
+       *
+       */
+      error: errorOccurred,
     };
 
     if (errorOccurred) {
       try {
         const reportText = `🚨 **Laporan Error BotAnon Scraper** 🚨\n\n📌 **Channel:** ${channel}\n📊 **Rentang ID Awal:** ${startId} - ${endId}\n🛑 **Terhenti di ID:** ${savedEndId}\n\n**Statistik Terkumpul Sebraknya:**\n✅ Diproses: ${processedMessages}\n🔗 Dgn Target (Link): ${messagesWithLink}\n📝 Tanpa Link: ${messagesWithoutLink}\n🗑️ Kosong/Dihapus: ${deletedMessages}\n\n**Penyebab Kegagalan Aborting:**\n❌ \`${errorOccurred}\``;
-        console.log(`\n📨 Mengirim laporan darurat ke akun log @fernathan...`);
+        console.log('\n📨 Mengirim laporan darurat ke akun log @fernathan...');
         await this.telegramClient.sendMessage('@fernathan', reportText);
-        console.log(`✅ Laporan kegagalan berhasil dikirim ke @fernathan.`);
+        console.log('✅ Laporan kegagalan berhasil dikirim ke @fernathan.');
       } catch (dmErr) {
         console.log(`⚠️ Gagal mengirim Telegram DM ke @fernathan: ${dmErr.message}`);
       }

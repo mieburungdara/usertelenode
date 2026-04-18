@@ -19,18 +19,49 @@ try {
 
 // Buat readline interface
 const rl = {
+  /**
+   *
+   * @param query
+   */
   question: (query) => readlineSync.question(query),
-  close: () => {}
+  /**
+   *
+   */
+  close: () => {},
 };
 
 // Import new modular modules
 const Config = require('./src/infrastructure/Config');
-const { FileStorageAdapter } = require('./src/infrastructure/adapters/FileStorageAdapter');
-const { TelegramClientAdapter } = require('./src/infrastructure/adapters/TelegramClientAdapter');
-const { AccountRepository } = require('./src/infrastructure/repositories/AccountRepository');
-const { ScrapingHistoryRepository } = require('./src/infrastructure/repositories/ScrapingHistoryRepository');
-const { ScrapingService } = require('./src/domain/services/ScrapingService');
-const { ReplyService } = require('./src/domain/services/ReplyService');
+const { /**
+ *
+ */
+  FileStorageAdapter,
+} = require('./src/infrastructure/adapters/FileStorageAdapter');
+const { /**
+ *
+ */
+  TelegramClientAdapter,
+} = require('./src/infrastructure/adapters/TelegramClientAdapter');
+const { /**
+ *
+ */
+  AccountRepository,
+} = require('./src/infrastructure/repositories/AccountRepository');
+const { /**
+ *
+ */
+  ScrapingHistoryRepository,
+} = require('./src/infrastructure/repositories/ScrapingHistoryRepository');
+const { /**
+ *
+ */
+  ScrapingService,
+} = require('./src/domain/services/ScrapingService');
+const { /**
+ *
+ */
+  ReplyService,
+} = require('./src/domain/services/ReplyService');
 const BotInteractionService = require('./src/domain/services/BotInteractionService');
 const RunDeepLinkScraperUseCase = require('./src/application/useCases/RunDeepLinkScraperUseCase');
 const ConsoleUI = require('./src/presentation/ConsoleUI');
@@ -48,7 +79,23 @@ const historyRepo = new ScrapingHistoryRepository(storage);
 let addAccount, listAccounts, selectAccount, deleteAccount, loadClient;
 let setupAutoReply, deepLinkScraper;
 try {
-  ({ addAccount, listAccounts, selectAccount, deleteAccount, loadClient } = require('./utils/accountManager'));
+  ({ /**
+   *
+   */
+    addAccount, /**
+   *
+   */
+    listAccounts, /**
+   *
+   */
+    selectAccount, /**
+   *
+   */
+    deleteAccount, /**
+   *
+   */
+    loadClient,
+  } = require('./utils/accountManager'));
   setupAutoReply = require('./handlers/autoReply');
   deepLinkScraper = require('./handlers/deepLinkScraper');
 } catch (e) {
@@ -57,11 +104,16 @@ try {
 }
 
 // Helper: Timeout wrapper for disconnect
-async function disconnectWithTimeout(client, timeoutMs = 5000) {
+/**
+ *
+ * @param client
+ * @param timeoutMs
+ */
+async function disconnectWithTimeout (client, timeoutMs = 5000) {
   try {
     await Promise.race([
       client.disconnect(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), timeoutMs)),
     ]);
   } catch (e) {
     // Silently ignore disconnect errors (including timeout)
@@ -69,7 +121,10 @@ async function disconnectWithTimeout(client, timeoutMs = 5000) {
 }
 
 // Tampilkan header
-function printHeader() {
+/**
+ *
+ */
+function printHeader () {
   try { console.clear(); } catch (e) { /* ignore unsupported terminals */ }
   console.log('╔══════════════════════════════════════════╗');
   console.log('║     🤖 UserTeleNode - User Bot Telegram  ║');
@@ -79,7 +134,10 @@ function printHeader() {
 }
 
 // Tampilkan menu utama
-function printMainMenu() {
+/**
+ *
+ */
+function printMainMenu () {
   console.log('📋 Menu Utama:');
   console.log('─'.repeat(40));
   console.log('  1. 🤖 Auto Reply Mode');
@@ -91,16 +149,21 @@ function printMainMenu() {
 }
 
 // Safe exit handler - creates isolated handler per mode execution
-function createSafeExitHandler(client, cleanupFn) {
+/**
+ *
+ * @param client
+ * @param cleanupFn
+ */
+function createSafeExitHandler (client, cleanupFn) {
   let isRunning = true;
-  
+
   const handler = async () => {
-    if (!isRunning) return;
+    if (!isRunning) { return; }
     isRunning = false;
-    
+
     console.log('\n\n⚠️  Menerima sinyal berhenti...');
     console.log('👋 Menutup koneksi...');
-    
+
     // Call cleanup if provided
     if (cleanupFn) {
       try {
@@ -109,7 +172,7 @@ function createSafeExitHandler(client, cleanupFn) {
         console.warn('⚠️  Error during cleanup:', e.message);
       }
     }
-    
+
     try {
       if (client) {
         await disconnectWithTimeout(client, 5000);
@@ -117,16 +180,19 @@ function createSafeExitHandler(client, cleanupFn) {
     } catch (e) {
       // Ignore disconnect errors
     }
-    
+
     console.log('✅ Bot berhenti dengan aman.');
     process.exit(0);
   };
-  
+
   return handler;
 }
 
 // Mode 1: Auto Reply
-async function runAutoReplyMode() {
+/**
+ *
+ */
+async function runAutoReplyMode () {
   const account = selectAccount(rl);
   if (!account) {
     rl.question('\nTekan Enter untuk kembali ke menu utama...');
@@ -156,7 +222,6 @@ async function runAutoReplyMode() {
 
     // Block execution until process exits
     await new Promise(() => {});
-
   } catch (error) {
     console.error('❌ Gagal menghubungkan client:', error.message);
     if (cleanupAutoReply) {
@@ -166,12 +231,14 @@ async function runAutoReplyMode() {
       await disconnectWithTimeout(client, 5000);
     }
     rl.question('\nTekan Enter untuk kembali ke menu utama...');
-    return;
   }
 }
 
 // Mode 2: Deep Link Scraper
-async function runDeepLinkScraper() {
+/**
+ *
+ */
+async function runDeepLinkScraper () {
   // Use new modular architecture
   const account = selectAccount(rl);
   if (!account) {
@@ -198,7 +265,6 @@ async function runDeepLinkScraper() {
 
     await disconnectWithTimeout(client, 5000);
     rl.question('\nTekan Enter untuk kembali ke menu utama...');
-
   } catch (error) {
     console.error('❌ Error:', error.message);
     if (client) {
@@ -209,7 +275,10 @@ async function runDeepLinkScraper() {
 }
 
 // Mode 3: Tambah Akun
-async function runAddAccount() {
+/**
+ *
+ */
+async function runAddAccount () {
   try {
     await addAccount();
   } catch (error) {
@@ -219,7 +288,10 @@ async function runAddAccount() {
 }
 
 // Mode 4: Hapus Akun
-function runDeleteAccount() {
+/**
+ *
+ */
+function runDeleteAccount () {
   try {
     deleteAccount(rl);
   } catch (error) {
@@ -229,7 +301,10 @@ function runDeleteAccount() {
 }
 
 // Main function - iterative loop instead of recursion
-async function main() {
+/**
+ *
+ */
+async function main () {
   while (true) {
     printHeader();
     printMainMenu();
@@ -243,28 +318,28 @@ async function main() {
     const choice = choiceInput.trim();
 
     switch (choice) {
-      case '1':
-        await runAutoReplyMode();
-        break;
-      case '2':
-        await runDeepLinkScraper();
-        break;
-      case '3':
-        await runAddAccount();
-        // Continue to next iteration (menu restart)
-        break;
-      case '4':
-        runDeleteAccount();
-        // Continue to next iteration
-        break;
-      case '5':
-        console.log('\n👋 Terima kasih telah menggunakan UserTeleNode!');
-        process.exit(0);
-        break;
-      default:
-        console.log('\n❌ Pilihan tidak valid.');
-        rl.question('\nTekan Enter untuk mencoba lagi...');
-        break;
+    case '1':
+      await runAutoReplyMode();
+      break;
+    case '2':
+      await runDeepLinkScraper();
+      break;
+    case '3':
+      await runAddAccount();
+      // Continue to next iteration (menu restart)
+      break;
+    case '4':
+      runDeleteAccount();
+      // Continue to next iteration
+      break;
+    case '5':
+      console.log('\n👋 Terima kasih telah menggunakan UserTeleNode!');
+      process.exit(0);
+      break;
+    default:
+      console.log('\n❌ Pilihan tidak valid.');
+      rl.question('\nTekan Enter untuk mencoba lagi...');
+      break;
     }
   }
 }

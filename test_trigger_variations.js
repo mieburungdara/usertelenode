@@ -11,28 +11,28 @@ const testVariations = [
   'Partner found 😺',
   'Partner found 🐱',
   'Partner found 🐈',
-  
+
   // Without emoji
   'Partner found',
   'partner found',
   'Partner found ',
   ' partner found ',
-  
+
   // Punctuation variations
   'Partner found!',
   'Partner found.',
   'Partner found',
-  
+
   // Spacing variations
   'Partner  found',
   'Partner   found',
   'Partner\tfound',
-  
+
   // Different capitalizations
   'PARTNER FOUND',
   'Partner Found',
   'pArTnEr fOuNd',
-  
+
   // Unicode space variations
   'Partner\u00A0found', // non-breaking space
   'Partner\u200Bfound', // zero-width space
@@ -50,9 +50,9 @@ testVariations.forEach((test, idx) => {
   const normalizedTest = test.trim().normalize('NFC');
   const strictMatch = test === config.TRIGGER_MESSAGE;
   const normalizedMatch = normalizedTest === normalizedTrigger;
-  
-  if (normalizedMatch) matchCount++;
-  
+
+  if (normalizedMatch) { matchCount++; }
+
   console.log(`Test ${idx + 1}: "${test}"`);
   console.log(`  Normalized: "${normalizedTest}"`);
   console.log(`  Strict match: ${strictMatch}`);

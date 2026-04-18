@@ -1,9 +1,13 @@
-function parseChannelInput(input) {
-  if (!input) return null;
+/**
+ *
+ * @param input
+ */
+function parseChannelInput (input) {
+  if (!input) { return null; }
 
   let cleaned = String(input).trim();
 
-  if (!cleaned) return null;
+  if (!cleaned) { return null; }
 
   // Handle t.me URLs
   if (cleaned.includes('t.me/')) {
@@ -17,7 +21,7 @@ function parseChannelInput(input) {
     cleaned = cleaned.trim();
   }
 
-  if (!cleaned) return null;
+  if (!cleaned) { return null; }
 
   // Check if it's a numeric channel ID (all digits with optional - prefix)
   const isNumericId = /^-?\d+$/.test(cleaned);
@@ -33,7 +37,12 @@ function parseChannelInput(input) {
   return cleaned;
 }
 
-async function deepLinkScraper(client, rl) {
+/**
+ *
+ * @param client
+ * @param rl
+ */
+async function deepLinkScraper (client, rl) {
   console.log('🔗 Mode Deep Link Scraper');
   console.log('─'.repeat(40));
 
@@ -42,7 +51,6 @@ async function deepLinkScraper(client, rl) {
   console.log('Scraping completed. Report generation placeholder.');
 
   rl.question('\nTekan Enter untuk kembali ke menu utama...');
-  return;
 }
 
 module.exports = deepLinkScraper;

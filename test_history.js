@@ -1,4 +1,8 @@
-const { updateHistory } = require('./utils/scrapingHistory');
+const { /**
+ *
+ */
+  updateHistory,
+} = require('./utils/scrapingHistory');
 
 // Test the history functionality
 console.log('Testing history module...');

@@ -23,12 +23,12 @@ for (let i = 0; i < trigger.length; i++) {
 
 // Test variations that might come from Telegram
 const testVariations = [
-  config.TRIGGER_MESSAGE,                    // Original
-  config.TRIGGER_MESSAGE.trim(),             // Trimmed
-  'Partner found 😺',                         // Plain copy
-  'Partner found 😺',                        // Different source
-  'Partner found \u{1F63A}',                 // Using Unicode escape
-  `Partner found ${'😺'}`,                    // Template literal
+  config.TRIGGER_MESSAGE, // Original
+  config.TRIGGER_MESSAGE.trim(), // Trimmed
+  'Partner found 😺', // Plain copy
+  'Partner found 😺', // Different source
+  'Partner found \u{1F63A}', // Using Unicode escape
+  `Partner found ${'😺'}`, // Template literal
 ];
 
 console.log('\n--- Testing various representations ---\n');
@@ -38,7 +38,7 @@ testVariations.forEach((test, idx) => {
   const normalizedTrigger = config.TRIGGER_MESSAGE.trim().normalize('NFC');
   const exactMatch = test === config.TRIGGER_MESSAGE;
   const normalizedMatch = normalizedTest === normalizedTrigger;
-  
+
   console.log(`Variation ${idx + 1}: "${test}"`);
   console.log(`  Trimmed: "${test.trim()}"`);
   console.log(`  Length: ${test.length} (trimmed: ${test.trim().length})`);
@@ -70,7 +70,7 @@ const sampleInputs = [
   'Partner found 😺\r\n',
   'Partner found 😺 ',
   ' Partner found 😺',
-  'Partner  found 😺',  // double space
+  'Partner  found 😺', // double space
 ];
 
 sampleInputs.forEach((input, idx) => {

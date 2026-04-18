@@ -8,7 +8,12 @@ const loadingMessage = document.getElementById('loadingMessage');
 
 const controls = [refreshAccounts, refreshHistory, addAccountForm];
 
-async function fetchJson(url, options = {}) {
+/**
+ *
+ * @param url
+ * @param options
+ */
+async function fetchJson (url, options = {}) {
   const response = await fetch(url, options);
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
@@ -17,7 +22,11 @@ async function fetchJson(url, options = {}) {
   return response.json();
 }
 
-function renderAccounts(accounts) {
+/**
+ *
+ * @param accounts
+ */
+function renderAccounts (accounts) {
   accountsList.innerHTML = '';
   if (!accounts.length) {
     accountsList.innerHTML = '<div class="item">Belum ada akun terdaftar.</div>';
@@ -39,7 +48,11 @@ function renderAccounts(accounts) {
   });
 }
 
-function renderHistory(channels) {
+/**
+ *
+ * @param channels
+ */
+function renderHistory (channels) {
   historyList.innerHTML = '';
   if (!channels.length) {
     historyList.innerHTML = '<div class="item">Belum ada history scraping.</div>';
@@ -64,7 +77,12 @@ function renderHistory(channels) {
   });
 }
 
-function setLoading(isLoading, message = 'Loading...') {
+/**
+ *
+ * @param isLoading
+ * @param message
+ */
+function setLoading (isLoading, message = 'Loading...') {
   loadingMessage.textContent = message;
   if (isLoading) {
     loadingOverlay.classList.remove('hidden');
@@ -87,7 +105,10 @@ function setLoading(isLoading, message = 'Loading...') {
   });
 }
 
-async function loadAccounts() {
+/**
+ *
+ */
+async function loadAccounts () {
   setLoading(true, 'Muat akun...');
   try {
     const result = await fetchJson('/api/accounts');
@@ -99,7 +120,10 @@ async function loadAccounts() {
   }
 }
 
-async function loadHistory() {
+/**
+ *
+ */
+async function loadHistory () {
   setLoading(true, 'Muat history...');
   try {
     const result = await fetchJson('/api/history');
@@ -111,22 +135,38 @@ async function loadHistory() {
   }
 }
 
-async function deleteAccount(accountId) {
+/**
+ *
+ * @param accountId
+ */
+async function deleteAccount (accountId) {
   try {
-    await fetchJson(`/api/accounts/${encodeURIComponent(accountId)}`, { method: 'DELETE' });
+    await fetchJson(`/api/accounts/${encodeURIComponent(accountId)}`, { /**
+     *
+     */
+      method: 'DELETE',
+    });
     loadAccounts();
   } catch (error) {
     alert(error.message);
   }
 }
 
-async function deleteHistory(channelKey) {
+/**
+ *
+ * @param channelKey
+ */
+async function deleteHistory (channelKey) {
   if (!confirm('Yakin ingin menghapus history channel ini?')) {
     return;
   }
   setLoading(true, 'Menghapus history...');
   try {
-    const result = await fetchJson(`/api/history/${encodeURIComponent(channelKey)}`, { method: 'DELETE' });
+    const result = await fetchJson(`/api/history/${encodeURIComponent(channelKey)}`, { /**
+     *
+     */
+      method: 'DELETE',
+    });
     renderHistory(result.channels);
   } catch (error) {
     alert(error.message);
@@ -142,9 +182,22 @@ addAccountForm.addEventListener('submit', async (event) => {
 
   try {
     await fetchJson('/api/accounts', {
+      /**
+       *
+       */
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      /**
+       *
+       */
+      headers: { /**
+       *
+       */
+        'Content-Type': 'application/json',
+      },
+      /**
+       *
+       */
+      body: JSON.stringify(payload),
     });
     addAccountForm.reset();
     loadAccounts();

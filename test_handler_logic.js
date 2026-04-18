@@ -6,15 +6,19 @@ const config = require('./config');
 console.log('=== Testing Handler Logic ===\n');
 
 // The three matching strategies from autoReply.js
-function testTriggerMatch(messageText) {
+/**
+ *
+ * @param messageText
+ */
+function testTriggerMatch (messageText) {
   if (config.TRIGGER_MESSAGE && typeof messageText === 'string') {
     const normalizedMessage = messageText.trim().normalize('NFC');
     const normalizedTrigger = config.TRIGGER_MESSAGE.trim().normalize('NFC');
-    
+
     // Strategy 1: Exact normalized match
     let triggerDetected = normalizedMessage === normalizedTrigger;
     let strategy = 'none';
-    
+
     // Strategy 2: Emoji-agnostic matching
     if (!triggerDetected) {
       const baseTrigger = normalizedTrigger.replace(/[\u{10000}-\u{10FFFF}]/gu, '').trim();
@@ -22,7 +26,7 @@ function testTriggerMatch(messageText) {
       triggerDetected = messageBase === baseTrigger;
       strategy = 'emoji-agnostic';
     }
-    
+
     // Strategy 3: Case-insensitive and emoji-insensitive
     if (!triggerDetected) {
       const messageLower = normalizedMessage.toLowerCase();
@@ -32,20 +36,34 @@ function testTriggerMatch(messageText) {
       triggerDetected = messageAlpha === triggerAlpha;
       strategy = 'case+emoji-insensitive';
     }
-    
-    return { matched: triggerDetected, strategy };
+
+    return { /**
+     *
+     */
+      matched: triggerDetected, /**
+     *
+     */
+      strategy,
+    };
   }
-  return { matched: false, strategy: 'none' };
+  return { /**
+   *
+   */
+    matched: false, /**
+   *
+   */
+    strategy: 'none',
+  };
 }
 
 // Test cases that the bot might actually send
 const testCases = [
-  'Partner found 😺',      // With emoji (original)
-  'Partner found',         // Without emoji - most likely
-  'partner found',         // lowercase
-  'Partner found!',        // With punctuation
-  'Partner found.',        // With period
-  'Partner found',         // Clean text
+  'Partner found 😺', // With emoji (original)
+  'Partner found', // Without emoji - most likely
+  'partner found', // lowercase
+  'Partner found!', // With punctuation
+  'Partner found.', // With period
+  'Partner found', // Clean text
 ];
 
 console.log(`Config trigger: "${config.TRIGGER_MESSAGE}"`);

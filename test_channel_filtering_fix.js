@@ -1,15 +1,54 @@
 // Test to verify the channelName.trim() fix
-const { parseChannelInput } = require('./src/domain/services/ScrapingService');
+const { /**
+ *
+ */
+  parseChannelInput,
+} = require('./src/domain/services/ScrapingService');
 
 console.log('=== Testing Fixed Channel Filtering ===\n');
 
 // Simulate mixed channel list (string + numeric ID)
 const testChannels = [
-  { channelName: '@test1', lastScrapedId: 100 },
-  { channelName: -1001234567890, lastScrapedId: 200 },
-  { channelName: '@test1', lastScrapedId: 150 }, // duplicate string
-  { channelName: -1001234567890, lastScrapedId: 250 }, // duplicate numeric
-  { channelName: '@test2', lastScrapedId: 300 },
+  { /**
+   *
+   */
+    channelName: '@test1', /**
+   *
+   */
+    lastScrapedId: 100,
+  },
+  { /**
+   *
+   */
+    channelName: -1001234567890, /**
+   *
+   */
+    lastScrapedId: 200,
+  },
+  { /**
+   *
+   */
+    channelName: '@test1', /**
+   *
+   */
+    lastScrapedId: 150,
+  }, // duplicate string
+  { /**
+   *
+   */
+    channelName: -1001234567890, /**
+   *
+   */
+    lastScrapedId: 250,
+  }, // duplicate numeric
+  { /**
+   *
+   */
+    channelName: '@test2', /**
+   *
+   */
+    lastScrapedId: 300,
+  },
 ];
 
 console.log('Test channels:');

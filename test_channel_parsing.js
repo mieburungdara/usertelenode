@@ -8,24 +8,144 @@ console.log('=== Testing Channel Input Parsing ===\n');
 // Test cases for parseChannelInput
 const testCases = [
   // Username formats
-  { input: 'contohchannel', expected: '@contohchannel', note: 'Plain username' },
-  { input: '@contohchannel', expected: '@contohchannel', note: 'Username with @' },
-  { input: '  contohchannel  ', expected: '@contohchannel', note: 'Username with spaces (trimmed)' },
-  
+  { /**
+   *
+   */
+    input: 'contohchannel', /**
+   *
+   */
+    expected: '@contohchannel', /**
+   *
+   */
+    note: 'Plain username',
+  },
+  { /**
+   *
+   */
+    input: '@contohchannel', /**
+   *
+   */
+    expected: '@contohchannel', /**
+   *
+   */
+    note: 'Username with @',
+  },
+  { /**
+   *
+   */
+    input: '  contohchannel  ', /**
+   *
+   */
+    expected: '@contohchannel', /**
+   *
+   */
+    note: 'Username with spaces (trimmed)',
+  },
+
   // Numeric channel ID formats
-  { input: '-1002558528880', expected: -1002558528880, note: 'Numeric channel ID with -100 prefix' },
-  { input: '2558528880', expected: 2558528880, note: 'Numeric ID without prefix' },
-  { input: '-123456789', expected: -123456789, note: 'Negative numeric ID' },
-  
+  { /**
+   *
+   */
+    input: '-1002558528880', /**
+   *
+   */
+    expected: -1002558528880, /**
+   *
+   */
+    note: 'Numeric channel ID with -100 prefix',
+  },
+  { /**
+   *
+   */
+    input: '2558528880', /**
+   *
+   */
+    expected: 2558528880, /**
+   *
+   */
+    note: 'Numeric ID without prefix',
+  },
+  { /**
+   *
+   */
+    input: '-123456789', /**
+   *
+   */
+    expected: -123456789, /**
+   *
+   */
+    note: 'Negative numeric ID',
+  },
+
   // URL formats
-  { input: 'https://t.me/contohchannel', expected: '@contohchannel', note: 'Full t.me URL' },
-  { input: 't.me/contohchannel', expected: '@contohchannel', note: 'Short t.me URL' },
-  { input: 'http://t.me/contohchannel', expected: '@contohchannel', note: 'HTTP t.me URL' },
-  
+  { /**
+   *
+   */
+    input: 'https://t.me/contohchannel', /**
+   *
+   */
+    expected: '@contohchannel', /**
+   *
+   */
+    note: 'Full t.me URL',
+  },
+  { /**
+   *
+   */
+    input: 't.me/contohchannel', /**
+   *
+   */
+    expected: '@contohchannel', /**
+   *
+   */
+    note: 'Short t.me URL',
+  },
+  { /**
+   *
+   */
+    input: 'http://t.me/contohchannel', /**
+   *
+   */
+    expected: '@contohchannel', /**
+   *
+   */
+    note: 'HTTP t.me URL',
+  },
+
   // Edge cases
-  { input: '', expected: null, note: 'Empty string' },
-  { input: '   ', expected: null, note: 'Only whitespace' },
-  { input: '@', expected: '@', note: 'Only @ symbol' },
+  { /**
+   *
+   */
+    input: '', /**
+   *
+   */
+    expected: null, /**
+   *
+   */
+    note: 'Empty string',
+  },
+  { /**
+   *
+   */
+    input: '   ', /**
+   *
+   */
+    expected: null, /**
+   *
+   */
+    note: 'Only whitespace',
+  },
+  { /**
+   *
+   */
+    input: '@', /**
+   *
+   */
+    expected: '@', /**
+   *
+   */
+    note: 'Only @ symbol',
+  },
 ];
 
 console.log('Testing parseChannelInput function:\n');
@@ -35,13 +155,12 @@ let failed = 0;
 
 testCases.forEach((test, idx) => {
   const result = deepLinkScraper.parseChannelInput(test.input);
-  
+
   // For numeric comparison, use strict equality
   const success = result === test.expected;
-  
-  if (success) passed++;
-  else failed++;
-  
+
+  if (success) { passed++; } else { failed++; }
+
   console.log(`Test ${idx + 1}: ${success ? '✅' : '❌'} ${test.note}`);
   console.log(`  Input: "${test.input}"`);
   console.log(`  Expected: ${JSON.stringify(test.expected)}`);
@@ -65,4 +184,14 @@ if (failed === 0) {
   console.log('\n❌ Some tests FAILED - review parsing logic');
 }
 
-module.exports = { testCases, passed, failed };
+module.exports = { /**
+ *
+ */
+  testCases, /**
+ *
+ */
+  passed, /**
+ *
+ */
+  failed,
+};

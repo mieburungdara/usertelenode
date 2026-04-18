@@ -35,13 +35,40 @@ if (minDelay > maxDelay) {
 }
 
 module.exports = {
+  /**
+   *
+   */
   API_ID: apiId,
+  /**
+   *
+   */
   API_HASH: apiHash,
+  /**
+   *
+   */
   TARGET_BOT_ID: targetBotId,
+  /**
+   *
+   */
   TRIGGER_MESSAGE: String(process.env.TRIGGER_MESSAGE || 'Partner found 😺'),
+  /**
+   *
+   */
   AUTO_REPLY_MESSAGE: String(process.env.AUTO_REPLY_MESSAGE || 'cowok'),
+  /**
+   *
+   */
   ACCOUNTS_FILE: String(process.env.ACCOUNTS_FILE || './accounts.json'),
+  /**
+   *
+   */
   REPORT_FILE: String(process.env.REPORT_FILE || './report.md'),
+  /**
+   *
+   */
   MIN_DELAY: minDelay,
-  MAX_DELAY: maxDelay
+  /**
+   *
+   */
+  MAX_DELAY: maxDelay,
 };

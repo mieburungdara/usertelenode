@@ -7,16 +7,34 @@ console.log('=== Testing Random Reply Selection ===\n');
 
 // Mock rule with array of replies
 const mockRuleWithArray = {
+  /**
+   *
+   */
   name: 'test_rule',
+  /**
+   *
+   */
   triggers: ['test'],
-  reply: ['option1', 'option2', 'option3', 'option4', 'option5']
+  /**
+   *
+   */
+  reply: ['option1', 'option2', 'option3', 'option4', 'option5'],
 };
 
 // Mock rule with single string (backward compatibility)
 const mockRuleWithString = {
+  /**
+   *
+   */
   name: 'test_rule_single',
+  /**
+   *
+   */
   triggers: ['test'],
-  reply: 'single reply'
+  /**
+   *
+   */
+  reply: 'single reply',
 };
 
 // Test 1: Array selection
@@ -47,8 +65,16 @@ console.log(`Matches expected: ${singleResult === 'single reply' ? '✅ YES' : '
 // Test 3: Edge cases
 console.log('Test 3: Edge cases');
 
-const emptyRule = { reply: [] };
-const nullRule = { reply: null };
+const emptyRule = { /**
+ *
+ */
+  reply: [],
+};
+const nullRule = { /**
+ *
+ */
+  reply: null,
+};
 const undefinedRule = {};
 
 console.log(`Empty array: ${handlers.getRandomReply(emptyRule) === null ? '✅ returns null' : '❌ unexpected'}`);
@@ -74,8 +100,8 @@ Object.entries(distribution).forEach(([option, count]) => {
 
 // Check if distribution is reasonably uniform (within 50% of expected)
 const expected = sampleSize / mockRuleWithArray.reply.length;
-const allWithinRange = Object.values(distribution).every(count => 
-  count >= expected * 0.5 && count <= expected * 1.5
+const allWithinRange = Object.values(distribution).every(count =>
+  count >= expected * 0.5 && count <= expected * 1.5,
 );
 console.log(`Distribution roughly uniform: ${allWithinRange ? '✅ YES' : '⚠️  Acceptable variance'}\n`);
 
@@ -89,4 +115,14 @@ console.log('\nUsage in autoreply.json:');
 console.log('  "reply": ["option1", "option2", "option3"]  // Random selection');
 console.log('  "reply": "single text"                      // Single reply (old format)');
 
-module.exports = { mockRuleWithArray, mockRuleWithString, distribution };
+module.exports = { /**
+ *
+ */
+  mockRuleWithArray, /**
+ *
+ */
+  mockRuleWithString, /**
+ *
+ */
+  distribution,
+};
