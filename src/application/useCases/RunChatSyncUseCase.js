@@ -1,4 +1,6 @@
 // src/application/useCases/RunChatSyncUseCase.js
+const ChatSync = require('../../domain/entities/ChatSync');
+
 class RunChatSyncUseCase {
   constructor(chatSyncService, configService, historyRepository, sourceRepository = null, ui = null) {
     this.chatSyncService = chatSyncService;
@@ -26,7 +28,7 @@ class RunChatSyncUseCase {
 
   async executeWithConfig(config) {
     // Validate configuration
-    if (!config.sourceChatId || !config.targetChatId) {
+    if (!config?.sourceChatId || !config?.targetChatId) {
       throw new Error('Source chat ID and target chat ID are required');
     }
 
@@ -38,7 +40,7 @@ class RunChatSyncUseCase {
       config.targetChatTitle
     );
 
-    const chatSync = new (require('../../domain/entities/ChatSync'))(
+    const chatSync = new ChatSync(
       config.sourceChatId,
       config.targetChatId,
       config

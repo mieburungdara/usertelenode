@@ -9,6 +9,8 @@ class BotInteractionService {
    */
   constructor (telegramClient) {
     this.telegramClient = telegramClient;
+    this.lastInteractionTimestamps = new Map();
+    this.MIN_INTERACTION_DELAY_MS = 2500; // Minimal 2.5 detik antar bot
   }
 
   /**
@@ -19,53 +21,54 @@ class BotInteractionService {
    */
   async interactWithBot (botUsername, startParam) {
     try {
-      const chat = await this.telegramClient.getEntity(`@${botUsername}`);
+      // Normalize bot username (hindari double @)
+      const normalizedBotUsername = botUsername.replace(/^@+/, '');
+      
+      // Rate limiting per bot
+      const now = Date.now();
+      const lastInteraction = this.lastInteractionTimestamps.get(normalizedBotUsername) || 0;
+      
+      if (now - lastInteraction < this.MIN_INTERACTION_DELAY_MS) {
+        console.log(`⏳ Rate limit aktif untuk @${normalizedBotUsername}, lewati interaksi`);
+        return {
+          success: false,
+          botUsername: normalizedBotUsername,
+          startParam,
+          error: 'Rate limited'
+        };
+      }
+      
+      this.lastInteractionTimestamps.set(normalizedBotUsername, now);
 
-      // Kirim pesan tanpa await (fire-and-forget) dan tangkap error agar tidak crash
-      this.telegramClient.sendMessage(chat, `/start ${startParam}`)
-        .then(() => console.log(`✅ Sent /start ${startParam} to @${botUsername}`))
-        .catch(err => {
-          if (err?.message?.includes('TIMEOUT')) {
-            console.log(`⏱️ Timeout pengiriman link @${botUsername} (diabaikan)`);
-          } else {
-            console.log(`❌ Error Background pengiriman ke @${botUsername}: ${err.message}`);
+      // Bersihkan timestamp yang sudah tua setiap 100 entri (prevent memory leak)
+      if (this.lastInteractionTimestamps.size > 100) {
+        const oneMinuteAgo = now - 60000;
+        for (const [key, timestamp] of this.lastInteractionTimestamps.entries()) {
+          if (timestamp < oneMinuteAgo) {
+            this.lastInteractionTimestamps.delete(key);
           }
-        });
+        }
+      }
 
-      // Kembalikan sukses seketika karena kita tidak menunggu balasan
+      const chat = await this.telegramClient.getEntity(`@${normalizedBotUsername}`);
+
+      // Wait for message to be actually sent (NO fire-and-forget!)
+      // Fire-and-forget causes memory leak and unhandled rejection
+      await this.telegramClient.sendMessage(chat, `/start ${startParam}`);
+      console.log(`✅ Sent /start ${startParam} to @${normalizedBotUsername}`);
 
       return {
-        /**
-         *
-         */
         success: true,
-        /**
-         *
-         */
-        botUsername,
-        /**
-         *
-         */
+        botUsername: normalizedBotUsername,
         startParam,
       };
     } catch (error) {
-      console.log(`❌ Failed to interact with @${botUsername}: ${error.message}`);
+      const normalizedBotUsername = botUsername?.replace?.(/^@+/, '') || botUsername;
+      console.log(`❌ Failed to interact with @${normalizedBotUsername}: ${error.message}`);
       return {
-        /**
-         *
-         */
         success: false,
-        /**
-         *
-         */
-        botUsername,
-        /**
-         *
-         */
+        botUsername: normalizedBotUsername,
         startParam,
-        /**
-         *
-         */
         error: error.message,
       };
     }

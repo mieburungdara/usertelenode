@@ -1,4 +1,7 @@
 // src/infrastructure/Config.js
+const fs = require('fs');
+const path = require('path');
+
 /**
  * @file Infrastructure layer untuk konfigurasi aplikasi
  * @description Kelas untuk mengelola konfigurasi aplikasi dari environment variables dan file config
@@ -38,16 +41,17 @@ class Config {
 
     try {
       // Try to load from config file if it exists
-      const fs = require('fs');
-      const path = require('path');
       const configPath = path.join(process.cwd(), 'data', 'chat_sync_config.json');
 
       if (fs.existsSync(configPath)) {
-        const fileConfig = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-        return { ...defaultConfig, ...fileConfig };
+        const fileContent = fs.readFileSync(configPath, 'utf8');
+        if (fileContent && fileContent.trim()) {
+          const fileConfig = JSON.parse(fileContent);
+          return { ...defaultConfig, ...fileConfig };
+        }
       }
     } catch (error) {
-      console.warn('Warning: Could not load chat sync config file, using defaults');
+      console.warn('Warning: Could not load chat sync config file, using defaults:', error.message);
     }
 
     return defaultConfig;
@@ -58,9 +62,11 @@ class Config {
    * @param {Object} config - Configuration object to save
    */
   saveChatSyncConfig(config) {
+    if (!config || typeof config !== 'object') {
+      throw new Error('Config must be a valid object');
+    }
+    
     try {
-      const fs = require('fs');
-      const path = require('path');
       const configDir = path.join(process.cwd(), 'data');
 
       // Ensure data directory exists
@@ -69,7 +75,7 @@ class Config {
       }
 
       const configPath = path.join(configDir, 'chat_sync_config.json');
-      fs.writeFileSync(configPath, JSON.stringify(config, null, 2));
+      fs.writeFileSync(configPath, JSON.stringify(config, null, 2), 'utf8');
     } catch (error) {
       console.error('Error saving chat sync config:', error.message);
       throw error;
