@@ -12,51 +12,31 @@ function extractDeepLinks (text) {
 
   // Pattern untuk mencocokkan Telegram deep link
   // Mencakup: https://t.me/username?start=data, t.me/username?start=data
-  // Use non-global regex to avoid lastIndex issues
+  // Always create NEW regex instance every call to avoid stateful lastIndex bug!
   const pattern = /https?:\/\/(?:www\.)?t\.me\/([a-zA-Z0-9_]{5,})[?&]start=([a-zA-Z0-9_\-]+)/gi;
 
   let match;
-  // Reset lastIndex before each use
-  pattern.lastIndex = 0;
   while ((match = pattern.exec(text)) !== null) {
     results.push({
-      /**
-       *
-       */
       botUsername: match[1],
-      /**
-       *
-       */
-      startData: match[2],
-      /**
-       *
-       */
+      startData: decodeURIComponent(match[2]), // Handle URL encoding
       fullUrl: match[0],
     });
   }
 
   // Juga cek format tanpa http/https: t.me/username?start=data
   const patternShort = /(?:^|\s)t\.me\/([a-zA-Z0-9_]{5,})[?&]start=([a-zA-Z0-9_\-]+)/gi;
-  // Reset lastIndex before each use
-  patternShort.lastIndex = 0;
   while ((match = patternShort.exec(text)) !== null) {
     const botUsername = match[1];
-    const startData = match[2];
+    const startData = decodeURIComponent(match[2]); // Handle URL encoding
     // Cek apakah sudah ada di results
-    const exists = results.some(r => r.botUsername === botUsername && r.startData === startData);
+    const exists = results.some(r => 
+      r.botUsername === botUsername && r.startData === startData
+    );
     if (!exists) {
       results.push({
-        /**
-         *
-         */
         botUsername,
-        /**
-         *
-         */
         startData,
-        /**
-         *
-         */
         fullUrl: `t.me/${botUsername}?start=${startData}`,
       });
     }
