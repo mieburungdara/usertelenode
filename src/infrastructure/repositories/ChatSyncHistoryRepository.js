@@ -50,8 +50,12 @@ class ChatSyncHistoryRepository {
    * @returns {string} Unique key
    */
   _getPairKey(sourceChat, targetChat) {
-    const sourceKey = typeof sourceChat === 'number' ? String(sourceChat) : sourceChat.replace('@', '');
-    const targetKey = typeof targetChat === 'number' ? String(targetChat) : targetChat.replace('@', '');
+    const sourceKey = typeof sourceChat === 'number' 
+      ? String(sourceChat) 
+      : sourceChat.replace('@', '').toLowerCase();
+    const targetKey = typeof targetChat === 'number' 
+      ? String(targetChat) 
+      : targetChat.replace('@', '').toLowerCase();
     return `${sourceKey}_to_${targetKey}`;
   }
 
@@ -83,6 +87,13 @@ class ChatSyncHistoryRepository {
       history.syncPairs[pairKey].totalMessagesSynced += (sessionData.messagesSynced || 0);
       history.syncPairs[pairKey].totalSyncSessions += 1;
       history.syncPairs[pairKey].syncSessions.push(sessionData);
+      
+      // Prevent memory leak: keep only last 50 sessions
+      if (history.syncPairs[pairKey].syncSessions.length > 50) {
+        history.syncPairs[pairKey].syncSessions = 
+          history.syncPairs[pairKey].syncSessions.slice(-50);
+      }
+      
       history.syncPairs[pairKey].status = sessionData.errors ? 'error' : 'active';
     }
 

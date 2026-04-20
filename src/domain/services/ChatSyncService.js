@@ -474,35 +474,40 @@ class ChatSyncService {
   isContentProtected(message) {
     if (!message.media) return false;
 
+    // Safe prototype pollution resistant check
+    const hasOwn = Object.prototype.hasOwnProperty;
+
     // Check for content protection flags
-    if (message.media.photo && message.media.photo.length > 0) {
-      return message.media.photo[0].hasOwnProperty('restricted') ||
-             message.media.photo[0].hasOwnProperty('content_protected') ||
-             !message.media.photo[0].sizes;
+    if (message.media.photo && Array.isArray(message.media.photo) && message.media.photo.length > 0) {
+      const firstPhoto = message.media.photo[0];
+      return firstPhoto && (
+             hasOwn.call(firstPhoto, 'restricted') ||
+             hasOwn.call(firstPhoto, 'content_protected') ||
+             !firstPhoto.sizes);
     }
 
     if (message.media.document) {
-      return message.media.document.hasOwnProperty('restricted') ||
-             message.media.document.hasOwnProperty('content_protected') ||
+      return hasOwn.call(message.media.document, 'restricted') ||
+             hasOwn.call(message.media.document, 'content_protected') ||
              !message.media.document.size;
     }
 
     if (message.media.video) {
-      return message.media.video.hasOwnProperty('restricted') ||
-             message.media.video.hasOwnProperty('content_protected') ||
+      return hasOwn.call(message.media.video, 'restricted') ||
+             hasOwn.call(message.media.video, 'content_protected') ||
              !message.media.video.size;
     }
 
     if (message.media.audio) {
-      return message.media.audio.hasOwnProperty('restricted') ||
-             message.media.audio.hasOwnProperty('content_protected') ||
+      return hasOwn.call(message.media.audio, 'restricted') ||
+             hasOwn.call(message.media.audio, 'content_protected') ||
              !message.media.audio.size;
     }
 
     // For other media types, check general protection flags
-    return message.media.hasOwnProperty('restricted') ||
-           message.media.hasOwnProperty('content_protected') ||
-           message.hasOwnProperty('content_protected');
+    return hasOwn.call(message.media, 'restricted') ||
+           hasOwn.call(message.media, 'content_protected') ||
+           hasOwn.call(message, 'content_protected');
   }
 
   /**
