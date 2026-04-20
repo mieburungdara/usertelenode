@@ -1,9 +1,42 @@
 // src/domain/entities/ChatSync.js
 class ChatSync {
   constructor(sourceChatId, targetChatId, config) {
-    this.sourceChatId = sourceChatId;
-    this.targetChatId = targetChatId;
-    this.config = config;
+    // Validate and sanitize input
+    if (!sourceChatId || typeof sourceChatId !== 'string') {
+      throw new Error('Source chat ID must be a non-empty string');
+    }
+    
+    if (!targetChatId || typeof targetChatId !== 'string') {
+      throw new Error('Target chat ID must be a non-empty string');
+    }
+    
+    // Trim whitespace
+    this.sourceChatId = sourceChatId.trim();
+    this.targetChatId = targetChatId.trim();
+    
+    // Set default config values
+    this.config = {
+      enabled: true,
+      includeMedia: true,
+      excludeServiceMessages: true,
+      excludedMessageTypes: [],
+      maxMessageAgeHours: null,
+      batchSize: 10,
+      rateLimitDelayMs: 1000,
+      sourceChatType: 'channel',
+      targetChatType: 'channel',
+      ...(config || {})
+    };
+    
+    // Validate config values
+    if (this.config.batchSize < 1) {
+      this.config.batchSize = 10;
+    }
+    
+    if (this.config.rateLimitDelayMs < 100) {
+      this.config.rateLimitDelayMs = 1000;
+    }
+    
     this.lastSyncTimestamp = null;
     this.status = 'idle'; // idle, running, paused, error
   }

@@ -84,40 +84,6 @@ class ChatSyncService {
         syncedCount: messagesSynced,
         errors: errors
       };
-
-      await this.historyRepository.saveSyncHistory(
-        chatSync.sourceChatId,
-        chatSync.targetChatId,
-        sessionData
-      );
-
-      // Update source progress information
-      if (this.sourceRepository) {
-        try {
-          // Get the last processed message ID for progress tracking
-          const lastProcessedMessage = messages[messages.length - 1];
-          const lastMessageId = lastProcessedMessage ? lastProcessedMessage.id : null;
-
-          await this.sourceRepository.saveSource({
-            id: chatSync.sourceChatId,
-            type: chatSync.getSourceChatType(),
-            title: chatSync.sourceChatId, // Will be updated with actual title if available
-            lastCopyId: lastCopiedMessageId, // Last successfully copied message ID
-            lastMessageId: lastMessageId // Last message ID encountered
-          });
-        } catch (error) {
-          this.logger.warn(`Could not update source progress: ${error.message}`);
-        }
-      }
-
-      this.logger.info('Sync completed: ' + messagesSynced + '/' + messagesProcessed + ' messages synced');
-
-      return {
-        success: true,
-        processedCount: messagesProcessed,
-        syncedCount: messagesSynced,
-        errors: errors
-      };
     } catch (error) {
       this.logger.error(`Sync failed: ${error.message}`);
 
