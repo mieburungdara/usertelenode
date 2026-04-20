@@ -116,18 +116,25 @@ class ScrapingService {
     }
 
     const workerPromise = (async () => {
-      while (!isFetchingFinished || interactionQueue.length > 0) {
-        if (errorOccurred) {
-           console.log('\n🛑 Antrean Pengiriman dimatikan paksa (Safe Exit Active).');
-           break;
+      let lastActivity = Date.now();
+      const MAX_IDLE_TIME = 30000; // 30 detik timeout idle
+      
+      while ((!isFetchingFinished || interactionQueue.length > 0) && !errorOccurred) {
+        // Timeout safety: jika tidak ada aktivitas dalam 30 detik, keluar otomatis
+        if (Date.now() - lastActivity > MAX_IDLE_TIME && interactionQueue.length === 0) {
+          console.log('\n⏱️ Worker timeout setelah 30 detik idle.');
+          break;
         }
-
+        
         if (isPaused || interactionQueue.length === 0) {
           await new Promise(r => setTimeout(r, 500));
           continue;
         }
 
+        lastActivity = Date.now();
         const task = interactionQueue.shift();
+        if (!task) continue;
+        
         try {
           console.log(`🎯 Executing [Sisa Antrean: ${interactionQueue.length}]: @${task.botUsername}?start=${task.startParam}`);
           const result = await botInteractionService.interactWithBot(task.botUsername, task.startParam);
@@ -141,12 +148,17 @@ class ScrapingService {
         // Delay 3 detik demi limit Telegram hanya ketika mengeksekusi
         await new Promise(r => setTimeout(r, 3000));
       }
-    })();
+      
+      console.log('\n✅ Worker loop selesai dengan aman.');
+    })().catch(error => {
+      console.error('\n❌ Worker error:', error.message);
+      errorOccurred = error.message;
+    });
     // --- END SYSTEM ---
 
     const BATCH_SIZE = 50;
 
-    try {
+     try {
       for (let batchStart = startId; batchStart <= endId; batchStart += BATCH_SIZE) {
         const batchEnd = Math.min(batchStart + BATCH_SIZE - 1, endId);
         const idsToFetch = [];
@@ -174,7 +186,7 @@ class ScrapingService {
             } else {
               console.log(`⚠️ Error fetch batch ${batchStart}-${batchEnd}: ${error.message}, mencoba ulang (${retries}/3)...`);
             }
-            await new Promise(resolve => setTimeout(resolve, 2000 * retries));
+            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries))); // Exponential backoff
           }
         }
 
@@ -271,8 +283,11 @@ class ScrapingService {
 
     const savedEndId = Math.max(startId, finalEndId);
 
-    // Update history with true successful point
-    await this.historyRepo.saveHistory(channel, startId, savedEndId);
+        // Tandai fetching telah selesai agar worker bisa keluar
+        isFetchingFinished = true;
+        
+        // Update history with true successful point
+        await this.historyRepo.saveHistory(channel, startId, savedEndId);
 
     // Simpan rincian sesi scraping ke database
     if (typeof this.historyRepo.addScrapingSession === 'function') {

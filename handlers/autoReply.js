@@ -18,7 +18,8 @@ function setupAutoReply (client) {
   // Use target_bot_id from autoreply.json, fallback to .env
   const targetBotId = autoreplyConfig.target_bot_id || config.TARGET_BOT_ID;
   const debugMode = autoreplyConfig.debug || false;
-
+  let handlerAttached = false;
+  
   console.log('\n🤖 Mode Auto Reply aktif...');
   console.log(`   Target Bot ID: ${targetBotId}`);
   console.log(`   Auto-reply rules loaded: ${autoreplyConfig.auto_replies.length}`);
@@ -37,11 +38,14 @@ function setupAutoReply (client) {
   const handler = async (event) => {
     try {
       const message = event.message;
+      if (!message || !message.getSender) return;
+      
       const sender = await message.getSender();
 
       // Cek apakah pesan originates from target bot ID
       // sender.id bisa BigInt, gunakan String() untuk comparison yang reliable
-      if (sender && sender.id && targetBotId && String(sender.id) === String(targetBotId)) {
+      if (sender && sender.id != null && targetBotId != null && 
+          String(sender.id).trim() === String(targetBotId).trim()) {
         // Log all incoming raw messages when debug mode is ON
         if (debugMode && typeof message.text === 'string') {
           console.log(`📨 [Pesan masuk] ${message.text}`);
@@ -55,24 +59,30 @@ function setupAutoReply (client) {
       console.error('❌ Error di autoReply handler:', error.message);
     }
   };
+  
+  const eventFilter = new NewMessage({ 
+    incoming: true,
+    edited: false,
+  });
 
   // Add event handler
-  client.addEventHandler(handler, new NewMessage({ /**
-   *
-   */
-    incoming: true, /**
-   *
-   */
-    edited: false,
-  }));
+  client.addEventHandler(handler, eventFilter);
+  handlerAttached = true;
 
   console.log('⏳ Menunggu pesan masuk...\n');
 
   // Return cleanup function
   return () => {
-    // Note: GramJS doesn't provide a direct removeEventHandler, but we can track it
-    // For now, the handler will be cleaned when client disconnects
-    console.log('🧹 Auto reply handler cleanup requested');
+    if (handlerAttached) {
+      try {
+        // GramJS removeEventHandler implementation
+        client.removeEventHandler(handler, eventFilter);
+        handlerAttached = false;
+        console.log('🧹 Auto reply handler berhasil di-lepas');
+      } catch (e) {
+        console.warn('⚠️ Gagal melepas handler:', e.message);
+      }
+    }
   };
 }
 
