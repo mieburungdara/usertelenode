@@ -37,7 +37,12 @@ class FileStorageAdapter {
    * @param data
    */
   async save (key, data) {
-    const filePath = this.path.resolve(__dirname, '..', '..', '..', `${key}.json`);
+    const filePath = this.path.resolve(__dirname, '..', '..', '..', 'data', `${key}.json`);
+    // Ensure data directory exists
+    const dataDir = this.path.dirname(filePath);
+    if (!this.fs.existsSync(dataDir)) {
+      this.fs.mkdirSync(dataDir, { recursive: true });
+    }
     this.fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
   }
 
@@ -46,7 +51,7 @@ class FileStorageAdapter {
    * @param key
    */
   async load (key) {
-    const filePath = this.path.resolve(__dirname, '..', '..', '..', `${key}.json`);
+    const filePath = this.path.resolve(__dirname, '..', '..', '..', 'data', `${key}.json`);
     if (!this.fs.existsSync(filePath)) { return null; }
     const data = this.fs.readFileSync(filePath, 'utf-8');
     return JSON.parse(data);

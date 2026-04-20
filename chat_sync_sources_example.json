@@ -1,0 +1,42 @@
+{
+  "techdiscussiongroup": {
+    "id": "@tech_discussion_group",
+    "type": "group",
+    "title": "Tech Discussion Group",
+    "lastUsed": "2026-04-19T07:36:44.000Z",
+    "usageCount": 5,
+    "addedAt": "2026-04-15T10:00:00.000Z",
+    "lastCopyId": 15432,
+    "lastMessageId": 15450
+  },
+  "newsbot": {
+    "id": "@news_bot",
+    "type": "bot",
+    "title": "Daily News Bot",
+    "lastUsed": "2026-04-19T06:42:44.000Z",
+    "usageCount": 12,
+    "addedAt": "2026-04-10T15:30:00.000Z",
+    "lastCopyId": 8921,
+    "lastMessageId": 8921
+  },
+  "gamingcommunity": {
+    "id": "@gaming_community",
+    "type": "group",
+    "title": "Gaming Community Hub",
+    "lastUsed": "2026-04-18T20:15:30.000Z",
+    "usageCount": 3,
+    "addedAt": "2026-04-18T18:45:00.000Z",
+    "lastCopyId": 6820,
+    "lastMessageId": 6820
+  },
+  "weatherupdates": {
+    "id": "@weather_bot",
+    "type": "bot",
+    "title": "Weather Update Bot",
+    "lastUsed": "2026-04-19T05:30:00.000Z",
+    "usageCount": 8,
+    "addedAt": "2026-04-12T09:00:00.000Z",
+    "lastCopyId": 1250,
+    "lastMessageId": 1250
+  }
+}

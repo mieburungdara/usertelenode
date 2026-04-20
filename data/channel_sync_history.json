@@ -1,0 +1,346 @@
+{
+  "syncPairs": {
+    "source_channel_to_target_channel": {
+      "sourceChannel": "@source_channel",
+      "targetChannel": "@target_channel",
+      "lastSyncedAt": "2026-04-19T08:23:29.044Z",
+      "totalMessagesSynced": 3,
+      "totalSyncSessions": 1,
+      "syncSessions": [
+        {
+          "syncedAt": "2026-04-19T08:23:29.044Z",
+          "messagesProcessed": 3,
+          "messagesSynced": 3,
+          "errors": 0,
+          "duration": 3055,
+          "sourceChatType": "channel",
+          "targetChatType": "channel"
+        }
+      ],
+      "status": "active"
+    },
+    "test_group_to_broadcast_channel": {
+      "sourceChannel": "@test_group",
+      "targetChannel": "@broadcast_channel",
+      "lastSyncedAt": "2026-04-19T08:23:32.087Z",
+      "totalMessagesSynced": 3,
+      "totalSyncSessions": 1,
+      "syncSessions": [
+        {
+          "syncedAt": "2026-04-19T08:23:32.087Z",
+          "messagesProcessed": 3,
+          "messagesSynced": 3,
+          "errors": 0,
+          "duration": 3020,
+          "sourceChatType": "group",
+          "targetChatType": "channel"
+        }
+      ],
+      "status": "active"
+    },
+    "news_bot_to_news_channel": {
+      "sourceChannel": "@news_bot",
+      "targetChannel": "@news_channel",
+      "lastSyncedAt": "2026-04-19T08:23:35.117Z",
+      "totalMessagesSynced": 3,
+      "totalSyncSessions": 1,
+      "syncSessions": [
+        {
+          "syncedAt": "2026-04-19T08:23:35.117Z",
+          "messagesProcessed": 3,
+          "messagesSynced": 3,
+          "errors": 0,
+          "duration": 3026,
+          "sourceChatType": "bot",
+          "targetChatType": "channel"
+        }
+      ],
+      "status": "active"
+    },
+    "progress_group_to_target_channel": {
+      "sourceChannel": "@progress_group",
+      "targetChannel": "@target_channel",
+      "lastSyncedAt": "2026-04-19T08:23:38.142Z",
+      "totalMessagesSynced": 3,
+      "totalSyncSessions": 1,
+      "syncSessions": [
+        {
+          "syncedAt": "2026-04-19T08:23:38.142Z",
+          "messagesProcessed": 3,
+          "messagesSynced": 3,
+          "errors": 0,
+          "duration": 3015,
+          "sourceChatType": "group",
+          "targetChatType": "channel"
+        }
+      ],
+      "status": "active"
+    },
+    "error_group_to_target_channel": {
+      "sourceChannel": "@error_group",
+      "targetChannel": "@target_channel",
+      "lastSyncedAt": "2026-04-19T08:23:38.153Z",
+      "totalMessagesSynced": 0,
+      "totalSyncSessions": 1,
+      "syncSessions": [
+        {
+          "syncedAt": "2026-04-19T08:23:38.153Z",
+          "messagesProcessed": 0,
+          "messagesSynced": 0,
+          "errors": 1,
+          "duration": 3,
+          "errorMessage": "Network connection failed",
+          "sourceChatType": "group",
+          "targetChatType": "channel"
+        }
+      ],
+      "status": "active"
+    },
+    "test_source_to_test_target": {
+      "sourceChannel": "@test_source",
+      "targetChannel": "@test_target",
+      "lastSyncedAt": "2026-04-19T08:23:38.156Z",
+      "totalMessagesSynced": 5,
+      "totalSyncSessions": 1,
+      "syncSessions": [
+        {
+          "syncedAt": "2026-04-19T08:23:38.156Z",
+          "messagesProcessed": 5,
+          "messagesSynced": 5,
+          "errors": 0
+        }
+      ],
+      "status": "active"
+    },
+    "group3_to_target_channel": {
+      "sourceChannel": "@group3",
+      "targetChannel": "@target_channel",
+      "lastSyncedAt": "2026-04-20T00:06:45.484Z",
+      "totalMessagesSynced": 4,
+      "totalSyncSessions": 4,
+      "syncSessions": [
+        {
+          "syncedAt": "2026-04-20T00:05:27.757Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1077,
+          "sourceChatType": "group",
+          "targetChatType": "channel"
+        },
+        {
+          "syncedAt": "2026-04-20T00:06:01.429Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1132,
+          "sourceChatType": "group",
+          "targetChatType": "channel"
+        },
+        {
+          "syncedAt": "2026-04-20T00:06:26.415Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1109,
+          "sourceChatType": "group",
+          "targetChatType": "channel"
+        },
+        {
+          "syncedAt": "2026-04-20T00:06:45.484Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1098,
+          "sourceChatType": "group",
+          "targetChatType": "channel"
+        }
+      ],
+      "status": "active"
+    },
+    "group2_to_target_channel": {
+      "sourceChannel": "@group2",
+      "targetChannel": "@target_channel",
+      "lastSyncedAt": "2026-04-20T00:06:45.516Z",
+      "totalMessagesSynced": 4,
+      "totalSyncSessions": 4,
+      "syncSessions": [
+        {
+          "syncedAt": "2026-04-20T00:05:27.788Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1096,
+          "sourceChatType": "group",
+          "targetChatType": "channel"
+        },
+        {
+          "syncedAt": "2026-04-20T00:06:01.398Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1102,
+          "sourceChatType": "group",
+          "targetChatType": "channel"
+        },
+        {
+          "syncedAt": "2026-04-20T00:06:26.431Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1125,
+          "sourceChatType": "group",
+          "targetChatType": "channel"
+        },
+        {
+          "syncedAt": "2026-04-20T00:06:45.516Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1131,
+          "sourceChatType": "group",
+          "targetChatType": "channel"
+        }
+      ],
+      "status": "active"
+    },
+    "group1_to_target_channel": {
+      "sourceChannel": "@group1",
+      "targetChannel": "@target_channel",
+      "lastSyncedAt": "2026-04-20T00:06:45.493Z",
+      "totalMessagesSynced": 4,
+      "totalSyncSessions": 4,
+      "syncSessions": [
+        {
+          "syncedAt": "2026-04-20T00:05:27.790Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1099,
+          "sourceChatType": "group",
+          "targetChatType": "channel"
+        },
+        {
+          "syncedAt": "2026-04-20T00:06:01.425Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1130,
+          "sourceChatType": "group",
+          "targetChatType": "channel"
+        },
+        {
+          "syncedAt": "2026-04-20T00:06:26.461Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1156,
+          "sourceChatType": "group",
+          "targetChatType": "channel"
+        },
+        {
+          "syncedAt": "2026-04-20T00:06:45.493Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1109,
+          "sourceChatType": "group",
+          "targetChatType": "channel"
+        }
+      ],
+      "status": "active"
+    },
+    "bot1_to_target_channel": {
+      "sourceChannel": "@bot1",
+      "targetChannel": "@target_channel",
+      "lastSyncedAt": "2026-04-20T00:06:45.562Z",
+      "totalMessagesSynced": 4,
+      "totalSyncSessions": 4,
+      "syncSessions": [
+        {
+          "syncedAt": "2026-04-20T00:05:27.803Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1111,
+          "sourceChatType": "bot",
+          "targetChatType": "channel"
+        },
+        {
+          "syncedAt": "2026-04-20T00:06:01.432Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1136,
+          "sourceChatType": "bot",
+          "targetChatType": "channel"
+        },
+        {
+          "syncedAt": "2026-04-20T00:06:26.426Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1120,
+          "sourceChatType": "bot",
+          "targetChatType": "channel"
+        },
+        {
+          "syncedAt": "2026-04-20T00:06:45.562Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1177,
+          "sourceChatType": "bot",
+          "targetChatType": "channel"
+        }
+      ],
+      "status": "active"
+    },
+    "channel1_to_target_channel": {
+      "sourceChannel": "@channel1",
+      "targetChannel": "@target_channel",
+      "lastSyncedAt": "2026-04-20T00:06:45.488Z",
+      "totalMessagesSynced": 4,
+      "totalSyncSessions": 4,
+      "syncSessions": [
+        {
+          "syncedAt": "2026-04-20T00:05:27.819Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1127,
+          "sourceChatType": "channel",
+          "targetChatType": "channel"
+        },
+        {
+          "syncedAt": "2026-04-20T00:06:01.393Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1097,
+          "sourceChatType": "channel",
+          "targetChatType": "channel"
+        },
+        {
+          "syncedAt": "2026-04-20T00:06:26.438Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1131,
+          "sourceChatType": "channel",
+          "targetChatType": "channel"
+        },
+        {
+          "syncedAt": "2026-04-20T00:06:45.488Z",
+          "messagesProcessed": 1,
+          "messagesSynced": 1,
+          "errors": 0,
+          "duration": 1102,
+          "sourceChatType": "channel",
+          "targetChatType": "channel"
+        }
+      ],
+      "status": "active"
+    }
+  }
+}

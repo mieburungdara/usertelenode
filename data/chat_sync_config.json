@@ -1,0 +1,16 @@
+{
+  "enabled": true,
+  "sourceChatId": "@test_group",
+  "targetChatId": "@test_channel",
+  "sourceChatType": "group",
+  "targetChatType": "channel",
+  "syncIntervalSeconds": 30,
+  "batchSize": 10,
+  "includeMedia": true,
+  "preserveTimestamps": false,
+  "retryAttempts": 3,
+  "rateLimitDelayMs": 1000,
+  "maxMessageAgeHours": 24,
+  "excludedMessageTypes": [],
+  "logLevel": "info"
+}

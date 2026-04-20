@@ -55,8 +55,23 @@ const { /**
 const { /**
  *
  */
+  ChatSyncHistoryRepository,
+} = require('./src/infrastructure/repositories/ChatSyncHistoryRepository');
+const { /**
+ *
+ */
+  ChatSyncSourceRepository,
+} = require('./src/infrastructure/repositories/ChatSyncSourceRepository');
+const { /**
+ *
+ */
   ScrapingService,
 } = require('./src/domain/services/ScrapingService');
+const { /**
+ *
+ */
+  ChatSyncService,
+} = require('./src/domain/services/ChatSyncService');
 const { /**
  *
  */
@@ -64,6 +79,7 @@ const { /**
 } = require('./src/domain/services/ReplyService');
 const BotInteractionService = require('./src/domain/services/BotInteractionService');
 const RunDeepLinkScraperUseCase = require('./src/application/useCases/RunDeepLinkScraperUseCase');
+const RunChatSyncUseCase = require('./src/application/useCases/RunChatSyncUseCase');
 const ConsoleUI = require('./src/presentation/ConsoleUI');
 
 // Setup DI
@@ -71,6 +87,8 @@ const config = new Config();
 const storage = new FileStorageAdapter(require('fs'), require('path'));
 const accountRepo = new AccountRepository(storage);
 const historyRepo = new ScrapingHistoryRepository(storage);
+const chatSyncHistoryRepo = new ChatSyncHistoryRepository(storage);
+const chatSyncSourceRepo = new ChatSyncSourceRepository(storage);
 
 // For simplicity, assume client is created here
 // const telegramClient = new TelegramClientAdapter(client);
@@ -142,9 +160,10 @@ function printMainMenu () {
   console.log('─'.repeat(40));
   console.log('  1. 🤖 Auto Reply Mode');
   console.log('  2. 🔗 Deep Link Scraper Mode (Scrape channel publik dan generate laporan)');
-  console.log('  3. ➕ Tambah Akun Baru');
-  console.log('  4. ❌ Hapus Akun');
-  console.log('  5. 🚪 Keluar');
+  console.log('  3. 🔄 Chat Synchronization (Sinkronisasi dari group/bot ke channel)');
+  console.log('  4. ➕ Tambah Akun Baru');
+  console.log('  5. ❌ Hapus Akun');
+  console.log('  6. 🚪 Keluar');
   console.log('');
 }
 
@@ -274,6 +293,45 @@ async function runDeepLinkScraper () {
   }
 }
 
+// Mode 3: Chat Synchronization
+/**
+ *
+ */
+async function runChatSynchronization () {
+  // Use new modular architecture
+  const account = selectAccount(rl);
+  if (!account) {
+    rl.question('\nTekan Enter untuk kembali ke menu utama...');
+    return;
+  }
+
+  console.log('\n🔄 Menghubungkan dengan akun @' + (account.username || account.phone || 'unknown') + '...');
+
+  let client = null;
+  try {
+    client = await loadClient(account);
+    const me = await client.getMe();
+    console.log('✅ Terhubung sebagai @' + (me.username || me.firstName || 'unknown'));
+
+    // Setup new architecture for chat sync
+    const telegramAdapter = new TelegramClientAdapter(client);
+    const chatSyncService = new ChatSyncService(telegramAdapter, chatSyncHistoryRepo, console, chatSyncSourceRepo);
+    const ui = new ConsoleUI(rl);
+    const useCase = new RunChatSyncUseCase(chatSyncService, config, chatSyncHistoryRepo, chatSyncSourceRepo, ui);
+
+    await useCase.execute();
+
+    await disconnectWithTimeout(client, 5000);
+    rl.question('\nTekan Enter untuk kembali ke menu utama...');
+  } catch (error) {
+    console.error('❌ Error:', error.message);
+    if (client) {
+      await disconnectWithTimeout(client, 5000);
+    }
+    rl.question('\nTekan Enter untuk kembali ke menu utama...');
+  }
+}
+
 // Mode 3: Tambah Akun
 /**
  *
@@ -309,7 +367,7 @@ async function main () {
     printHeader();
     printMainMenu();
 
-    const choiceInput = rl.question('Masukkan pilihan (1-5): ');
+    const choiceInput = rl.question('Masukkan pilihan (1-6): ');
     if (!choiceInput || !choiceInput.trim()) {
       console.log('\n❌ Input kosong atau hanya spasi.');
       rl.question('\nTekan Enter untuk mencoba lagi...');
@@ -325,14 +383,17 @@ async function main () {
       await runDeepLinkScraper();
       break;
     case '3':
+      await runChatSynchronization();
+      break;
+    case '4':
       await runAddAccount();
       // Continue to next iteration (menu restart)
       break;
-    case '4':
+    case '5':
       runDeleteAccount();
       // Continue to next iteration
       break;
-    case '5':
+    case '6':
       console.log('\n👋 Terima kasih telah menggunakan UserTeleNode!');
       process.exit(0);
       break;

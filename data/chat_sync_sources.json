@@ -1,0 +1,62 @@
+{
+  "group3": {
+    "id": "@group3",
+    "type": "group",
+    "title": "@group3",
+    "lastUsed": "2026-04-20T00:06:45.486Z",
+    "usageCount": 1,
+    "addedAt": "2026-04-20T00:06:45.486Z",
+    "lastCopyId": 1,
+    "lastMessageId": 1
+  },
+  "channel1": {
+    "id": "@channel1",
+    "type": "channel",
+    "title": "@channel1",
+    "lastUsed": "2026-04-20T00:06:45.490Z",
+    "usageCount": 1,
+    "addedAt": "2026-04-20T00:06:45.490Z",
+    "lastCopyId": 1,
+    "lastMessageId": 1
+  },
+  "group1": {
+    "id": "@group1",
+    "type": "group",
+    "title": "@group1",
+    "lastUsed": "2026-04-20T00:06:45.495Z",
+    "usageCount": 1,
+    "addedAt": "2026-04-20T00:06:45.495Z",
+    "lastCopyId": 1,
+    "lastMessageId": 1
+  },
+  "group2": {
+    "id": "@group2",
+    "type": "group",
+    "title": "@group2",
+    "lastUsed": "2026-04-20T00:06:45.517Z",
+    "usageCount": 1,
+    "addedAt": "2026-04-20T00:06:45.517Z",
+    "lastCopyId": 1,
+    "lastMessageId": 1
+  },
+  "bot1": {
+    "id": "@bot1",
+    "type": "bot",
+    "title": "@bot1",
+    "lastUsed": "2026-04-20T00:06:45.564Z",
+    "usageCount": 1,
+    "addedAt": "2026-04-20T00:06:45.564Z",
+    "lastCopyId": 1,
+    "lastMessageId": 1
+  },
+  "test_source_9": {
+    "id": "@test_source_9",
+    "type": "group",
+    "title": "Test Source 9",
+    "lastUsed": "2026-04-20T00:09:22.079Z",
+    "usageCount": 4,
+    "addedAt": "2026-04-20T00:07:13.410Z",
+    "lastCopyId": null,
+    "lastMessageId": null
+  }
+}

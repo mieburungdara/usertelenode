@@ -1,0 +1,30 @@
+{
+  "syncPairs": {
+    "sourcechannel_to_targetchannel": {
+      "sourceChannel": "@sourcechannel",
+      "targetChannel": "@targetchannel",
+      "sourceTitle": "Source Channel Title",
+      "targetTitle": "Target Channel Title",
+      "lastSyncedAt": "2026-04-19T06:42:44.000Z",
+      "totalMessagesSynced": 150,
+      "totalSyncSessions": 5,
+      "status": "active",
+      "syncSessions": [
+        {
+          "syncedAt": "2026-04-19T06:42:44.000Z",
+          "messagesProcessed": 30,
+          "messagesSynced": 28,
+          "errors": 2,
+          "duration": 45000
+        },
+        {
+          "syncedAt": "2026-04-19T06:30:00.000Z",
+          "messagesProcessed": 25,
+          "messagesSynced": 25,
+          "errors": 0,
+          "duration": 32000
+        }
+      ]
+    }
+  }
+}

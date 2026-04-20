@@ -220,6 +220,227 @@ class ConsoleUI {
     console.log(`🤖 Interaksi Deep Link Berhasil     : ${results.interactions}`);
     console.log('─────────────────────────────────────────\n');
   }
+
+  /**
+   * Menampilkan menu sinkronisasi chat
+   */
+  showChatSyncMenu () {
+    console.log('\n🔄 CHAT SYNCHRONIZATION');
+    console.log('═══════════════════════════════════════');
+    console.log('1. 🚀 Mulai Sinkronisasi');
+    console.log('2. ⏹️ Hentikan Sinkronisasi');
+    console.log('3. 📊 Lihat Status Sinkronisasi');
+    console.log('4. ⚙️ Konfigurasi Sinkronisasi');
+    console.log('5. 📈 Lihat Riwayat Sinkronisasi');
+    console.log('6. 📋 Lihat Statistik Sinkronisasi');
+    console.log('0. ↩️ Kembali ke Menu Utama');
+    console.log('═══════════════════════════════════════');
+  }
+
+  /**
+   * Menampilkan hasil sinkronisasi chat
+   * @param {Object} result - Hasil sinkronisasi
+   */
+  displayChatSyncResult (result) {
+    console.log('\n📊 HASIL SINKRONISASI CHAT');
+    console.log('─────────────────────────────────────');
+    if (result.success) {
+      console.log(`✅ Status              : Berhasil`);
+      console.log(`📝 Pesan Diproses      : ${result.processedCount}`);
+      console.log(`🔄 Pesan Disinkronkan  : ${result.syncedCount}`);
+      console.log(`❌ Error                : ${result.errors}`);
+      console.log(`⏱️ Durasi               : ${result.duration ? Math.round(result.duration / 1000) + ' detik' : 'N/A'}`);
+    } else {
+      console.log(`❌ Status              : Gagal`);
+      console.log(`💬 Pesan Error        : ${result.error || 'Unknown error'}`);
+    }
+    console.log('─────────────────────────────────────\n');
+  }
+
+  /**
+   * Menampilkan status sinkronisasi chat
+   * @param {Array} syncPairs - Array pasangan chat sinkronisasi
+   */
+  displayChatSyncStatus (syncPairs) {
+    console.log('\n📊 STATUS SINKRONISASI CHAT');
+    console.log('══════════════════════════════════════════════════════════════');
+
+    if (!syncPairs || syncPairs.length === 0) {
+      console.log('❌ Tidak ada pasangan chat sinkronisasi yang terdaftar');
+      console.log('💡 Gunakan menu konfigurasi untuk menambahkan pasangan chat');
+      return;
+    }
+
+    // Header
+    console.log('┌─────┬─────────────────────┬─────────────────────┬────────────┬────────────┐');
+    console.log('│ No  │ Source Chat         │ Target Chat         │ Last Sync  │ Status     │');
+    console.log('├─────┼─────────────────────┼─────────────────────┼────────────┼────────────┤');
+
+    syncPairs.forEach((pair, index) => {
+      const source = String(pair.sourceChat || '').substring(0, 19);
+      const target = String(pair.targetChat || '').substring(0, 19);
+      const lastSync = pair.lastSyncedAt ? new Date(pair.lastSyncedAt).toLocaleDateString('id-ID') : 'Never';
+      const status = String(pair.status || 'unknown').toUpperCase();
+
+      console.log(`│ ${String(index + 1).padStart(3)} │ ${source.padEnd(19)} │ ${target.padEnd(19)} │ ${lastSync.padEnd(10)} │ ${status.padEnd(10)} │`);
+    });
+
+    console.log('└─────┴─────────────────────┴─────────────────────┴────────────┴────────────┘');
+    console.log('');
+  }
+
+  /**
+   * Menampilkan riwayat sinkronisasi chat
+   * @param {Object} statistics - Statistik sinkronisasi
+   */
+  displayChatSyncHistory (statistics) {
+    console.log('\n📈 RIWAYAT SINKRONISASI CHAT');
+    console.log('─────────────────────────────────────────────');
+    console.log(`🔄 Total Sesi Sinkronisasi : ${statistics.totalSessions}`);
+    console.log(`📨 Total Pesan Disinkronkan : ${statistics.totalMessages}`);
+    console.log(`📅 Sinkronisasi Terakhir    : ${statistics.lastSync ? new Date(statistics.lastSync).toLocaleString('id-ID') : 'Belum pernah'}`);
+    console.log(`📊 Rata-rata per Sesi       : ${statistics.averageMessagesPerSession} pesan`);
+    console.log('─────────────────────────────────────────────');
+
+    if (statistics.recentSessions && statistics.recentSessions.length > 0) {
+      console.log('\n📋 SESI TERAKHIR:');
+      console.log('┌─────────────┬──────────────┬──────────────┬──────────┬─────────────┐');
+      console.log('│ Tanggal     │ Diproses     │ Disinkronkan │ Error    │ Durasi (ms) │');
+      console.log('├─────────────┼──────────────┼──────────────┼──────────┼─────────────┤');
+
+      statistics.recentSessions.forEach(session => {
+        const date = new Date(session.syncedAt).toLocaleDateString('id-ID');
+        const processed = String(session.messagesProcessed || 0).padStart(12);
+        const synced = String(session.messagesSynced || 0).padStart(12);
+        const errors = String(session.errors || 0).padStart(8);
+        const duration = String(session.duration || 0).padStart(11);
+
+        console.log(`│ ${date.padEnd(11)} │ ${processed} │ ${synced} │ ${errors} │ ${duration} │`);
+      });
+
+      console.log('└─────────────┴──────────────┴──────────────┴──────────┴─────────────┘');
+    }
+    console.log('');
+  }
+
+  /**
+   * Meminta input untuk konfigurasi sinkronisasi chat dengan dukungan daftar source tersimpan
+   * @param {Object} sourceRepository - Repository untuk daftar source tersimpan
+   */
+  async getChatSyncConfigInput (sourceRepository = null) {
+    console.log('\n⚙️ KONFIGURASI SINKRONISASI CHAT');
+    console.log('─────────────────────────────────────');
+    console.log('Fitur ini memungkinkan sinkronisasi dari berbagai sumber ke channel target');
+
+    // Tampilkan daftar source tersimpan jika repository tersedia
+    let selectedSource = null;
+    if (sourceRepository) {
+      selectedSource = await this.selectFromSavedSources(sourceRepository);
+    }
+
+    let sourceChat, sourceChatType;
+
+    if (selectedSource) {
+      sourceChat = selectedSource.id;
+      sourceChatType = selectedSource.type;
+      console.log(`✅ Source dipilih: ${selectedSource.title} (${selectedSource.type})`);
+    } else {
+      // Input manual jika tidak ada source tersimpan atau user memilih input manual
+      sourceChat = this.rl.question('Chat sumber (contoh: @sourcechat, chat_id, bot_username): ');
+
+      console.log('\nTipe chat yang didukung:');
+      console.log('1. channel - untuk kanal Telegram');
+      console.log('2. group - untuk grup/supergroup Telegram');
+      console.log('3. bot - untuk bot Telegram');
+
+      const sourceTypeInput = this.rl.question('Tipe chat sumber (1-3, default: 2 untuk group): ') || '2';
+      const typeMap = { '1': 'channel', '2': 'group', '3': 'bot' };
+      const typeInput = parseInt(sourceTypeInput.trim());
+      sourceChatType = (typeInput >= 1 && typeInput <= 3) ? typeMap[sourceTypeInput] : 'group';
+    }
+
+    const targetChat = this.rl.question('Channel target (contoh: @broadcast_channel): ');
+    const targetChatType = 'channel'; // Target is typically a channel
+
+    const batchSize = parseInt(this.rl.question('Ukuran batch (default: 10): ') || '10');
+    const rateLimitDelay = parseInt(this.rl.question('Delay rate limit (ms, default: 1000): ') || '1000');
+    const includeMedia = this.rl.question('Sertakan media? (y/n, default: y): ').toLowerCase() !== 'n';
+
+    const config = {
+      sourceChatId: sourceChat,
+      targetChatId: targetChat,
+      sourceChatType,
+      targetChatType,
+      batchSize,
+      rateLimitDelayMs: rateLimitDelay,
+      includeMedia,
+      enabled: true
+    };
+
+    // Simpan source ke daftar tersimpan jika repository tersedia
+    if (sourceRepository && sourceChat) {
+      try {
+        await sourceRepository.saveSource({
+          id: sourceChat,
+          type: sourceChatType,
+          title: sourceChat // Akan diupdate dengan title sebenarnya saat pertama kali digunakan
+        });
+        console.log('💾 Source disimpan ke daftar tersimpan untuk penggunaan selanjutnya.');
+      } catch (error) {
+        console.warn('⚠️ Gagal menyimpan source ke daftar tersimpan:', error.message);
+      }
+    }
+
+    return config;
+  }
+
+  /**
+   * Menampilkan dan memungkinkan pemilihan source dari daftar tersimpan
+   * @param {Object} sourceRepository - Repository untuk daftar source tersimpan
+   * @returns {Object|null} Source yang dipilih atau null jika input manual
+   */
+  async selectFromSavedSources (sourceRepository) {
+    try {
+      const savedSources = await sourceRepository.getAllSources();
+
+      if (savedSources.length === 0) {
+        console.log('\n📝 Tidak ada source tersimpan. Anda akan diminta untuk input manual.');
+        return null;
+      }
+
+      console.log('\n📋 DAFTAR SOURCE TERSIMPAN:');
+      console.log('─────────────────────────────────────');
+      console.log('0. Input manual (baru)');
+      savedSources.forEach((source, index) => {
+        const usageCount = source.usageCount || 0;
+        const usageInfo = usageCount > 1 ? ` (${usageCount}x digunakan)` : '';
+        const lastUsed = source.lastUsed ? new Date(source.lastUsed).toLocaleDateString('id-ID') : '';
+        const progressInfo = (source.lastMessageId !== null && source.lastMessageId !== undefined) ?
+          ` | Last Msg: ${source.lastMessageId}${source.lastCopyId !== null && source.lastCopyId !== undefined ? ` (Copied: ${source.lastCopyId})` : ''}` : '';
+        const title = source.title || source.id || 'Unknown';
+        const type = source.type || 'unknown';
+        console.log(`${index + 1}. ${title} (${type}) - ${lastUsed}${usageInfo}${progressInfo}`);
+      });
+      console.log('');
+
+      const choiceInput = this.rl.question('Pilih source (0 untuk input manual, 1-' + (savedSources ? savedSources.length : 0) + '): ');
+
+      if (!choiceInput || choiceInput.trim() === '0') {
+        return null; // Input manual
+      }
+
+      const choice = parseInt(choiceInput.trim());
+      if (choice >= 1 && choice <= savedSources.length) {
+        return savedSources[choice - 1];
+      } else {
+        console.log('❌ Pilihan tidak valid, akan menggunakan input manual.');
+        return null;
+      }
+    } catch (error) {
+      console.warn('⚠️ Gagal memuat daftar source tersimpan:', error.message);
+      return null;
+    }
+  }
 }
 
 module.exports = ConsoleUI;

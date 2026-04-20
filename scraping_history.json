@@ -2,8 +2,8 @@
   "channels": {
     "asupandavina": {
       "channelName": "@asupandavina",
-      "lastScrapedId": 881,
-      "lastScrapedAt": "2026-04-17T01:29:08.912Z",
+      "lastScrapedId": 888,
+      "lastScrapedAt": "2026-04-19T23:33:46.662Z",
       "totalScraped": 3,
       "scrapingSessions": [
         {
@@ -19,17 +19,41 @@
           "scrapedAt": "2026-04-12T17:27:20.391Z",
           "linksFound": 0,
           "stopped": false
+        },
+        {
+          "date": "2026-04-18T23:11:48.843Z",
+          "startId": 882,
+          "endId": 884,
+          "processed": 3,
+          "linksFound": 2,
+          "noLinks": 1,
+          "deleted": 0,
+          "interactions": 2,
+          "error": null
+        },
+        {
+          "date": "2026-04-19T23:33:46.668Z",
+          "startId": 885,
+          "endId": 888,
+          "processed": 4,
+          "linksFound": 3,
+          "noLinks": 1,
+          "deleted": 0,
+          "interactions": 3,
+          "error": null
         }
       ],
-      "lastMessageId": 884,
-      "lastMessageTimestamp": "2026-04-17T16:08:52.000Z",
+      "lastMessageId": 888,
+      "lastMessageTimestamp": "2026-04-19T13:17:16.000Z",
       "channelTitle": "ASUPAN DAVINA",
-      "lastCheckedAt": "2026-04-18T00:41:31.757Z"
+      "lastCheckedAt": "2026-04-19T23:30:39.116Z",
+      "totalLinksFound": 5,
+      "totalMessagesScraped": 7
     },
     "rategenz": {
       "channelName": "@rategenz",
-      "lastScrapedId": 2902,
-      "lastScrapedAt": "2026-04-17T09:16:45.682Z",
+      "lastScrapedId": 3066,
+      "lastScrapedAt": "2026-04-19T23:47:45.201Z",
       "totalScraped": 61,
       "scrapingSessions": [
         {
@@ -45,17 +69,41 @@
           "scrapedAt": "2026-04-12T01:17:09.367Z",
           "linksFound": 1,
           "stopped": false
+        },
+        {
+          "date": "2026-04-18T23:27:05.279Z",
+          "startId": 2903,
+          "endId": 2990,
+          "processed": 86,
+          "linksFound": 86,
+          "noLinks": 0,
+          "deleted": 2,
+          "interactions": 86,
+          "error": null
+        },
+        {
+          "date": "2026-04-19T23:47:45.203Z",
+          "startId": 2991,
+          "endId": 3066,
+          "processed": 74,
+          "linksFound": 74,
+          "noLinks": 0,
+          "deleted": 2,
+          "interactions": 74,
+          "error": null
         }
       ],
-      "lastMessageId": 2940,
-      "lastMessageTimestamp": "2026-04-17T18:17:25.000Z",
+      "lastMessageId": 3066,
+      "lastMessageTimestamp": "2026-04-19T20:40:16.000Z",
       "channelTitle": "𝐑𝐀𝐓𝐄 𝐏𝐀𝐏 𝐆𝐄𝐍 𝐙",
-      "lastCheckedAt": "2026-04-18T00:41:32.932Z"
+      "lastCheckedAt": "2026-04-19T23:30:40.295Z",
+      "totalLinksFound": 160,
+      "totalMessagesScraped": 160
     },
     "ometv_S": {
       "channelName": "@ometv_S",
-      "lastScrapedId": 1742,
-      "lastScrapedAt": "2026-04-17T01:14:23.037Z",
+      "lastScrapedId": 1756,
+      "lastScrapedAt": "2026-04-19T23:31:22.427Z",
       "totalScraped": 5,
       "scrapingSessions": [
         {
@@ -64,17 +112,41 @@
           "scrapedAt": "2026-04-11T22:52:52.683Z",
           "linksFound": 2,
           "stopped": false
+        },
+        {
+          "date": "2026-04-18T23:10:46.629Z",
+          "startId": 1743,
+          "endId": 1751,
+          "processed": 7,
+          "linksFound": 6,
+          "noLinks": 1,
+          "deleted": 2,
+          "interactions": 6,
+          "error": null
+        },
+        {
+          "date": "2026-04-19T23:31:22.430Z",
+          "startId": 1752,
+          "endId": 1756,
+          "processed": 5,
+          "linksFound": 4,
+          "noLinks": 1,
+          "deleted": 0,
+          "interactions": 4,
+          "error": null
         }
       ],
-      "lastMessageId": 1751,
-      "lastMessageTimestamp": "2026-04-17T16:06:38.000Z",
+      "lastMessageId": 1756,
+      "lastMessageTimestamp": "2026-04-19T13:14:18.000Z",
       "channelTitle": "OME TV",
-      "lastCheckedAt": "2026-04-18T00:41:34.106Z"
+      "lastCheckedAt": "2026-04-19T23:30:41.546Z",
+      "totalLinksFound": 10,
+      "totalMessagesScraped": 12
     },
     "RateMineplease": {
       "channelName": "@RateMineplease",
-      "lastScrapedId": 1725,
-      "lastScrapedAt": "2026-04-17T04:16:14.756Z",
+      "lastScrapedId": 1732,
+      "lastScrapedAt": "2026-04-19T23:32:17.557Z",
       "totalScraped": 1698,
       "scrapingSessions": [
         {
@@ -83,12 +155,36 @@
           "scrapedAt": "2026-04-12T01:06:19.454Z",
           "linksFound": 1600,
           "stopped": false
+        },
+        {
+          "date": "2026-04-18T23:12:19.889Z",
+          "startId": 1726,
+          "endId": 1727,
+          "processed": 2,
+          "linksFound": 1,
+          "noLinks": 1,
+          "deleted": 0,
+          "interactions": 1,
+          "error": null
+        },
+        {
+          "date": "2026-04-19T23:32:17.559Z",
+          "startId": 1728,
+          "endId": 1732,
+          "processed": 5,
+          "linksFound": 5,
+          "noLinks": 0,
+          "deleted": 0,
+          "interactions": 5,
+          "error": null
         }
       ],
-      "lastMessageId": 1727,
-      "lastMessageTimestamp": "2026-04-17T17:00:34.000Z",
+      "lastMessageId": 1732,
+      "lastMessageTimestamp": "2026-04-19T12:56:02.000Z",
       "channelTitle": "Rate My Pap",
-      "lastCheckedAt": "2026-04-18T00:41:35.463Z"
+      "lastCheckedAt": "2026-04-19T23:30:42.712Z",
+      "totalLinksFound": 6,
+      "totalMessagesScraped": 7
     },
     "DYNOCORED2": {
       "channelName": "@DYNOCORED2",
@@ -114,12 +210,12 @@
       "lastMessageId": 242,
       "lastMessageTimestamp": "2026-04-13T17:03:14.000Z",
       "channelTitle": "𝗥𝗘𝗗 𝗗𝗬𝗡𝗢𝗖𝗢 𝟮",
-      "lastCheckedAt": "2026-04-18T00:41:36.619Z"
+      "lastCheckedAt": "2026-04-19T23:30:43.878Z"
     },
     "Asupan_Terbaru_Viral": {
       "channelName": "@Asupan_Terbaru_Viral",
-      "lastScrapedId": 1571,
-      "lastScrapedAt": "2026-04-17T01:10:42.869Z",
+      "lastScrapedId": 1573,
+      "lastScrapedAt": "2026-04-19T23:35:27.844Z",
       "totalScraped": 594,
       "scrapingSessions": [
         {
@@ -128,12 +224,25 @@
           "scrapedAt": "2026-04-12T17:02:15.458Z",
           "linksFound": 612,
           "stopped": false
+        },
+        {
+          "date": "2026-04-19T23:35:27.846Z",
+          "startId": 1572,
+          "endId": 1573,
+          "processed": 2,
+          "linksFound": 2,
+          "noLinks": 0,
+          "deleted": 0,
+          "interactions": 4,
+          "error": null
         }
       ],
-      "lastMessageId": 1571,
-      "lastMessageTimestamp": "2026-04-16T18:27:08.000Z",
+      "lastMessageId": 1573,
+      "lastMessageTimestamp": "2026-04-19T16:07:06.000Z",
       "channelTitle": "𝐌𝐄𝐃𝐈𝐀 𝟗𝟔𝟗",
-      "lastCheckedAt": "2026-04-18T00:41:37.787Z"
+      "lastCheckedAt": "2026-04-19T23:30:45.043Z",
+      "totalLinksFound": 2,
+      "totalMessagesScraped": 2
     },
     "ometv_s": {
       "channelName": "@ometv_s",
@@ -171,8 +280,8 @@
     },
     "papratearea": {
       "channelName": "@papratearea",
-      "lastScrapedId": 8122,
-      "lastScrapedAt": "2026-04-17T04:49:37.619Z",
+      "lastScrapedId": 8243,
+      "lastScrapedAt": "2026-04-19T23:37:33.295Z",
       "totalScraped": 8081,
       "scrapingSessions": [
         {
@@ -195,21 +304,104 @@
           "scrapedAt": "2026-04-16T12:35:09.596Z",
           "linksFound": 3,
           "stopped": false
+        },
+        {
+          "date": "2026-04-18T11:26:39.527Z",
+          "startId": 8123,
+          "endId": 8189,
+          "processed": 65,
+          "linksFound": 65,
+          "noLinks": 0,
+          "deleted": 2,
+          "interactions": 65,
+          "error": null
+        },
+        {
+          "date": "2026-04-18T23:15:10.581Z",
+          "startId": 8190,
+          "endId": 8212,
+          "processed": 23,
+          "linksFound": 23,
+          "noLinks": 0,
+          "deleted": 0,
+          "interactions": 23,
+          "error": null
+        },
+        {
+          "date": "2026-04-19T23:37:33.309Z",
+          "startId": 8213,
+          "endId": 8243,
+          "processed": 30,
+          "linksFound": 29,
+          "noLinks": 1,
+          "deleted": 1,
+          "interactions": 29,
+          "error": null
         }
       ],
-      "lastMessageId": 8165,
-      "lastMessageTimestamp": "2026-04-18T00:38:22.000Z",
+      "lastMessageId": 8243,
+      "lastMessageTimestamp": "2026-04-19T19:45:26.000Z",
       "channelTitle": "PAP RATE AREA",
-      "lastCheckedAt": "2026-04-18T00:41:38.950Z"
+      "lastCheckedAt": "2026-04-19T23:30:46.212Z",
+      "totalLinksFound": 117,
+      "totalMessagesScraped": 118
     },
     "-1002064393292": {
       "channelName": -1002064393292,
-      "lastScrapedId": 12387,
-      "lastScrapedAt": "2026-04-17T22:14:22.234Z",
-      "lastMessageId": 12388,
-      "lastMessageTimestamp": "2026-04-17T23:05:06.000Z",
-      "channelTitle": "fav",
-      "lastCheckedAt": "2026-04-18T00:41:40.188Z"
+      "lastScrapedId": 12418,
+      "lastScrapedAt": "2026-04-19T23:49:18.407Z",
+      "lastMessageId": 12418,
+      "lastMessageTimestamp": "2026-04-19T23:02:58.000Z",
+      "channelTitle": "vy—pap",
+      "lastCheckedAt": "2026-04-19T23:30:47.456Z",
+      "scrapingSessions": [
+        {
+          "date": "2026-04-18T11:22:35.264Z",
+          "startId": 12388,
+          "endId": 12388,
+          "processed": 1,
+          "linksFound": 1,
+          "noLinks": 0,
+          "deleted": 0,
+          "interactions": 1,
+          "error": null
+        },
+        {
+          "date": "2026-04-18T11:31:55.609Z",
+          "startId": 12389,
+          "endId": 12397,
+          "processed": 8,
+          "linksFound": 6,
+          "noLinks": 2,
+          "deleted": 1,
+          "interactions": 6,
+          "error": null
+        },
+        {
+          "date": "2026-04-18T23:28:13.365Z",
+          "startId": 12398,
+          "endId": 12405,
+          "processed": 6,
+          "linksFound": 6,
+          "noLinks": 0,
+          "deleted": 2,
+          "interactions": 6,
+          "error": null
+        },
+        {
+          "date": "2026-04-19T23:49:18.408Z",
+          "startId": 12406,
+          "endId": 12418,
+          "processed": 13,
+          "linksFound": 12,
+          "noLinks": 1,
+          "deleted": 0,
+          "interactions": 12,
+          "error": null
+        }
+      ],
+      "totalLinksFound": 25,
+      "totalMessagesScraped": 28
     },
     "jjratearea": {
       "channelName": "@jjratearea",
@@ -218,18 +410,18 @@
       "lastMessageId": 192,
       "lastMessageTimestamp": "2026-04-15T14:58:44.000Z",
       "channelTitle": "JJ RATE AREA",
-      "lastCheckedAt": "2026-04-18T00:41:41.349Z"
+      "lastCheckedAt": "2026-04-19T23:30:49.725Z"
     },
     "Lendirgenz": {
       "channelName": "@Lendirgenz",
       "channelTitle": "𝐋𝐄𝐍𝐃𝐈𝐑 𝐆𝐄𝐍 𝐙",
-      "lastScrapedId": 1855,
-      "lastScrapedAt": "2026-04-17T23:57:59.943Z",
-      "lastMessageId": 1855,
-      "lastMessageTimestamp": "2026-04-17T23:05:15.000Z",
-      "lastCheckedAt": "2026-04-17T23:57:22.378Z",
-      "totalLinksFound": 24,
-      "totalMessagesScraped": 24,
+      "lastScrapedId": 1870,
+      "lastScrapedAt": "2026-04-19T23:51:23.629Z",
+      "lastMessageId": 1870,
+      "lastMessageTimestamp": "2026-04-19T23:00:15.000Z",
+      "lastCheckedAt": "2026-04-19T23:30:50.872Z",
+      "totalLinksFound": 37,
+      "totalMessagesScraped": 37,
       "scrapingSessions": [
         {
           "date": "2026-04-17T23:27:48.276Z",
@@ -252,6 +444,28 @@
           "deleted": 1,
           "interactions": 12,
           "error": null
+        },
+        {
+          "date": "2026-04-18T23:13:18.720Z",
+          "startId": 1856,
+          "endId": 1861,
+          "processed": 6,
+          "linksFound": 6,
+          "noLinks": 0,
+          "deleted": 0,
+          "interactions": 6,
+          "error": null
+        },
+        {
+          "date": "2026-04-19T23:51:23.631Z",
+          "startId": 1862,
+          "endId": 1870,
+          "processed": 7,
+          "linksFound": 7,
+          "noLinks": 0,
+          "deleted": 2,
+          "interactions": 7,
+          "error": null
         }
       ]
     },
@@ -262,7 +476,7 @@
       "lastScrapedAt": "2026-04-18T00:41:31.585Z",
       "lastMessageId": 845,
       "lastMessageTimestamp": "2026-04-16T14:32:38.000Z",
-      "lastCheckedAt": "2026-04-17T23:59:59.677Z",
+      "lastCheckedAt": "2026-04-19T23:30:52.048Z",
       "totalLinksFound": 803,
       "totalMessagesScraped": 815,
       "scrapingSessions": [
@@ -275,6 +489,78 @@
           "noLinks": 12,
           "deleted": 23,
           "interactions": 806,
+          "error": null
+        }
+      ]
+    },
+    "Asupan_nutrisi18": {
+      "channelName": "@Asupan_nutrisi18",
+      "channelTitle": "asupan nutrisi",
+      "lastScrapedId": 116,
+      "lastScrapedAt": "2026-04-18T23:40:51.889Z",
+      "lastMessageId": 116,
+      "lastMessageTimestamp": "2026-04-15T12:37:15.000Z",
+      "lastCheckedAt": "2026-04-19T23:30:53.219Z",
+      "totalLinksFound": 95,
+      "totalMessagesScraped": 96,
+      "scrapingSessions": [
+        {
+          "date": "2026-04-18T23:40:51.891Z",
+          "startId": 21,
+          "endId": 116,
+          "processed": 96,
+          "linksFound": 95,
+          "noLinks": 1,
+          "deleted": 0,
+          "interactions": 98,
+          "error": null
+        }
+      ]
+    },
+    "omewktv": {
+      "channelName": "@omewktv",
+      "channelTitle": "Ome TV",
+      "lastScrapedId": 30,
+      "lastScrapedAt": "2026-04-18T23:45:22.586Z",
+      "lastMessageId": 30,
+      "lastMessageTimestamp": "2026-03-08T16:32:46.000Z",
+      "lastCheckedAt": "2026-04-19T23:30:54.383Z",
+      "totalLinksFound": 21,
+      "totalMessagesScraped": 24,
+      "scrapingSessions": [
+        {
+          "date": "2026-04-18T23:45:22.588Z",
+          "startId": 5,
+          "endId": 30,
+          "processed": 24,
+          "linksFound": 21,
+          "noLinks": 3,
+          "deleted": 2,
+          "interactions": 21,
+          "error": null
+        }
+      ]
+    },
+    "-1002820688531": {
+      "channelName": -1002820688531,
+      "channelTitle": "Rate Pretty Lady",
+      "lastScrapedId": 630,
+      "lastScrapedAt": "2026-04-19T00:15:09.089Z",
+      "lastMessageId": 630,
+      "lastMessageTimestamp": "2026-04-16T14:33:57.000Z",
+      "lastCheckedAt": "2026-04-19T23:30:55.602Z",
+      "totalLinksFound": 542,
+      "totalMessagesScraped": 552,
+      "scrapingSessions": [
+        {
+          "date": "2026-04-19T00:15:09.096Z",
+          "startId": 64,
+          "endId": 630,
+          "processed": 552,
+          "linksFound": 542,
+          "noLinks": 10,
+          "deleted": 15,
+          "interactions": 543,
           "error": null
         }
       ]
