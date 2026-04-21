@@ -40,18 +40,31 @@ class TelegramClientAdapter {
    * @param {Function} fn - Async function to execute
    * @param {number} maxRetries - Maximum number of retries
    * @param {number} baseDelay - Base delay in ms between retries
+   * @param {number} timeoutMs - Timeout per attempt in ms
    * @returns {Promise<any>} Result of the function
    */
-  async _withRetries (fn, maxRetries = 3, baseDelay = 1000) {
+  async _withRetries (fn, maxRetries = 3, baseDelay = 1000, timeoutMs = 30000) {
     let lastError;
 
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        return await fn();
+        // Add timeout to prevent hanging
+        const timeoutPromise = new Promise((_, reject) => {
+          setTimeout(() => reject(new Error(`API call timed out after ${timeoutMs}ms`)), timeoutMs);
+        });
+        
+        return await Promise.race([fn(), timeoutPromise]);
       } catch (error) {
         lastError = error;
 
         if (attempt === maxRetries) {
+          throw error;
+        }
+        
+        // Don't retry on fatal errors that won't resolve
+        const fatalErrors = ['AUTH_KEY_UNREGISTERED', 'USER_DEACTIVATED', 'CHANNEL_PRIVATE', 'CHAT_WRITE_FORBIDDEN'];
+        if (fatalErrors.some(err => error.message?.includes(err) || error.code === err)) {
+          console.log(`❌ Fatal error, will not retry: ${error.message}`);
           throw error;
         }
 
@@ -71,6 +84,14 @@ class TelegramClientAdapter {
    * @returns {Promise<Object>} Entity object
    */
   async getEntity (channel) {
+    if (channel == null) {
+      throw new Error('Channel parameter is required');
+    }
+    
+    if (typeof channel === 'string' && channel.trim() === '') {
+      throw new Error('Channel name cannot be empty');
+    }
+    
     return await this._withRetries(() => this.client.getEntity(channel));
   }
 
@@ -80,23 +101,33 @@ class TelegramClientAdapter {
    * @param {Object} options - Opsi getMessages
    * @returns {Promise<Object[]>} Array pesan
    */
-  async getMessages (channel, options) {
+  async getMessages (channel, options = {}) {
+    if (channel == null) {
+      throw new Error('Channel parameter is required');
+    }
+    
     return await this._withRetries(() => this.client.getMessages(channel, options));
   }
 
   /**
    * Mengirim pesan ke Telegram dengan retry mechanism
    * @param {Object} chatId - Chat entity atau ID
-   * @param {string} message - Pesan yang akan dikirim
+   * @param {string|Object} message - Pesan yang akan dikirim atau options object
    * @returns {Promise<Object>} Hasil pengiriman
    */
   async sendMessage (chatId, message) {
-    return await this._withRetries(() => this.client.sendMessage(chatId, {
-      /**
-       *
-       */
-      message,
-    }));
+    if (chatId == null) {
+      throw new Error('Chat ID is required');
+    }
+    
+    if (message == null) {
+      throw new Error('Message is required');
+    }
+    
+    // Support both string message and options object
+    const options = typeof message === 'string' ? { message } : message;
+    
+    return await this._withRetries(() => this.client.sendMessage(chatId, options));
   }
 
   /**
@@ -107,6 +138,18 @@ class TelegramClientAdapter {
    * @returns {Promise<Object>} Forwarded message result
    */
   async forwardMessage (chatId, messageId, fromChatId) {
+    if (chatId == null) {
+      throw new Error('Target chat ID is required');
+    }
+    
+    if (messageId == null) {
+      throw new Error('Message ID is required');
+    }
+    
+    if (fromChatId == null) {
+      throw new Error('Source chat ID is required');
+    }
+    
     return await this._withRetries(() => this.client.forwardMessages(chatId, {
       messages: [messageId],
       fromPeer: fromChatId
