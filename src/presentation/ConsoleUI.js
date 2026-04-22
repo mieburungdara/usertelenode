@@ -343,6 +343,7 @@ class ConsoleUI {
 
     console.log(`\n${fg.green}${bright}📊 HASIL AKHIR PROSES SCRAPING${reset}`);
     console.log(`${fg.green}─────────────────────────────────────────${reset}`);
+    console.log(`${fg.cyan}📋 Estimasi ID Pesan Diperiksa     : ${bright}${results.totalToProcess || 0}${reset}`);
     console.log(`${fg.white}✅ Total Pesan Terbaca / Diproses   : ${bright}${results.messages}${reset}`);
     console.log(`${fg.dim}🗑️ Pesan Kosong / Terhapus / Tiada  : ${results.deletedMessages || 0}${reset}`);
     console.log(`${fg.cyan}🔗 Pesan Mengandung Tautan Sasaran  : ${bright}${results.messagesWithLink || 0}${reset}`);
