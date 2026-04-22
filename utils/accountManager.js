@@ -371,9 +371,22 @@ async function loadClient (account) {
 
   await client.connect();
 
+  // Suppress non-fatal GramJS internal update loop TIMEOUT errors
+  // These are reconnection events and do not affect functionality
+  const originalConsoleError = console.error;
+  const suppressedPatterns = ['TIMEOUT', '_updateLoop', 'updates.js'];
+  console.error = function (...args) {
+    const msg = args.map(a => String(a)).join(' ');
+    const isSuppressed = suppressedPatterns.some(p => msg.includes(p));
+    if (!isSuppressed) {
+      originalConsoleError.apply(console, args);
+    }
+  };
+
   // Cek apakah session masih valid
   const isConnected = client.connected;
   if (!isConnected) {
+    console.error = originalConsoleError; // Restore on failure
     throw new Error('Session tidak valid atau sudah kadaluarsa.');
   }
 
