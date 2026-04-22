@@ -15,33 +15,56 @@ class IAccountRepository {
   async save (account) { throw new Error('Not implemented'); }
 }
 
+const prisma = require('../adapters/PrismaClientAdapter');
+
 /**
- *
+ * Repository for managing Telegram accounts
  */
 class AccountRepository {
   /**
-   *
-   * @param storage
-   */
-  constructor (storage) {
-    this.storage = storage;
-  }
-
-  /**
-   *
+   * Find all saved accounts
+   * @returns {Promise<Array>}
    */
   async findAll () {
-    return await this.storage.load('accounts') || [];
+    const rawAccounts = await prisma.account.findMany();
+    // Return in the format expected by the legacy code
+    return rawAccounts.map(acc => ({
+      phoneNumber: acc.phoneNumber,
+      username: acc.username,
+      id: acc.telegramId ? parseInt(acc.telegramId) : null,
+      sessionString: acc.sessionString
+    }));
   }
 
   /**
-   *
-   * @param account
+   * Save a new account
+   * @param {Object} account - Account object
    */
   async save (account) {
-    const accounts = await this.findAll();
-    accounts.push(account);
-    await this.storage.save('accounts', accounts);
+    await prisma.account.upsert({
+      where: { phoneNumber: account.phoneNumber },
+      update: {
+        username: account.username,
+        telegramId: account.id ? String(account.id) : null,
+        sessionString: account.sessionString || '',
+      },
+      create: {
+        phoneNumber: account.phoneNumber,
+        username: account.username,
+        telegramId: account.id ? String(account.id) : null,
+        sessionString: account.sessionString || '',
+      },
+    });
+  }
+
+  /**
+   * Delete an account by phone number
+   * @param {string} phoneNumber 
+   */
+  async delete (phoneNumber) {
+    await prisma.account.delete({
+      where: { phoneNumber }
+    });
   }
 }
 

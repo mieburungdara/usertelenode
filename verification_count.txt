@@ -1,0 +1,5 @@
+ERROR:
+Invalid `prisma.channel.count()` invocation:
+
+
+The table `main.Channel` does not exist in the current database.

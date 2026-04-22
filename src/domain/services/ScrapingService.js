@@ -83,153 +83,89 @@ class ScrapingService {
     let messagesWithoutLink = 0;
     let deletedMessages = 0;
     let totalInteractions = 0;
+    let totalMedia = 0;
+    let responseWithoutMedia = 0;
 
-    let lastFetchedId = startId - 1; // ID tercapai di loop fetcher
+    let lastFetchedId = startId - 1;
     let errorOccurred = null;
+    let aborted = false;
+
+    const sessionStartTime = new Date();
+    const scrapingDetails = [];
 
     const totalToProcess = Math.max(0, (endId - startId) + 1);
     console.log(`\n📊 Estimasi jumlah ID pesan yang akan diperiksa: ${totalToProcess}`);
+    console.log('🔄 Mode: Sequential with Media Detection');
 
-    // --- PAUSE & DECOUPLED QUEUE SYSTEM ---
-    let isPaused = false;
-    let isFetchingFinished = false;
-    const interactionQueue = [];
+    const BATCH_SIZE = 20; // Smaller batch for sequential processing
 
-    const stdInHandler = (data) => {
-      const char = data.toString();
-      if (char === ' ') {
-        isPaused = !isPaused;
-        if (isPaused) {
-          console.log('\n⏸️ STATUS: PENGIRIMAN DIJEDA... (Membaca pesan tetap berjalan) Tekan SPASI untuk lanjut.\n');
-        } else {
-          console.log('\n▶️ STATUS: PENGIRIMAN DILANJUTKAN.\n');
-        }
-      } else if (char === '\x03') {
-        process.emit('SIGINT');
-      }
-    };
-
-    if (process.stdin.isTTY) {
-      process.stdin.setRawMode(true);
-      process.stdin.resume();
-      process.stdin.on('data', stdInHandler);
-    }
-
-    const workerPromise = (async () => {
-      let lastActivity = Date.now();
-      const MAX_IDLE_TIME = 30000; // 30 detik timeout idle
-      
-      while ((!isFetchingFinished || interactionQueue.length > 0) && !errorOccurred) {
-        // Timeout safety: jika tidak ada aktivitas dalam 30 detik, keluar otomatis
-        if (Date.now() - lastActivity > MAX_IDLE_TIME && interactionQueue.length === 0) {
-          console.log('\n⏱️ Worker timeout setelah 30 detik idle.');
-          break;
-        }
-        
-        if (isPaused || interactionQueue.length === 0) {
-          await new Promise(r => setTimeout(r, 500));
-          continue;
-        }
-
-        lastActivity = Date.now();
-        const task = interactionQueue.shift();
-        if (!task) continue;
-        
-        try {
-          console.log(`🎯 Executing [Sisa Antrean: ${interactionQueue.length}]: @${task.botUsername}?start=${task.startParam}`);
-          const result = await botInteractionService.interactWithBot(task.botUsername, task.startParam);
-          if (result.success) {
-            totalInteractions++;
-          }
-        } catch (e) {
-          console.log(`⚠️ Gagal interaksi @${task.botUsername}: ${e.message}`);
-        }
-
-        // Delay 3 detik demi limit Telegram hanya ketika mengeksekusi
-        await new Promise(r => setTimeout(r, 3000));
-      }
-      
-      console.log('\n✅ Worker loop selesai dengan aman.');
-    })().catch(error => {
-      console.error('\n❌ Worker error:', error.message);
-      errorOccurred = error.message;
-    });
-    // --- END SYSTEM ---
-
-    const BATCH_SIZE = 50;
-
-     try {
-      for (let batchStart = startId; batchStart <= endId; batchStart += BATCH_SIZE) {
+    try {
+      for (let batchStart = startId; batchStart <= endId && !aborted; batchStart += BATCH_SIZE) {
         const batchEnd = Math.min(batchStart + BATCH_SIZE - 1, endId);
         const idsToFetch = [];
         for (let i = batchStart; i <= batchEnd; i++) {
           idsToFetch.push(i);
         }
 
-        let messages = [];
-        let success = false;
-        let retries = 0;
-
-        while (retries < 3 && !success) {
-          try {
-            messages = await this.telegramClient.getMessages(channel, {
-              /**
-               *
-               */
-              ids: idsToFetch,
-            });
-            success = true;
-          } catch (error) {
-            retries++;
-            if (error.message && error.message.includes('TIMEOUT')) {
-              console.log(`⏱️ Timeout fetch batch ${batchStart}-${batchEnd}, mencoba ulang (${retries}/3)...`);
-            } else {
-              console.log(`⚠️ Error fetch batch ${batchStart}-${batchEnd}: ${error.message}, mencoba ulang (${retries}/3)...`);
-            }
-            await new Promise(resolve => setTimeout(resolve, 1000 * Math.pow(2, retries))); // Exponential backoff
-          }
-        }
-
-        if (!success) {
-          throw new Error(`Gagal mengambil API batch pesan dari ID ${batchStart} s/d ${batchEnd} setelah 3x percobaan mutlak. Koneksi terputus.`);
-        }
-
+        let messages = await this.telegramClient.getMessages(channel, { ids: idsToFetch });
         const validMsgs = messages.filter(m => m && m.className !== 'MessageEmpty');
-        const emptyCount = idsToFetch.length - validMsgs.length;
-
-        if (emptyCount > 0) {
-          deletedMessages += emptyCount;
-        }
-
+        deletedMessages += (idsToFetch.length - validMsgs.length);
         validMsgs.sort((a, b) => a.id - b.id);
 
         for (const msg of validMsgs) {
+          if (aborted) break;
+          
           const currentId = msg.id;
           processedMessages++;
+          lastFetchedId = currentId;
 
           if (msg.text) {
-            const startLinks = msg.text.match(/(?:https?:\/\/)?t\.me\/([a-zA-Z0-9_]+)\?start=([^\s]+)/g);
-            if (startLinks && startLinks.length > 0) {
+            const { extractDeepLinks } = require('../../../utils/linkParser');
+            const deepLinks = extractDeepLinks(msg.text);
+
+            if (deepLinks.length > 0) {
               messagesWithLink++;
-              console.log(`🔗 Pesan ${currentId} terbaca: Ditemukan ${startLinks.length} tautan (Dimasukkan ke Antrean).`);
-              for (const fullLink of startLinks) {
-                const match = fullLink.match(/(?:https?:\/\/)?t\.me\/([a-zA-Z0-9_]+)\?start=([^\s]+)/);
-                if (match) {
-                  interactionQueue.push({
-                    /**
-                     *
-                     */
-                    botUsername: match[1],
-                    /**
-                     *
-                     */
-                    startParam: match[2],
-                    /**
-                     *
-                     */
-                    msgId: currentId,
+              console.log(`🔗 Pesan ${currentId}: Ditemukan ${deepLinks.length} tautan.`);
+
+              for (const link of deepLinks) {
+                console.log(`🎯 Interacting with @${link.botUsername}...`);
+                const interaction = await botInteractionService.interactWithBot(link.botUsername, link.startData);
+                
+                if (interaction.success) {
+                  totalInteractions++;
+                  const response = interaction.response;
+                  const hasMedia = response && response.media;
+
+                  if (hasMedia) {
+                    totalMedia++;
+                    console.log('✅ Response has media. Continuing...');
+                  } else {
+                    responseWithoutMedia++;
+                    console.log('⚠️ Response HAS NO MEDIA.');
+                    console.log('🛑 ABORTING: Original logic requires media to continue.');
+                    aborted = true;
+                  }
+
+                  scrapingDetails.push({
+                    url: link.fullUrl,
+                    bot: `@${link.botUsername}`,
+                    startData: link.startData,
+                    hasMedia: !!hasMedia
                   });
+
+                  if (aborted) break;
+                } else {
+                  console.log(`❌ Interaction failed: ${interaction.error}`);
+                  // Note: Should we abort on interaction failure? 
+                  // README says "Jika tidak ada media -> stop". 
+                  // If bot doesn't respond at all, it's effectively no media.
+                  aborted = true;
+                  errorOccurred = interaction.error;
+                  break;
                 }
+                
+                // Human-like delay between interactions
+                await new Promise(r => setTimeout(r, 3000 + Math.random() * 2000));
               }
             } else {
               messagesWithoutLink++;
@@ -239,11 +175,8 @@ class ScrapingService {
           }
         }
 
-        lastFetchedId = batchEnd;
-
-        // Delay antar fetch diperkecil krn eksekusi dilakukan terpisah
-        if (batchEnd < endId) {
-          await new Promise(resolve => setTimeout(resolve, 500));
+        if (!aborted && batchEnd < endId) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
       }
     } catch (e) {
@@ -251,129 +184,98 @@ class ScrapingService {
       errorOccurred = e.message;
     }
 
-    // Tunggu antrean habis (Hanya jika tidak ada error fatal)
-    isFetchingFinished = true;
-    if (!errorOccurred && interactionQueue.length > 0) {
-      console.log(`\n✅ Pengambilan pesan selesai! Menunggu ${interactionQueue.length} interaksi dari dalam antrean dikirim...`);
-    }
+    const savedEndId = Math.max(startId, lastFetchedId);
+    await this.historyRepo.saveHistory(channel, startId, savedEndId);
 
-    // Tunggu Worker Selesai atau putus jika error, minimal beri sedikit waktu.
-    try {
-      if (!errorOccurred) {
-        await workerPromise;
-      }
-    } catch (err) {
-      console.log('Worker Error:', err);
-    }
+    const stats = {
+      messages: processedMessages,
+      interactions: totalInteractions,
+      messagesWithLink,
+      messagesWithoutLink,
+      deletedMessages,
+      totalMedia,
+      responseWithoutMedia,
+      stoppedAt: savedEndId,
+      error: errorOccurred,
+      aborted
+    };
 
-    // MATIKAN RAW MODE STDIN (wajib agar CLI tidak bertingkah aneh ke depan)
-    if (process.stdin.isTTY) {
-      process.stdin.removeListener('data', stdInHandler);
-      process.stdin.setRawMode(false);
-      process.stdin.pause();
-    }
-
-    // --- SAFE STATE CALCULATION ---
-    // Titik aman terakhir = jika error mendadak, cek apakaha ada antrean yg batal dieksekusi?
-    let finalEndId = lastFetchedId;
-    if (interactionQueue.length > 0) {
-      // Titik belum selesai = ID pertama di antrian kurangi 1
-      finalEndId = interactionQueue[0].msgId - 1;
-    }
-
-    const savedEndId = Math.max(startId, finalEndId);
-
-        // Tandai fetching telah selesai agar worker bisa keluar
-        isFetchingFinished = true;
-        
-        // Update history with true successful point
-        await this.historyRepo.saveHistory(channel, startId, savedEndId);
-
-    // Simpan rincian sesi scraping ke database
+    // Update history with true successful point
     if (typeof this.historyRepo.addScrapingSession === 'function') {
       await this.historyRepo.addScrapingSession(channel, {
-        /**
-         *
-         */
-        date: new Date().toISOString(),
-        /**
-         *
-         */
+        date: sessionStartTime.toISOString(),
         startId,
-        /**
-         *
-         */
         endId: savedEndId,
-        /**
-         *
-         */
         processed: processedMessages,
-        /**
-         *
-         */
         linksFound: messagesWithLink,
-        /**
-         *
-         */
         noLinks: messagesWithoutLink,
-        /**
-         *
-         */
         deleted: deletedMessages,
-        /**
-         *
-         */
         interactions: totalInteractions,
-        /**
-         *
-         */
-        error: errorOccurred,
+        error: errorOccurred || (aborted ? 'Aborted by logic' : null),
       });
     }
 
-    const resultPayload = {
-      /**
-       *
-       */
-      messages: processedMessages,
-      /**
-       *
-       */
-      interactions: totalInteractions,
-      /**
-       *
-       */
-      messagesWithLink,
-      /**
-       *
-       */
-      messagesWithoutLink,
-      /**
-       *
-       */
-      deletedMessages,
-      /**
-       *
-       */
-      stoppedAt: savedEndId,
-      /**
-       *
-       */
-      error: errorOccurred,
-    };
+    // GENERATE report.md (Actual Functionality)
+    await this.generateReportFile(channel, startId, savedEndId, stats, scrapingDetails);
 
-    if (errorOccurred) {
-      try {
-        const reportText = `🚨 **Laporan Error BotAnon Scraper** 🚨\n\n📌 **Channel:** ${channel}\n📊 **Rentang ID Awal:** ${startId} - ${endId}\n🛑 **Terhenti di ID:** ${savedEndId}\n\n**Statistik Terkumpul Sebraknya:**\n✅ Diproses: ${processedMessages}\n🔗 Dgn Target (Link): ${messagesWithLink}\n📝 Tanpa Link: ${messagesWithoutLink}\n🗑️ Kosong/Dihapus: ${deletedMessages}\n\n**Penyebab Kegagalan Aborting:**\n❌ \`${errorOccurred}\``;
-        console.log('\n📨 Mengirim laporan darurat ke akun log @fernathan...');
-        await this.telegramClient.sendMessage('@fernathan', reportText);
-        console.log('✅ Laporan kegagalan berhasil dikirim ke @fernathan.');
-      } catch (dmErr) {
-        console.log(`⚠️ Gagal mengirim Telegram DM ke @fernathan: ${dmErr.message}`);
-      }
+    return stats;
+  }
+
+  /**
+   * Menghasilkan file report.md sesuai spesifikasi
+   * @param {string} channel 
+   * @param {number} startId 
+   * @param {number} endId 
+   * @param {Object} stats 
+   * @param {Array} details 
+   */
+  async generateReportFile (channel, startId, endId, stats, details) {
+    const fs = require('fs');
+    const path = require('path');
+    const reportPath = path.resolve(process.cwd(), 'report.md');
+    
+    let content = `# Laporan Deep Link Scraping\n\n---\n\n`;
+    content += `## Informasi Scraping\n`;
+    content += `- **Channel:** ${channel}\n`;
+    content += `- **Range Pesan:** ID ${startId} - ID ${endId}\n`;
+    content += `- **Tanggal:** ${new Date().toLocaleString('id-ID')}\n\n---\n\n`;
+    
+    content += `## Statistik\n\n`;
+    content += `| Metrik | Jumlah |\n`;
+    content += `|--------|--------|\n`;
+    content += `| Total Pesan Discrape | ${stats.messages} |\n`;
+    content += `| Total Link Ditemukan | ${stats.interactions} |\n`;
+    content += `| Total Media (Foto/Video) | ${stats.totalMedia} |\n`;
+    content += `| Pesan yang Mengandung Deep Link | ${stats.messagesWithLink} |\n`;
+    content += `| Response tanpa Media | ${stats.responseWithoutMedia} |\n\n---\n\n`;
+    
+    content += `## Detail Link\n\n`;
+    details.forEach((item, idx) => {
+      content += `### ${idx + 1}. Link\n`;
+      content += `- **URL:** \`${item.url}\`\n`;
+      content += `- **Bot:** ${item.bot}\n`;
+      content += `- **Start Data:** \`${item.startData}\`\n`;
+      content += `- **Response:** ${item.hasMedia ? '✅ Ada Media' : '❌ Tidak Ada Media'}\n\n`;
+    });
+    
+    content += `---\n\n`;
+    content += `## Status\n\n`;
+    if (stats.error) {
+      content += `❌ **ERROR** - ${stats.error}\n`;
+    } else if (stats.aborted) {
+      content += `🛑 **ABORTED** - Berhenti karena response bot tidak mengandung media\n`;
+    } else {
+      content += `✅ **SELESAI** - Semua pesan berhasil discrape\n`;
     }
-
-    return resultPayload;
+    
+    content += `\n---\n\n*Report generated by UserTeleNode Bot*`;
+    
+    try {
+      fs.writeFileSync(reportPath, content);
+      console.log(`\n📝 Laporan berhasil disimpan ke: ${reportPath}`);
+    } catch (e) {
+      console.warn(`⚠️ Gagal menulis file report.md: ${e.message}`);
+    }
   }
 
   /**

@@ -32,11 +32,7 @@ const rl = {
 
 // Import new modular modules
 const Config = require('./src/infrastructure/Config');
-const { /**
- *
- */
-  FileStorageAdapter,
-} = require('./src/infrastructure/adapters/FileStorageAdapter');
+const prisma = require('./src/infrastructure/adapters/PrismaClientAdapter');
 const { /**
  *
  */
@@ -84,11 +80,10 @@ const ConsoleUI = require('./src/presentation/ConsoleUI');
 
 // Setup DI
 const config = new Config();
-const storage = new FileStorageAdapter(require('fs'), require('path'));
-const accountRepo = new AccountRepository(storage);
-const historyRepo = new ScrapingHistoryRepository(storage);
-const chatSyncHistoryRepo = new ChatSyncHistoryRepository(storage);
-const chatSyncSourceRepo = new ChatSyncSourceRepository(storage);
+const accountRepo = new AccountRepository();
+const historyRepo = new ScrapingHistoryRepository();
+const chatSyncHistoryRepo = new ChatSyncHistoryRepository();
+const chatSyncSourceRepo = new ChatSyncSourceRepository();
 
 // For simplicity, assume client is created here
 // const telegramClient = new TelegramClientAdapter(client);

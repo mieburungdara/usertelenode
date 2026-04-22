@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Account {
+  id              String   @id @default(cuid())
+  phoneNumber     String   @unique
+  username        String?
+  telegramId      String?
+  sessionString   String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Channel {
+  id                    String            @id @default(cuid())
+  channelName           String            @unique
+  channelTitle          String?
+  lastScrapedId         Int?
+  lastScrapedAt         DateTime?
+  lastMessageId         Int?
+  lastMessageTimestamp  DateTime?
+  lastCheckedAt         DateTime?
+  totalLinksFound       Int               @default(0)
+  totalMessagesScraped  Int               @default(0)
+  sessions              ScrapingSession[]
+}
+
+model ScrapingSession {
+  id           String   @id @default(cuid())
+  date         DateTime @default(now())
+  startId      Int
+  endId        Int
+  processed    Int      @default(0)
+  linksFound   Int      @default(0)
+  noLinks      Int      @default(0)
+  deleted      Int      @default(0)
+  interactions Int      @default(0)
+  error        String?
+  channelId    String
+  channel      Channel  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+}
+
+model SyncPair {
+  id                  String        @id @default(cuid())
+  sourceChannel       String
+  targetChannel       String
+  sourceTitle         String?
+  targetTitle         String?
+  lastSyncedAt        DateTime?
+  totalMessagesSynced Int           @default(0)
+  totalSyncSessions   Int           @default(0)
+  status              String        @default("inactive")
+  sessions            SyncSession[]
+
+  @@unique([sourceChannel, targetChannel])
+}
+
+model SyncSession {
+  id                String   @id @default(cuid())
+  syncedAt          DateTime @default(now())
+  messagesProcessed Int      @default(0)
+  messagesSynced    Int      @default(0)
+  duration          Int?     // milliseconds
+  errors            String?
+  pairId            String
+  pair              SyncPair @relation(fields: [pairId], references: [id], onDelete: Cascade)
+}
+
+model SyncSource {
+  id            String   @id // Telegram ID or Username
+  type          String   @default("channel")
+  title         String
+  lastUsed      DateTime @default(now())
+  usageCount    Int      @default(0)
+  addedAt       DateTime @default(now())
+  lastCopyId    Int?
+  lastMessageId Int?
+}

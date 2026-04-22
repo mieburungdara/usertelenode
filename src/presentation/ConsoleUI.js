@@ -209,16 +209,22 @@ class ConsoleUI {
   displayResults (results) {
     if (results.error) {
       console.log(`\n❌ PROSES TERHENTI KARENA ERROR FATAL: ${results.error}`);
-      console.log(`⚠️ Hasil di bawah ini merupakan status aman terakhir yang tercatat di ID ${results.stoppedAt}.`);
+    } else if (results.aborted) {
+      console.log(`\n🛑 PROSES TERHENTI OTOMATIS: Response bot tidak mengandung media.`);
     }
+    
+    console.log(`⚠️ Hasil di bawah ini merupakan status aman terakhir yang tercatat di ID ${results.stoppedAt}.`);
     console.log('\n📊 HASIL AKHIR PROSES SCRAPING');
     console.log('─────────────────────────────────────────');
     console.log(`✅ Total Pesan Terbaca / Diproses   : ${results.messages}`);
     console.log(`🗑️ Pesan Kosong / Terhapus / Tiada  : ${results.deletedMessages || 0}`);
     console.log(`🔗 Pesan Mengandung Tautan Sasaran  : ${results.messagesWithLink || 0}`);
     console.log(`📝 Pesan Tanpa Tautan (Teks/Media)  : ${results.messagesWithoutLink || 0}`);
-    console.log(`🤖 Interaksi Deep Link Berhasil     : ${results.interactions}`);
+    console.log(`🤖 Interaksi Deep Link (Link Send)  : ${results.interactions}`);
+    console.log(`🖼️ Response dengan Media            : ${results.totalMedia || 0}`);
+    console.log(`📄 Response TANPA Media             : ${results.responseWithoutMedia || 0}`);
     console.log('─────────────────────────────────────────\n');
+    console.log('📝 Laporan detail telah disimpan ke file report.md');
   }
 
   /**

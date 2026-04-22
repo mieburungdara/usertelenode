@@ -335,6 +335,35 @@ class TelegramClientAdapter {
       outputFile: filePath
     }));
   }
+
+  /**
+   * Menunggu pesan terbaru dari peer tertentu setelah waktu tertentu
+   * @param {Object|string|number} peer - Peer entity, username atau ID
+   * @param {Object} options - { timeout: ms, afterTime: timestamp }
+   * @returns {Promise<Object|null>} Pesan terbaru atau null jika timeout
+   */
+  async waitForNextMessage (peer, options = {}) {
+    const timeout = options.timeout || 15000;
+    const afterTime = options.afterTime || Math.floor(Date.now() / 1000);
+    
+    const startTime = Date.now();
+    while (Date.now() - startTime < timeout) {
+      try {
+        const messages = await this.getMessages(peer, { limit: 1 });
+        if (messages.length > 0) {
+          const msg = messages[0];
+          // Cek apakah pesan baru datang setelah afterTime
+          if (msg.date > afterTime) {
+            return msg;
+          }
+        }
+      } catch (e) {
+        // Ignore errors during polling
+      }
+      await new Promise(resolve => setTimeout(resolve, 1500)); // Poll every 1.5s
+    }
+    return null;
+  }
 }
 
 module.exports = { /**

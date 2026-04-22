@@ -18,19 +18,12 @@ class IScrapingHistoryRepository {
   async getLastScrapedId (channel) { throw new Error('Not implemented'); }
 }
 
+const prisma = require('../adapters/PrismaClientAdapter');
+
 /**
- *
+ * Repository for managing scraping history with SQLite (Prisma)
  */
 class ScrapingHistoryRepository {
-  /**
-   *
-   * @param storage
-   */
-  constructor (storage) {
-    this.storage = storage;
-    this.writeLocks = new Map(); // Prevent race condition
-  }
-  
   /**
    * Generate normalized, case-insensitive key for channel
    * @param {string|number} channel - Channel name or ID
@@ -41,239 +34,130 @@ class ScrapingHistoryRepository {
     if (typeof channel === 'number') {
       return String(channel);
     }
-    return channel.replace('@', '').trim().toLowerCase();
+    return channel.replace('@', '').trim();
   }
 
   /**
-   *
-   * @param channel
-   * @param startId
-   * @param endId
+   * Save last scraped ID for a channel
    */
   async saveHistory (channel, startId, endId) {
-    const key = this._getChannelKey(channel);
-    
-    // Prevent race condition with write lock
-    if (this.writeLocks.has(key)) {
-      await this.writeLocks.get(key);
-    }
-    
-    let resolveLock;
-    const lockPromise = new Promise(resolve => { resolveLock = resolve; });
-    this.writeLocks.set(key, lockPromise);
-    
-    try {
-      const history = await this.storage.load('scraping_history') || {
-        channels: {},
-      };
-      
-      if (!history.channels[key]) {
-        history.channels[key] = {
-          channelName: channel,
-          lastScrapedId: endId,
-          lastScrapedAt: new Date().toISOString(),
-          scrapingSessions: [],
-          totalLinksFound: 0,
-          totalMessagesScraped: 0,
-        };
-      } else {
-        history.channels[key].lastScrapedId = endId;
-        history.channels[key].lastScrapedAt = new Date().toISOString();
+    const channelName = String(channel);
+    await prisma.channel.upsert({
+      where: { channelName },
+      update: {
+        lastScrapedId: endId,
+        lastScrapedAt: new Date(),
+      },
+      create: {
+        channelName,
+        lastScrapedId: endId,
+        lastScrapedAt: new Date(),
       }
-      
-      await this.storage.save('scraping_history', history);
-    } finally {
-      resolveLock();
-      this.writeLocks.delete(key);
-    }
+    });
   }
 
   /**
-   *
-   * @param channel
+   * Get last scraped message ID for a channel
    */
   async getLastScrapedId (channel) {
-    const history = await this.storage.load('scraping_history') || {
-      channels: {},
-    };
-    const key = this._getChannelKey(channel);
-    return history.channels[key]?.lastScrapedId || null;
+    const ch = await prisma.channel.findUnique({
+      where: { channelName: String(channel) }
+    });
+    return ch?.lastScrapedId || null;
   }
 
   /**
-   *
+   * Get all registered channels
    */
   async getAllChannels () {
-    const history = await this.storage.load('scraping_history') || {
-      channels: {},
-    };
-    const channels = Object.values(history.channels);
-    // Filter valid channels and remove duplicates by NORMALIZED name
-    return channels.filter(ch => ch && ch.channelName && String(ch.channelName).trim() !== '')
-      .filter((ch, index, arr) => 
-        arr.findIndex(c => this._getChannelKey(c.channelName) === this._getChannelKey(ch.channelName)) === index
-      );
+    return await prisma.channel.findMany();
   }
 
   /**
-   *
-   * @param channelName
-   * @param lastMessageId
-   * @param lastMessageTimestamp
-   * @param channelTitle
+   * Update cache for latest message info
    */
   async updateLastMessageId (channelName, lastMessageId, lastMessageTimestamp, channelTitle) {
-    const key = this._getChannelKey(channelName);
-    
-    // Prevent race condition with write lock
-    if (this.writeLocks.has(key)) {
-      await this.writeLocks.get(key);
-    }
-    
-    let resolveLock;
-    const lockPromise = new Promise(resolve => { resolveLock = resolve; });
-    this.writeLocks.set(key, lockPromise);
-    
-    try {
-      const history = await this.storage.load('scraping_history') || {
-        channels: {},
-      };
-
-      if (!history.channels[key]) {
-        history.channels[key] = {
-          channelName,
-          channelTitle,
-          lastScrapedId: null,
-          lastScrapedAt: null,
-          lastMessageId,
-          lastMessageTimestamp,
-          lastCheckedAt: new Date().toISOString(),
-          scrapingSessions: [],
-          totalLinksFound: 0,
-          totalMessagesScraped: 0,
-        };
-      } else {
-        if (channelTitle) { history.channels[key].channelTitle = channelTitle; }
-        history.channels[key].lastMessageId = lastMessageId;
-        history.channels[key].lastMessageTimestamp = lastMessageTimestamp;
-        history.channels[key].lastCheckedAt = new Date().toISOString();
+    const name = String(channelName);
+    await prisma.channel.upsert({
+      where: { channelName: name },
+      update: {
+        channelTitle,
+        lastMessageId,
+        lastMessageTimestamp: lastMessageTimestamp ? new Date(lastMessageTimestamp) : null,
+        lastCheckedAt: new Date(),
+      },
+      create: {
+        channelName: name,
+        channelTitle,
+        lastMessageId,
+        lastMessageTimestamp: lastMessageTimestamp ? new Date(lastMessageTimestamp) : null,
+        lastCheckedAt: new Date(),
       }
-
-      await this.storage.save('scraping_history', history);
-    } finally {
-      resolveLock();
-      this.writeLocks.delete(key);
-    }
+    });
   }
 
   /**
-   * Menambahkan channel baru ke history
-   * @param {string|number} channel - Nama channel (@channelname) atau ID numeric
-   * @param {string} title - Judul channel
-   * @returns {Promise<boolean>} True jika berhasil ditambahkan, false jika sudah ada
+   * Add a new channel to track
    */
   async addChannel (channel, title) {
-    const key = this._getChannelKey(channel);
-    
-    // Prevent race condition with write lock
-    if (this.writeLocks.has(key)) {
-      await this.writeLocks.get(key);
-    }
-    
-    let resolveLock;
-    const lockPromise = new Promise(resolve => { resolveLock = resolve; });
-    this.writeLocks.set(key, lockPromise);
-    
-    try {
-      const history = await this.storage.load('scraping_history') || {
-        channels: {},
-      };
+    const channelName = String(channel);
+    const existing = await prisma.channel.findUnique({
+      where: { channelName }
+    });
 
-      if (history.channels[key]) {
-        // Channel sudah ada
-        if (title && !history.channels[key].channelTitle) {
-          history.channels[key].channelTitle = title;
-          await this.storage.save('scraping_history', history);
-        }
-        return false;
+    if (existing) {
+      if (title && !existing.channelTitle) {
+        await prisma.channel.update({
+          where: { channelName },
+          data: { channelTitle: title }
+        });
       }
-
-      history.channels[key] = {
-        channelName: channel,
-        channelTitle: title || channel,
-        lastScrapedId: null,
-        lastScrapedAt: null,
-        lastMessageId: null,
-        lastMessageTimestamp: null,
-        lastCheckedAt: null,
-        totalLinksFound: 0,
-        totalMessagesScraped: 0,
-        scrapingSessions: [],
-      };
-
-      await this.storage.save('scraping_history', history);
-      return true;
-    } finally {
-      resolveLock();
-      this.writeLocks.delete(key);
+      return false;
     }
+
+    await prisma.channel.create({
+      data: {
+        channelName,
+        channelTitle: title || channelName,
+      }
+    });
+    return true;
   }
 
   /**
-   * Menambahkan log hasil sesi scraping untuk channel tertentu
-   * @param {string|number} channelName - Nama channel (@channelname) atau ID numeric
-   * @param {Object} sessionData - Objek berisi { date, startId, endId, processed, linksFound, noLinks, deleted, interactions }
+   * Add a scraping session log
    */
   async addScrapingSession (channelName, sessionData) {
-    if (!sessionData || typeof sessionData !== 'object') {
-      throw new Error('Session data must be a valid object');
-    }
-    
-    const key = this._getChannelKey(channelName);
-    
-    // Prevent race condition with write lock
-    if (this.writeLocks.has(key)) {
-      await this.writeLocks.get(key);
-    }
-    
-    let resolveLock;
-    const lockPromise = new Promise(resolve => { resolveLock = resolve; });
-    this.writeLocks.set(key, lockPromise);
-    
-    try {
-      const history = await this.storage.load('scraping_history') || {
-        channels: {},
-      };
+    const name = String(channelName);
+    const ch = await prisma.channel.findUnique({
+      where: { channelName: name }
+    });
 
-      if (history.channels[key]) {
-        // Inisialisasi properti jika merupakan channel lawas yang belum punya atribut baru ini
-        if (!Array.isArray(history.channels[key].scrapingSessions)) {
-          history.channels[key].scrapingSessions = [];
-        }
-        if (typeof history.channels[key].totalLinksFound !== 'number') {
-          history.channels[key].totalLinksFound = 0;
-        }
-        if (typeof history.channels[key].totalMessagesScraped !== 'number') {
-          history.channels[key].totalMessagesScraped = 0;
-        }
+    if (!ch) return;
 
-        history.channels[key].scrapingSessions.push(sessionData);
-        
-        // PREVENT MEMORY LEAK: Keep only last 100 sessions
-        if (history.channels[key].scrapingSessions.length > 100) {
-          history.channels[key].scrapingSessions = 
-            history.channels[key].scrapingSessions.slice(-100);
-        }
-        
-        history.channels[key].totalLinksFound += (sessionData.linksFound || 0);
-        history.channels[key].totalMessagesScraped += (sessionData.processed || 0);
-
-        await this.storage.save('scraping_history', history);
+    await prisma.scrapingSession.create({
+      data: {
+        date: sessionData.date ? new Date(sessionData.date) : new Date(),
+        startId: sessionData.startId,
+        endId: sessionData.endId,
+        processed: sessionData.processed || 0,
+        linksFound: sessionData.linksFound || 0,
+        noLinks: sessionData.noLinks || 0,
+        deleted: sessionData.deleted || 0,
+        interactions: sessionData.interactions || 0,
+        error: sessionData.error,
+        channelId: ch.id
       }
-    } finally {
-      resolveLock();
-      this.writeLocks.delete(key);
-    }
+    });
+
+    // Update totals
+    await prisma.channel.update({
+      where: { id: ch.id },
+      data: {
+        totalLinksFound: { increment: sessionData.linksFound || 0 },
+        totalMessagesScraped: { increment: sessionData.processed || 0 },
+      }
+    });
   }
 }
 

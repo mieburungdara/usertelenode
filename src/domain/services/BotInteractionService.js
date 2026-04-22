@@ -39,8 +39,8 @@ class BotInteractionService {
       }
       
       this.lastInteractionTimestamps.set(normalizedBotUsername, now);
-
-      // Bersihkan timestamp yang sudah tua setiap 100 entri (prevent memory leak)
+      
+      // Bersihkan timestamp yang sudah tua setiap 100 entri
       if (this.lastInteractionTimestamps.size > 100) {
         const oneMinuteAgo = now - 60000;
         for (const [key, timestamp] of this.lastInteractionTimestamps.entries()) {
@@ -51,17 +51,35 @@ class BotInteractionService {
       }
 
       const chat = await this.telegramClient.getEntity(`@${normalizedBotUsername}`);
+      const sendTime = Math.floor(Date.now() / 1000);
 
-      // Wait for message to be actually sent (NO fire-and-forget!)
-      // Fire-and-forget causes memory leak and unhandled rejection
       await this.telegramClient.sendMessage(chat, `/start ${startParam}`);
       console.log(`✅ Sent /start ${startParam} to @${normalizedBotUsername}`);
 
-      return {
-        success: true,
-        botUsername: normalizedBotUsername,
-        startParam,
-      };
+      // Wait for bot response (Actual Functionality)
+      console.log(`⏳ Waiting for response from @${normalizedBotUsername}...`);
+      const responseMsg = await this.telegramClient.waitForNextMessage(chat, { 
+        afterTime: sendTime,
+        timeout: 10000 // 10s timeout
+      });
+
+      if (responseMsg) {
+        console.log(`📩 Received response from @${normalizedBotUsername}`);
+        return {
+          success: true,
+          botUsername: normalizedBotUsername,
+          startParam,
+          response: responseMsg
+        };
+      } else {
+        console.log(`⚠️ No response from @${normalizedBotUsername} within timeout`);
+        return {
+          success: false,
+          botUsername: normalizedBotUsername,
+          startParam,
+          error: 'Timeout waiting for response'
+        };
+      }
     } catch (error) {
       const normalizedBotUsername = botUsername?.replace?.(/^@+/, '') || botUsername;
       console.log(`❌ Failed to interact with @${normalizedBotUsername}: ${error.message}`);
