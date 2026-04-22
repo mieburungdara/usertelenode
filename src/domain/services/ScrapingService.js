@@ -287,7 +287,7 @@ class ScrapingService {
    * @param {Object} stats - Statistik scraping
    */
   async sendReportToAdmin (channel, startId, endId, stats) {
-    const ADMIN_ID = 7602143247; // @fernathan
+    const ADMIN_ID = '@fernathan';
 
     try {
       let statusEmoji = '✅';
