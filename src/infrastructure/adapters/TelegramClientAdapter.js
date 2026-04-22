@@ -52,7 +52,7 @@ class TelegramClientAdapter {
         const timeoutPromise = new Promise((_, reject) => {
           setTimeout(() => reject(new Error(`API call timed out after ${timeoutMs}ms`)), timeoutMs);
         });
-        
+
         return await Promise.race([fn(), timeoutPromise]);
       } catch (error) {
         lastError = error;
@@ -60,7 +60,7 @@ class TelegramClientAdapter {
         if (attempt === maxRetries) {
           throw error;
         }
-        
+
         // Don't retry on fatal errors that won't resolve
         const fatalErrors = ['AUTH_KEY_UNREGISTERED', 'USER_DEACTIVATED', 'CHANNEL_PRIVATE', 'CHAT_WRITE_FORBIDDEN'];
         if (fatalErrors.some(err => error.message?.includes(err) || error.code === err)) {
@@ -87,11 +87,11 @@ class TelegramClientAdapter {
     if (channel == null) {
       throw new Error('Channel parameter is required');
     }
-    
+
     if (typeof channel === 'string' && channel.trim() === '') {
       throw new Error('Channel name cannot be empty');
     }
-    
+
     return await this._withRetries(() => this.client.getEntity(channel));
   }
 
@@ -105,7 +105,7 @@ class TelegramClientAdapter {
     if (channel == null) {
       throw new Error('Channel parameter is required');
     }
-    
+
     return await this._withRetries(() => this.client.getMessages(channel, options));
   }
 
@@ -119,14 +119,18 @@ class TelegramClientAdapter {
     if (chatId == null) {
       throw new Error('Chat ID is required');
     }
-    
+
     if (message == null) {
       throw new Error('Message is required');
     }
-    
+
     // Support both string message and options object
-    const options = typeof message === 'string' ? { message } : message;
-    
+    const options = typeof message === 'string' ? { /**
+     *
+     */
+      message,
+    } : message;
+
     return await this._withRetries(() => this.client.sendMessage(chatId, options));
   }
 
@@ -141,18 +145,24 @@ class TelegramClientAdapter {
     if (chatId == null) {
       throw new Error('Target chat ID is required');
     }
-    
+
     if (messageId == null) {
       throw new Error('Message ID is required');
     }
-    
+
     if (fromChatId == null) {
       throw new Error('Source chat ID is required');
     }
-    
+
     return await this._withRetries(() => this.client.forwardMessages(chatId, {
+      /**
+       *
+       */
       messages: [messageId],
-      fromPeer: fromChatId
+      /**
+       *
+       */
+      fromPeer: fromChatId,
     }));
   }
 
@@ -166,7 +176,10 @@ class TelegramClientAdapter {
   async sendPhoto (chatId, photo, options = {}) {
     return await this._withRetries(() => this.client.sendFile(chatId, photo, {
       ...options,
-      forceDocument: false
+      /**
+       *
+       */
+      forceDocument: false,
     }));
   }
 
@@ -180,7 +193,10 @@ class TelegramClientAdapter {
   async sendVideo (chatId, video, options = {}) {
     return await this._withRetries(() => this.client.sendFile(chatId, video, {
       ...options,
-      forceDocument: false
+      /**
+       *
+       */
+      forceDocument: false,
     }));
   }
 
@@ -194,7 +210,10 @@ class TelegramClientAdapter {
   async sendDocument (chatId, document, options = {}) {
     return await this._withRetries(() => this.client.sendFile(chatId, document, {
       ...options,
-      forceDocument: true
+      /**
+       *
+       */
+      forceDocument: true,
     }));
   }
 
@@ -208,7 +227,10 @@ class TelegramClientAdapter {
   async sendAudio (chatId, audio, options = {}) {
     return await this._withRetries(() => this.client.sendFile(chatId, audio, {
       ...options,
-      forceDocument: false
+      /**
+       *
+       */
+      forceDocument: false,
     }));
   }
 
@@ -220,7 +242,10 @@ class TelegramClientAdapter {
    */
   async sendVoice (chatId, voice) {
     return await this._withRetries(() => this.client.sendFile(chatId, voice, {
-      voiceNote: true
+      /**
+       *
+       */
+      voiceNote: true,
     }));
   }
 
@@ -244,7 +269,10 @@ class TelegramClientAdapter {
   async sendAnimation (chatId, animation, options = {}) {
     return await this._withRetries(() => this.client.sendFile(chatId, animation, {
       ...options,
-      forceDocument: false
+      /**
+       *
+       */
+      forceDocument: false,
     }));
   }
 
@@ -256,7 +284,10 @@ class TelegramClientAdapter {
    */
   async sendPoll (chatId, poll) {
     return await this._withRetries(() => this.client.sendMessage(chatId, {
-      poll: poll
+      /**
+       *
+       */
+      poll,
     }));
   }
 
@@ -268,7 +299,10 @@ class TelegramClientAdapter {
    */
   async sendLocation (chatId, geo) {
     return await this._withRetries(() => this.client.sendMessage(chatId, {
-      geo: geo
+      /**
+       *
+       */
+      geo,
     }));
   }
 
@@ -280,7 +314,10 @@ class TelegramClientAdapter {
    */
   async sendContact (chatId, contact) {
     return await this._withRetries(() => this.client.sendMessage(chatId, {
-      contact: contact
+      /**
+       *
+       */
+      contact,
     }));
   }
 
@@ -292,7 +329,10 @@ class TelegramClientAdapter {
    */
   async sendVenue (chatId, venue) {
     return await this._withRetries(() => this.client.sendMessage(chatId, {
-      venue: venue
+      /**
+       *
+       */
+      venue,
     }));
   }
 
@@ -306,7 +346,10 @@ class TelegramClientAdapter {
   async sendAlbum (chatId, media, options = {}) {
     return await this._withRetries(() => this.client.sendFile(chatId, media, {
       ...options,
-      album: true
+      /**
+       *
+       */
+      album: true,
     }));
   }
 
@@ -318,7 +361,7 @@ class TelegramClientAdapter {
    */
   async downloadMedia (media, options = {}) {
     return await this._withRetries(() => this.client.downloadMedia(media, {
-      ...options
+      ...options,
     }));
   }
 
@@ -332,7 +375,10 @@ class TelegramClientAdapter {
   async downloadMediaToFile (media, filePath, options = {}) {
     return await this._withRetries(() => this.client.downloadMedia(media, {
       ...options,
-      outputFile: filePath
+      /**
+       *
+       */
+      outputFile: filePath,
     }));
   }
 
@@ -345,11 +391,15 @@ class TelegramClientAdapter {
   async waitForNextMessage (peer, options = {}) {
     const timeout = options.timeout || 15000;
     const afterTime = options.afterTime || Math.floor(Date.now() / 1000);
-    
+
     const startTime = Date.now();
     while (Date.now() - startTime < timeout) {
       try {
-        const messages = await this.getMessages(peer, { limit: 1 });
+        const messages = await this.getMessages(peer, { /**
+         *
+         */
+          limit: 1,
+        });
         if (messages.length > 0) {
           const msg = messages[0];
           // Cek apakah pesan baru datang setelah afterTime

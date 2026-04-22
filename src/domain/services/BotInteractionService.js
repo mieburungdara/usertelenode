@@ -23,23 +23,35 @@ class BotInteractionService {
     try {
       // Normalize bot username (hindari double @)
       const normalizedBotUsername = botUsername.replace(/^@+/, '');
-      
+
       // Rate limiting per bot
       const now = Date.now();
       const lastInteraction = this.lastInteractionTimestamps.get(normalizedBotUsername) || 0;
-      
+
       if (now - lastInteraction < this.MIN_INTERACTION_DELAY_MS) {
         console.log(`⏳ Rate limit aktif untuk @${normalizedBotUsername}, lewati interaksi`);
         return {
+          /**
+           *
+           */
           success: false,
+          /**
+           *
+           */
           botUsername: normalizedBotUsername,
+          /**
+           *
+           */
           startParam,
-          error: 'Rate limited'
+          /**
+           *
+           */
+          error: 'Rate limited',
         };
       }
-      
+
       this.lastInteractionTimestamps.set(normalizedBotUsername, now);
-      
+
       // Bersihkan timestamp yang sudah tua setiap 100 entri
       if (this.lastInteractionTimestamps.size > 100) {
         const oneMinuteAgo = now - 60000;
@@ -58,35 +70,77 @@ class BotInteractionService {
 
       // Wait for bot response (Actual Functionality)
       console.log(`⏳ Waiting for response from @${normalizedBotUsername}...`);
-      const responseMsg = await this.telegramClient.waitForNextMessage(chat, { 
+      const responseMsg = await this.telegramClient.waitForNextMessage(chat, {
+        /**
+         *
+         */
         afterTime: sendTime,
-        timeout: 10000 // 10s timeout
+        /**
+         *
+         */
+        timeout: 10000, // 10s timeout
       });
 
       if (responseMsg) {
         console.log(`📩 Received response from @${normalizedBotUsername}`);
         return {
+          /**
+           *
+           */
           success: true,
+          /**
+           *
+           */
           botUsername: normalizedBotUsername,
+          /**
+           *
+           */
           startParam,
-          response: responseMsg
+          /**
+           *
+           */
+          response: responseMsg,
         };
       } else {
         console.log(`⚠️ No response from @${normalizedBotUsername} within timeout`);
         return {
+          /**
+           *
+           */
           success: false,
+          /**
+           *
+           */
           botUsername: normalizedBotUsername,
+          /**
+           *
+           */
           startParam,
-          error: 'Timeout waiting for response'
+          /**
+           *
+           */
+          error: 'Timeout waiting for response',
         };
       }
     } catch (error) {
       const normalizedBotUsername = botUsername?.replace?.(/^@+/, '') || botUsername;
       console.log(`❌ Failed to interact with @${normalizedBotUsername}: ${error.message}`);
       return {
+        /**
+         *
+         */
         success: false,
+        /**
+         *
+         */
         botUsername: normalizedBotUsername,
+        /**
+         *
+         */
         startParam,
+        /**
+         *
+         */
         error: error.message,
       };
     }

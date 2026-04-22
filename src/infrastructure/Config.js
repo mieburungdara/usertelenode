@@ -20,23 +20,65 @@ class Config {
    * Load chat synchronization configuration
    * @returns {Object} Chat sync configuration object
    */
-  getChatSyncConfig() {
+  getChatSyncConfig () {
     // Default configuration
     const defaultConfig = {
+      /**
+       *
+       */
       enabled: false,
+      /**
+       *
+       */
       sourceChatId: null,
+      /**
+       *
+       */
       targetChatId: null,
+      /**
+       *
+       */
       sourceChatType: 'channel',
+      /**
+       *
+       */
       targetChatType: 'channel',
+      /**
+       *
+       */
       syncIntervalSeconds: 30,
+      /**
+       *
+       */
       batchSize: 10,
+      /**
+       *
+       */
       includeMedia: true,
+      /**
+       *
+       */
       preserveTimestamps: false,
+      /**
+       *
+       */
       retryAttempts: 3,
+      /**
+       *
+       */
       rateLimitDelayMs: 1000,
+      /**
+       *
+       */
       maxMessageAgeHours: 24,
+      /**
+       *
+       */
       excludedMessageTypes: [],
-      logLevel: 'info'
+      /**
+       *
+       */
+      logLevel: 'info',
     };
 
     try {
@@ -61,17 +103,21 @@ class Config {
    * Save chat synchronization configuration
    * @param {Object} config - Configuration object to save
    */
-  saveChatSyncConfig(config) {
+  saveChatSyncConfig (config) {
     if (!config || typeof config !== 'object') {
       throw new Error('Config must be a valid object');
     }
-    
+
     try {
       const configDir = path.join(process.cwd(), 'data');
 
       // Ensure data directory exists
       if (!fs.existsSync(configDir)) {
-        fs.mkdirSync(configDir, { recursive: true });
+        fs.mkdirSync(configDir, { /**
+         *
+         */
+          recursive: true,
+        });
       }
 
       const configPath = path.join(configDir, 'chat_sync_config.json');

@@ -4,15 +4,29 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
+/**
+ *
+ */
 class ChatSyncService {
-  constructor(telegramApi, historyRepository, logger, sourceRepository = null) {
+  /**
+   *
+   * @param telegramApi
+   * @param historyRepository
+   * @param logger
+   * @param sourceRepository
+   */
+  constructor (telegramApi, historyRepository, logger, sourceRepository = null) {
     this.telegramApi = telegramApi;
     this.historyRepository = historyRepository;
     this.logger = logger;
     this.sourceRepository = sourceRepository;
   }
 
-  async synchronizeChats(chatSync) {
+  /**
+   *
+   * @param chatSync
+   */
+  async synchronizeChats (chatSync) {
     // Input validation
     if (!chatSync.sourceChatId || !chatSync.targetChatId) {
       throw new Error('Source chat ID and target chat ID are required');
@@ -26,7 +40,7 @@ class ChatSyncService {
     let messagesProcessed = 0;
     let messagesSynced = 0;
     let lastCopiedMessageId = null;
-    let errors = 0;
+    const errors = 0;
 
     try {
       this.logger.info(`Starting sync from ${chatSync.sourceChatId} (${chatSync.getSourceChatType()}) to ${chatSync.targetChatId} (${chatSync.getTargetChatType()})`);
@@ -42,19 +56,40 @@ class ChatSyncService {
 
       // Save sync history
       const sessionData = {
+        /**
+         *
+         */
         syncedAt: new Date().toISOString(),
-        messagesProcessed: messagesProcessed,
-        messagesSynced: messagesSynced,
-        errors: errors,
+        /**
+         *
+         */
+        messagesProcessed,
+        /**
+         *
+         */
+        messagesSynced,
+        /**
+         *
+         */
+        errors,
+        /**
+         *
+         */
         duration: Date.now() - startTime,
+        /**
+         *
+         */
         sourceChatType: chatSync.getSourceChatType(),
-        targetChatType: chatSync.getTargetChatType()
+        /**
+         *
+         */
+        targetChatType: chatSync.getTargetChatType(),
       };
 
       await this.historyRepository.saveSyncHistory(
         chatSync.sourceChatId,
         chatSync.targetChatId,
-        sessionData
+        sessionData,
       );
 
       // Update source progress information
@@ -65,11 +100,26 @@ class ChatSyncService {
           const lastMessageId = lastProcessedMessage ? lastProcessedMessage.id : null;
 
           await this.sourceRepository.saveSource({
+            /**
+             *
+             */
             id: chatSync.sourceChatId,
+            /**
+             *
+             */
             type: chatSync.getSourceChatType(),
+            /**
+             *
+             */
             title: chatSync.sourceChatId, // Will be updated with actual title if available
+            /**
+             *
+             */
             lastCopyId: lastCopiedMessageId, // Last successfully copied message ID
-            lastMessageId: lastMessageId // Last message ID encountered
+            /**
+             *
+             */
+            lastMessageId, // Last message ID encountered
           });
         } catch (error) {
           this.logger.warn(`Could not update source progress: ${error.message}`);
@@ -79,35 +129,75 @@ class ChatSyncService {
       this.logger.info('Sync completed: ' + messagesSynced + '/' + messagesProcessed + ' messages synced');
 
       return {
+        /**
+         *
+         */
         success: true,
+        /**
+         *
+         */
         processedCount: messagesProcessed,
+        /**
+         *
+         */
         syncedCount: messagesSynced,
-        errors: errors
+        /**
+         *
+         */
+        errors,
       };
     } catch (error) {
       this.logger.error(`Sync failed: ${error.message}`);
 
       // Save error session
       const sessionData = {
+        /**
+         *
+         */
         syncedAt: new Date().toISOString(),
-        messagesProcessed: messagesProcessed,
+        /**
+         *
+         */
+        messagesProcessed,
+        /**
+         *
+         */
         messagesSynced: 0, // No messages synced due to error
+        /**
+         *
+         */
         errors: messagesProcessed + 1, // +1 for this error
+        /**
+         *
+         */
         duration: Date.now() - startTime,
+        /**
+         *
+         */
         errorMessage: error.message,
+        /**
+         *
+         */
         sourceChatType: chatSync.getSourceChatType(),
-        targetChatType: chatSync.getTargetChatType()
+        /**
+         *
+         */
+        targetChatType: chatSync.getTargetChatType(),
       };
 
       await this.historyRepository.saveSyncHistory(
         chatSync.sourceChatId,
         chatSync.targetChatId,
-        sessionData
+        sessionData,
       );
     }
   }
 
-  async fetchNewMessages(chatSync) {
+  /**
+   *
+   * @param chatSync
+   */
+  async fetchNewMessages (chatSync) {
     try {
       const sourceEntity = await this.telegramApi.getEntity(chatSync.sourceChatId);
       const targetEntity = await this.telegramApi.getEntity(chatSync.targetChatId);
@@ -115,7 +205,7 @@ class ChatSyncService {
       // Get last sync timestamp
       const lastSyncTimestamp = await this.historyRepository.getLastSyncTimestamp(
         chatSync.sourceChatId,
-        chatSync.targetChatId
+        chatSync.targetChatId,
       );
 
       // Adjust batch size based on chat type (bots might have fewer messages)
@@ -125,9 +215,18 @@ class ChatSyncService {
       }
 
       const options = {
+        /**
+         *
+         */
         limit: batchSize,
+        /**
+         *
+         */
         offsetDate: lastSyncTimestamp ? new Date(lastSyncTimestamp) : null,
-        reverse: false // Get newest first
+        /**
+         *
+         */
+        reverse: false, // Get newest first
       };
 
       // For groups and bots, we might need different fetching strategies
@@ -153,7 +252,12 @@ class ChatSyncService {
     }
   }
 
-  filterMessagesByChatType(messages, chatSync) {
+  /**
+   *
+   * @param messages
+   * @param chatSync
+   */
+  filterMessagesByChatType (messages, chatSync) {
     return messages.filter(message => {
       // For bot chats, filter out service messages or commands if needed
       if (chatSync.isSourceBot()) {
@@ -175,18 +279,38 @@ class ChatSyncService {
     });
   }
 
-  async processMessages(chatSync, messages) {
+  /**
+   *
+   * @param chatSync
+   * @param messages
+   */
+  async processMessages (chatSync, messages) {
     const processedMessages = [];
 
     for (const message of messages) {
       if (chatSync.shouldProcessMessage(message)) {
         // Add source attribution if needed
         const processedMessage = {
+          /**
+           *
+           */
           originalMessage: message,
+          /**
+           *
+           */
           content: this.extractMessageContent(message),
+          /**
+           *
+           */
           media: this.extractMediaContent(message),
+          /**
+           *
+           */
           type: this.determineMessageType(message),
-          timestamp: message.date
+          /**
+           *
+           */
+          timestamp: message.date,
         };
         processedMessages.push(processedMessage);
       }
@@ -195,135 +319,245 @@ class ChatSyncService {
     return processedMessages;
   }
 
-  extractMessageContent(message) {
+  /**
+   *
+   * @param message
+   */
+  extractMessageContent (message) {
     return {
+      /**
+       *
+       */
       text: message.message || '',
-      entities: message.entities || []
+      /**
+       *
+       */
+      entities: message.entities || [],
     };
   }
 
-  extractMediaContent(message) {
-    if (!message.media) return null;
+  /**
+   *
+   * @param message
+   */
+  extractMediaContent (message) {
+    if (!message.media) { return null; }
 
     const media = message.media;
 
     // Handle different media types
     if (media.photo) {
       return {
+        /**
+         *
+         */
         type: 'photo',
+        /**
+         *
+         */
         photo: media.photo,
-        caption: message.message || ''
+        /**
+         *
+         */
+        caption: message.message || '',
       };
     }
 
     if (media.document) {
       return {
+        /**
+         *
+         */
         type: 'document',
+        /**
+         *
+         */
         document: media.document,
-        caption: message.message || ''
+        /**
+         *
+         */
+        caption: message.message || '',
       };
     }
 
     if (media.video) {
       return {
+        /**
+         *
+         */
         type: 'video',
+        /**
+         *
+         */
         video: media.video,
-        caption: message.message || ''
+        /**
+         *
+         */
+        caption: message.message || '',
       };
     }
 
     if (media.audio) {
       return {
+        /**
+         *
+         */
         type: 'audio',
+        /**
+         *
+         */
         audio: media.audio,
-        caption: message.message || ''
+        /**
+         *
+         */
+        caption: message.message || '',
       };
     }
 
     if (media.voice) {
       return {
+        /**
+         *
+         */
         type: 'voice',
-        voice: media.voice
+        /**
+         *
+         */
+        voice: media.voice,
       };
     }
 
     if (media.sticker) {
       return {
+        /**
+         *
+         */
         type: 'sticker',
-        sticker: media.sticker
+        /**
+         *
+         */
+        sticker: media.sticker,
       };
     }
 
     if (media.animation) {
       return {
+        /**
+         *
+         */
         type: 'animation',
+        /**
+         *
+         */
         animation: media.animation,
-        caption: message.message || ''
+        /**
+         *
+         */
+        caption: message.message || '',
       };
     }
 
     if (media.poll) {
       return {
+        /**
+         *
+         */
         type: 'poll',
-        poll: media.poll
+        /**
+         *
+         */
+        poll: media.poll,
       };
     }
 
     if (media.geo) {
       return {
+        /**
+         *
+         */
         type: 'location',
-        geo: media.geo
+        /**
+         *
+         */
+        geo: media.geo,
       };
     }
 
     if (media.contact) {
       return {
+        /**
+         *
+         */
         type: 'contact',
-        contact: media.contact
+        /**
+         *
+         */
+        contact: media.contact,
       };
     }
 
     if (media.venue) {
       return {
+        /**
+         *
+         */
         type: 'venue',
-        venue: media.venue
+        /**
+         *
+         */
+        venue: media.venue,
       };
     }
 
     if (media.webpage) {
       return {
+        /**
+         *
+         */
         type: 'webpage',
-        webpage: media.webpage
+        /**
+         *
+         */
+        webpage: media.webpage,
       };
     }
 
     return null;
   }
 
-  determineMessageType(message) {
+  /**
+   *
+   * @param message
+   */
+  determineMessageType (message) {
     if (message.media) {
-      if (message.media.photo) return 'photo';
-      if (message.media.document) return 'document';
-      if (message.media.video) return 'video';
-      if (message.media.audio) return 'audio';
-      if (message.media.voice) return 'voice';
-      if (message.media.sticker) return 'sticker';
-      if (message.media.animation) return 'animation';
-      if (message.media.poll) return 'poll';
-      if (message.media.geo) return 'location';
-      if (message.media.contact) return 'contact';
-      if (message.media.venue) return 'venue';
-      if (message.media.webpage) return 'webpage';
+      if (message.media.photo) { return 'photo'; }
+      if (message.media.document) { return 'document'; }
+      if (message.media.video) { return 'video'; }
+      if (message.media.audio) { return 'audio'; }
+      if (message.media.voice) { return 'voice'; }
+      if (message.media.sticker) { return 'sticker'; }
+      if (message.media.animation) { return 'animation'; }
+      if (message.media.poll) { return 'poll'; }
+      if (message.media.geo) { return 'location'; }
+      if (message.media.contact) { return 'contact'; }
+      if (message.media.venue) { return 'venue'; }
+      if (message.media.webpage) { return 'webpage'; }
     }
 
-    if (message.message) return 'text';
-    if (message.game) return 'game';
-    if (message.invoice) return 'invoice';
+    if (message.message) { return 'text'; }
+    if (message.game) { return 'game'; }
+    if (message.invoice) { return 'invoice'; }
 
     return 'unknown';
   }
 
-  async sendMessagesToTarget(chatSync, processedMessages) {
+  /**
+   *
+   * @param chatSync
+   * @param processedMessages
+   */
+  async sendMessagesToTarget (chatSync, processedMessages) {
     let syncedCount = 0;
     let lastCopiedMessageId = null;
 
@@ -348,13 +582,38 @@ class ChatSyncService {
     }
 
     return {
+      /**
+       *
+       */
       count: syncedCount,
-      lastCopiedMessageId: lastCopiedMessageId
+      /**
+       *
+       */
+      lastCopiedMessageId,
     };
   }
 
-  async sendSingleMessage(targetChatId, processedMessage, chatSync = null) {
-    const { content, media, type, originalMessage } = processedMessage;
+  /**
+   *
+   * @param targetChatId
+   * @param processedMessage
+   * @param chatSync
+   */
+  async sendSingleMessage (targetChatId, processedMessage, chatSync = null) {
+    const { /**
+     *
+     */
+      content, /**
+     *
+     */
+      media, /**
+     *
+     */
+      type, /**
+     *
+     */
+      originalMessage,
+    } = processedMessage;
 
     // Check if content is protected (cannot be copied directly)
     const isContentProtected = this.isContentProtected(originalMessage);
@@ -368,7 +627,7 @@ class ChatSyncService {
         return await this.telegramApi.forwardMessage(
           targetChatId,
           originalMessage.id,
-          originalMessage.peerId
+          originalMessage.peerId,
         );
       } catch (error) {
         // Fall back to sending
@@ -378,91 +637,106 @@ class ChatSyncService {
 
     // Handle different message types
     switch (type) {
-      case 'text':
-        return await this.telegramApi.sendMessage(targetChatId, content.text);
+    case 'text':
+      return await this.telegramApi.sendMessage(targetChatId, content.text);
 
-      case 'photo':
-        if (isContentProtected) {
-          return await this.sendProtectedPhoto(targetChatId, originalMessage, media.caption);
+    case 'photo':
+      if (isContentProtected) {
+        return await this.sendProtectedPhoto(targetChatId, originalMessage, media.caption);
+      }
+      return await this.telegramApi.sendPhoto(targetChatId, media.photo, {
+        /**
+         *
+         */
+        caption: media.caption,
+      });
+
+    case 'video':
+      if (isContentProtected) {
+        return await this.sendProtectedVideo(targetChatId, originalMessage, media.caption);
+      }
+      return await this.telegramApi.sendVideo(targetChatId, media.video, {
+        /**
+         *
+         */
+        caption: media.caption,
+      });
+
+    case 'document':
+      if (isContentProtected) {
+        return await this.sendProtectedDocument(targetChatId, originalMessage, media.caption);
+      }
+      return await this.telegramApi.sendDocument(targetChatId, media.document, {
+        /**
+         *
+         */
+        caption: media.caption,
+      });
+
+    case 'audio':
+      if (isContentProtected) {
+        return await this.sendProtectedAudio(targetChatId, originalMessage, media.caption);
+      }
+      return await this.telegramApi.sendAudio(targetChatId, media.audio, {
+        /**
+         *
+         */
+        caption: media.caption,
+      });
+
+    case 'voice':
+      if (isContentProtected) {
+        return await this.sendProtectedVoice(targetChatId, originalMessage);
+      }
+      return await this.telegramApi.sendVoice(targetChatId, media.voice);
+
+    case 'sticker':
+      if (isContentProtected) {
+        return await this.sendProtectedSticker(targetChatId, originalMessage);
+      }
+      return await this.telegramApi.sendSticker(targetChatId, media.sticker);
+
+    case 'animation':
+      if (isContentProtected) {
+        return await this.sendProtectedAnimation(targetChatId, originalMessage, media.caption);
+      }
+      return await this.telegramApi.sendAnimation(targetChatId, media.animation, {
+        /**
+         *
+         */
+        caption: media.caption,
+      });
+
+    case 'poll':
+      return await this.telegramApi.sendPoll(targetChatId, media.poll);
+
+    case 'location':
+      return await this.telegramApi.sendLocation(targetChatId, media.geo);
+
+    case 'contact':
+      return await this.telegramApi.sendContact(targetChatId, media.contact);
+
+    case 'venue':
+      return await this.telegramApi.sendVenue(targetChatId, media.venue);
+
+    default:
+      // For unsupported types, try to forward if possible
+      const canForwardDefault = chatSync ? !chatSync.isTargetBot() && !isContentProtected : !isContentProtected;
+      if (canForwardDefault) {
+        try {
+          return await this.telegramApi.forwardMessage(
+            targetChatId,
+            originalMessage.id,
+            originalMessage.peerId,
+          );
+        } catch (forwardError) {
+          this.logger.warn(`Cannot sync message type ${type}: ${forwardError.message}`);
+          throw forwardError;
         }
-        return await this.telegramApi.sendPhoto(targetChatId, media.photo, {
-          caption: media.caption
-        });
-
-      case 'video':
-        if (isContentProtected) {
-          return await this.sendProtectedVideo(targetChatId, originalMessage, media.caption);
-        }
-        return await this.telegramApi.sendVideo(targetChatId, media.video, {
-          caption: media.caption
-        });
-
-      case 'document':
-        if (isContentProtected) {
-          return await this.sendProtectedDocument(targetChatId, originalMessage, media.caption);
-        }
-        return await this.telegramApi.sendDocument(targetChatId, media.document, {
-          caption: media.caption
-        });
-
-      case 'audio':
-        if (isContentProtected) {
-          return await this.sendProtectedAudio(targetChatId, originalMessage, media.caption);
-        }
-        return await this.telegramApi.sendAudio(targetChatId, media.audio, {
-          caption: media.caption
-        });
-
-      case 'voice':
-        if (isContentProtected) {
-          return await this.sendProtectedVoice(targetChatId, originalMessage);
-        }
-        return await this.telegramApi.sendVoice(targetChatId, media.voice);
-
-      case 'sticker':
-        if (isContentProtected) {
-          return await this.sendProtectedSticker(targetChatId, originalMessage);
-        }
-        return await this.telegramApi.sendSticker(targetChatId, media.sticker);
-
-      case 'animation':
-        if (isContentProtected) {
-          return await this.sendProtectedAnimation(targetChatId, originalMessage, media.caption);
-        }
-        return await this.telegramApi.sendAnimation(targetChatId, media.animation, {
-          caption: media.caption
-        });
-
-      case 'poll':
-        return await this.telegramApi.sendPoll(targetChatId, media.poll);
-
-      case 'location':
-        return await this.telegramApi.sendLocation(targetChatId, media.geo);
-
-      case 'contact':
-        return await this.telegramApi.sendContact(targetChatId, media.contact);
-
-      case 'venue':
-        return await this.telegramApi.sendVenue(targetChatId, media.venue);
-
-      default:
-        // For unsupported types, try to forward if possible
-        const canForwardDefault = chatSync ? !chatSync.isTargetBot() && !isContentProtected : !isContentProtected;
-        if (canForwardDefault) {
-          try {
-            return await this.telegramApi.forwardMessage(
-              targetChatId,
-              originalMessage.id,
-              originalMessage.peerId
-            );
-          } catch (forwardError) {
-            this.logger.warn(`Cannot sync message type ${type}: ${forwardError.message}`);
-            throw forwardError;
-          }
-        } else {
-          this.logger.warn(`Cannot sync message type ${type} to bot chat or protected content`);
-          throw new Error(`Unsupported message type for bot chat or protected content: ${type}`);
-        }
+      } else {
+        this.logger.warn(`Cannot sync message type ${type} to bot chat or protected content`);
+        throw new Error(`Unsupported message type for bot chat or protected content: ${type}`);
+      }
     }
   }
 
@@ -471,8 +745,8 @@ class ChatSyncService {
    * @param {Object} message - Telegram message object
    * @returns {boolean} True if content is protected
    */
-  isContentProtected(message) {
-    if (!message.media) return false;
+  isContentProtected (message) {
+    if (!message.media) { return false; }
 
     // Safe prototype pollution resistant check
     const hasOwn = Object.prototype.hasOwnProperty;
@@ -481,7 +755,7 @@ class ChatSyncService {
     if (message.media.photo && Array.isArray(message.media.photo) && message.media.photo.length > 0) {
       const firstPhoto = message.media.photo[0];
       return firstPhoto && (
-             hasOwn.call(firstPhoto, 'restricted') ||
+        hasOwn.call(firstPhoto, 'restricted') ||
              hasOwn.call(firstPhoto, 'content_protected') ||
              !firstPhoto.sizes);
     }
@@ -512,8 +786,11 @@ class ChatSyncService {
 
   /**
    * Send protected photo by downloading and re-uploading
+   * @param targetChatId
+   * @param originalMessage
+   * @param caption
    */
-  async sendProtectedPhoto(targetChatId, originalMessage, caption) {
+  async sendProtectedPhoto (targetChatId, originalMessage, caption) {
     let tempFilePath = null;
 
     try {
@@ -528,7 +805,10 @@ class ChatSyncService {
 
       // Send the file
       const result = await this.telegramApi.sendPhoto(targetChatId, tempFilePath, {
-        caption: caption
+        /**
+         *
+         */
+        caption,
       });
 
       return result;
@@ -550,8 +830,11 @@ class ChatSyncService {
 
   /**
    * Send protected video by downloading and re-uploading
+   * @param targetChatId
+   * @param originalMessage
+   * @param caption
    */
-  async sendProtectedVideo(targetChatId, originalMessage, caption) {
+  async sendProtectedVideo (targetChatId, originalMessage, caption) {
     let tempFilePath = null;
 
     try {
@@ -566,7 +849,10 @@ class ChatSyncService {
 
       // Send the file
       const result = await this.telegramApi.sendVideo(targetChatId, tempFilePath, {
-        caption: caption
+        /**
+         *
+         */
+        caption,
       });
 
       return result;
@@ -588,8 +874,11 @@ class ChatSyncService {
 
   /**
    * Send protected document by downloading and re-uploading
+   * @param targetChatId
+   * @param originalMessage
+   * @param caption
    */
-  async sendProtectedDocument(targetChatId, originalMessage, caption) {
+  async sendProtectedDocument (targetChatId, originalMessage, caption) {
     let tempFilePath = null;
 
     try {
@@ -605,7 +894,10 @@ class ChatSyncService {
 
       // Send the file
       const result = await this.telegramApi.sendDocument(targetChatId, tempFilePath, {
-        caption: caption
+        /**
+         *
+         */
+        caption,
       });
 
       return result;
@@ -627,8 +919,11 @@ class ChatSyncService {
 
   /**
    * Send protected audio by downloading and re-uploading
+   * @param targetChatId
+   * @param originalMessage
+   * @param caption
    */
-  async sendProtectedAudio(targetChatId, originalMessage, caption) {
+  async sendProtectedAudio (targetChatId, originalMessage, caption) {
     let tempFilePath = null;
 
     try {
@@ -643,7 +938,10 @@ class ChatSyncService {
 
       // Send the file
       const result = await this.telegramApi.sendAudio(targetChatId, tempFilePath, {
-        caption: caption
+        /**
+         *
+         */
+        caption,
       });
 
       return result;
@@ -665,8 +963,10 @@ class ChatSyncService {
 
   /**
    * Send protected voice message by downloading and re-uploading
+   * @param targetChatId
+   * @param originalMessage
    */
-  async sendProtectedVoice(targetChatId, originalMessage) {
+  async sendProtectedVoice (targetChatId, originalMessage) {
     let tempFilePath = null;
 
     try {
@@ -701,8 +1001,10 @@ class ChatSyncService {
 
   /**
    * Send protected sticker by downloading and re-uploading
+   * @param targetChatId
+   * @param originalMessage
    */
-  async sendProtectedSticker(targetChatId, originalMessage) {
+  async sendProtectedSticker (targetChatId, originalMessage) {
     let tempFilePath = null;
 
     try {
@@ -737,8 +1039,11 @@ class ChatSyncService {
 
   /**
    * Send protected animation by downloading and re-uploading
+   * @param targetChatId
+   * @param originalMessage
+   * @param caption
    */
-  async sendProtectedAnimation(targetChatId, originalMessage, caption) {
+  async sendProtectedAnimation (targetChatId, originalMessage, caption) {
     let tempFilePath = null;
 
     try {
@@ -753,7 +1058,10 @@ class ChatSyncService {
 
       // Send the file
       const result = await this.telegramApi.sendAnimation(targetChatId, tempFilePath, {
-        caption: caption
+        /**
+         *
+         */
+        caption,
       });
 
       return result;

@@ -107,30 +107,38 @@ class ScrapingService {
           idsToFetch.push(i);
         }
 
-        let messages = await this.telegramClient.getMessages(channel, { ids: idsToFetch });
+        const messages = await this.telegramClient.getMessages(channel, { /**
+         *
+         */
+          ids: idsToFetch,
+        });
         const validMsgs = messages.filter(m => m && m.className !== 'MessageEmpty');
         deletedMessages += (idsToFetch.length - validMsgs.length);
         validMsgs.sort((a, b) => a.id - b.id);
 
         for (const msg of validMsgs) {
-          if (aborted) break;
-          
+          if (aborted) { break; }
+
           const currentId = msg.id;
           processedMessages++;
           lastFetchedId = currentId;
 
           if (msg.text) {
-            const { extractDeepLinks } = require('../../../utils/linkParser');
+            const { /**
+             *
+             */
+              extractDeepLinks,
+            } = require('../../../utils/linkParser');
             const deepLinks = extractDeepLinks(msg.text);
 
             if (deepLinks.length > 0) {
               messagesWithLink++;
-              console.log(`🔗 Pesan ${currentId}: Ditemukan ${deepLinks.length} tautan.`);
+              console.log(`\x1b[36m🔗 Pesan ${currentId}: Ditemukan ${deepLinks.length} tautan.\x1b[0m`);
 
               for (const link of deepLinks) {
-                console.log(`🎯 Interacting with @${link.botUsername}...`);
+                console.log(`\x1b[35m🎯 Interacting with @${link.botUsername}...\x1b[0m`);
                 const interaction = await botInteractionService.interactWithBot(link.botUsername, link.startData);
-                
+
                 if (interaction.success) {
                   totalInteractions++;
                   const response = interaction.response;
@@ -138,32 +146,41 @@ class ScrapingService {
 
                   if (hasMedia) {
                     totalMedia++;
-                    console.log('✅ Response has media. Continuing...');
+                    console.log('\x1b[32m✅ Response has media. Continuing...\x1b[0m');
                   } else {
                     responseWithoutMedia++;
-                    console.log('⚠️ Response HAS NO MEDIA.');
-                    console.log('🛑 ABORTING: Original logic requires media to continue.');
+                    console.log('\x1b[31m⚠️ Response HAS NO MEDIA.\x1b[0m');
+                    console.log('\x1b[31m\x1b[1m🛑 ABORTING: Original logic requires media to continue.\x1b[0m');
                     aborted = true;
                   }
 
                   scrapingDetails.push({
+                    /**
+                     *
+                     */
                     url: link.fullUrl,
+                    /**
+                     *
+                     */
                     bot: `@${link.botUsername}`,
+                    /**
+                     *
+                     */
                     startData: link.startData,
-                    hasMedia: !!hasMedia
+                    /**
+                     *
+                     */
+                    hasMedia: !!hasMedia,
                   });
 
-                  if (aborted) break;
+                  if (aborted) { break; }
                 } else {
-                  console.log(`❌ Interaction failed: ${interaction.error}`);
-                  // Note: Should we abort on interaction failure? 
-                  // README says "Jika tidak ada media -> stop". 
-                  // If bot doesn't respond at all, it's effectively no media.
+                  console.log(`\x1b[31m❌ Interaction failed: ${interaction.error}\x1b[0m`);
                   aborted = true;
                   errorOccurred = interaction.error;
                   break;
                 }
-                
+
                 // Human-like delay between interactions
                 await new Promise(r => setTimeout(r, 3000 + Math.random() * 2000));
               }
@@ -188,29 +205,86 @@ class ScrapingService {
     await this.historyRepo.saveHistory(channel, startId, savedEndId);
 
     const stats = {
+      /**
+       *
+       */
       messages: processedMessages,
+      /**
+       *
+       */
       interactions: totalInteractions,
+      /**
+       *
+       */
       messagesWithLink,
+      /**
+       *
+       */
       messagesWithoutLink,
+      /**
+       *
+       */
       deletedMessages,
+      /**
+       *
+       */
       totalMedia,
+      /**
+       *
+       */
       responseWithoutMedia,
+      /**
+       *
+       */
       stoppedAt: savedEndId,
+      /**
+       *
+       */
       error: errorOccurred,
-      aborted
+      /**
+       *
+       */
+      aborted,
     };
 
     // Update history with true successful point
     if (typeof this.historyRepo.addScrapingSession === 'function') {
       await this.historyRepo.addScrapingSession(channel, {
+        /**
+         *
+         */
         date: sessionStartTime.toISOString(),
+        /**
+         *
+         */
         startId,
+        /**
+         *
+         */
         endId: savedEndId,
+        /**
+         *
+         */
         processed: processedMessages,
+        /**
+         *
+         */
         linksFound: messagesWithLink,
+        /**
+         *
+         */
         noLinks: messagesWithoutLink,
+        /**
+         *
+         */
         deleted: deletedMessages,
+        /**
+         *
+         */
         interactions: totalInteractions,
+        /**
+         *
+         */
         error: errorOccurred || (aborted ? 'Aborted by logic' : null),
       });
     }
@@ -223,33 +297,33 @@ class ScrapingService {
 
   /**
    * Menghasilkan file report.md sesuai spesifikasi
-   * @param {string} channel 
-   * @param {number} startId 
-   * @param {number} endId 
-   * @param {Object} stats 
-   * @param {Array} details 
+   * @param {string} channel
+   * @param {number} startId
+   * @param {number} endId
+   * @param {Object} stats
+   * @param {Array} details
    */
   async generateReportFile (channel, startId, endId, stats, details) {
     const fs = require('fs');
     const path = require('path');
     const reportPath = path.resolve(process.cwd(), 'report.md');
-    
-    let content = `# Laporan Deep Link Scraping\n\n---\n\n`;
-    content += `## Informasi Scraping\n`;
+
+    let content = '# Laporan Deep Link Scraping\n\n---\n\n';
+    content += '## Informasi Scraping\n';
     content += `- **Channel:** ${channel}\n`;
     content += `- **Range Pesan:** ID ${startId} - ID ${endId}\n`;
     content += `- **Tanggal:** ${new Date().toLocaleString('id-ID')}\n\n---\n\n`;
-    
-    content += `## Statistik\n\n`;
-    content += `| Metrik | Jumlah |\n`;
-    content += `|--------|--------|\n`;
+
+    content += '## Statistik\n\n';
+    content += '| Metrik | Jumlah |\n';
+    content += '|--------|--------|\n';
     content += `| Total Pesan Discrape | ${stats.messages} |\n`;
     content += `| Total Link Ditemukan | ${stats.interactions} |\n`;
     content += `| Total Media (Foto/Video) | ${stats.totalMedia} |\n`;
     content += `| Pesan yang Mengandung Deep Link | ${stats.messagesWithLink} |\n`;
     content += `| Response tanpa Media | ${stats.responseWithoutMedia} |\n\n---\n\n`;
-    
-    content += `## Detail Link\n\n`;
+
+    content += '## Detail Link\n\n';
     details.forEach((item, idx) => {
       content += `### ${idx + 1}. Link\n`;
       content += `- **URL:** \`${item.url}\`\n`;
@@ -257,19 +331,19 @@ class ScrapingService {
       content += `- **Start Data:** \`${item.startData}\`\n`;
       content += `- **Response:** ${item.hasMedia ? '✅ Ada Media' : '❌ Tidak Ada Media'}\n\n`;
     });
-    
-    content += `---\n\n`;
-    content += `## Status\n\n`;
+
+    content += '---\n\n';
+    content += '## Status\n\n';
     if (stats.error) {
       content += `❌ **ERROR** - ${stats.error}\n`;
     } else if (stats.aborted) {
-      content += `🛑 **ABORTED** - Berhenti karena response bot tidak mengandung media\n`;
+      content += '🛑 **ABORTED** - Berhenti karena response bot tidak mengandung media\n';
     } else {
-      content += `✅ **SELESAI** - Semua pesan berhasil discrape\n`;
+      content += '✅ **SELESAI** - Semua pesan berhasil discrape\n';
     }
-    
-    content += `\n---\n\n*Report generated by UserTeleNode Bot*`;
-    
+
+    content += '\n---\n\n*Report generated by UserTeleNode Bot*';
+
     try {
       fs.writeFileSync(reportPath, content);
       console.log(`\n📝 Laporan berhasil disimpan ke: ${reportPath}`);
@@ -462,6 +536,12 @@ class ScrapingService {
              */
             status: msg ? 'Punya pesan' : 'Kosong',
           });
+
+          // Rate limit delay - only if we actually hit the network
+          if (index < totalChannels - 1) {
+            console.log('⏳ Waiting 1s before next channel to avoid rate limit...');
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
         } catch (e) {
           let status = 'Tidak dapat diakses';
           if (e.message && e.message.includes('TIMEOUT')) {
@@ -506,12 +586,6 @@ class ScrapingService {
             status: `${status} (using cached)`,
           });
         }
-      }
-
-      // Rate limit delay - always delay between channels (even cached) to avoid Telegram rate limits
-      if (index < totalChannels - 1) {
-        console.log('⏳ Waiting 1s before next channel...');
-        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
 

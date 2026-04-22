@@ -9,6 +9,119 @@ class ConsoleUI {
    */
   constructor (rl) {
     this.rl = rl;
+    this.colors = {
+      /**
+       *
+       */
+      reset: '\x1b[0m',
+      /**
+       *
+       */
+      bright: '\x1b[1m',
+      /**
+       *
+       */
+      dim: '\x1b[2m',
+      /**
+       *
+       */
+      underscore: '\x1b[4m',
+      /**
+       *
+       */
+      blink: '\x1b[5m',
+      /**
+       *
+       */
+      reverse: '\x1b[7m',
+      /**
+       *
+       */
+      hidden: '\x1b[8m',
+
+      /**
+       *
+       */
+      fg: {
+        /**
+         *
+         */
+        black: '\x1b[30m',
+        /**
+         *
+         */
+        red: '\x1b[31m',
+        /**
+         *
+         */
+        green: '\x1b[32m',
+        /**
+         *
+         */
+        yellow: '\x1b[33m',
+        /**
+         *
+         */
+        blue: '\x1b[34m',
+        /**
+         *
+         */
+        magenta: '\x1b[35m',
+        /**
+         *
+         */
+        cyan: '\x1b[36m',
+        /**
+         *
+         */
+        white: '\x1b[37m',
+        /**
+         *
+         */
+        crimson: '\x1b[38m',
+      },
+      /**
+       *
+       */
+      bg: {
+        /**
+         *
+         */
+        black: '\x1b[40m',
+        /**
+         *
+         */
+        red: '\x1b[41m',
+        /**
+         *
+         */
+        green: '\x1b[42m',
+        /**
+         *
+         */
+        yellow: '\x1b[43m',
+        /**
+         *
+         */
+        blue: '\x1b[44m',
+        /**
+         *
+         */
+        magenta: '\x1b[45m',
+        /**
+         *
+         */
+        cyan: '\x1b[46m',
+        /**
+         *
+         */
+        white: '\x1b[47m',
+        /**
+         *
+         */
+        crimson: '\x1b[48m',
+      },
+    };
   }
 
   /**
@@ -207,24 +320,37 @@ class ConsoleUI {
    * @param results
    */
   displayResults (results) {
+    const { /**
+     *
+     */
+      fg, /**
+     *
+     */
+      bright, /**
+     *
+     */
+      reset,
+    } = this.colors;
+
     if (results.error) {
-      console.log(`\n❌ PROSES TERHENTI KARENA ERROR FATAL: ${results.error}`);
+      console.log(`\n${fg.red}${bright}❌ PROSES TERHENTI KARENA ERROR FATAL: ${results.error}${reset}`);
     } else if (results.aborted) {
-      console.log(`\n🛑 PROSES TERHENTI OTOMATIS: Response bot tidak mengandung media.`);
+      console.log(`\n${fg.yellow}${bright}🛑 PROSES TERHENTI OTOMATIS: Response bot tidak mengandung media.${reset}`);
     }
-    
-    console.log(`⚠️ Hasil di bawah ini merupakan status aman terakhir yang tercatat di ID ${results.stoppedAt}.`);
-    console.log('\n📊 HASIL AKHIR PROSES SCRAPING');
-    console.log('─────────────────────────────────────────');
-    console.log(`✅ Total Pesan Terbaca / Diproses   : ${results.messages}`);
-    console.log(`🗑️ Pesan Kosong / Terhapus / Tiada  : ${results.deletedMessages || 0}`);
-    console.log(`🔗 Pesan Mengandung Tautan Sasaran  : ${results.messagesWithLink || 0}`);
-    console.log(`📝 Pesan Tanpa Tautan (Teks/Media)  : ${results.messagesWithoutLink || 0}`);
-    console.log(`🤖 Interaksi Deep Link (Link Send)  : ${results.interactions}`);
-    console.log(`🖼️ Response dengan Media            : ${results.totalMedia || 0}`);
-    console.log(`📄 Response TANPA Media             : ${results.responseWithoutMedia || 0}`);
-    console.log('─────────────────────────────────────────\n');
-    console.log('📝 Laporan detail telah disimpan ke file report.md');
+
+    console.log(`\n${fg.cyan}📝 Laporan detail telah disimpan ke file: ${bright}report.md${reset}`);
+    console.log(`${fg.yellow}⚠️ Hasil di bawah ini merupakan status aman terakhir yang tercatat di ID ${results.stoppedAt}.${reset}`);
+
+    console.log(`\n${fg.green}${bright}📊 HASIL AKHIR PROSES SCRAPING${reset}`);
+    console.log(`${fg.green}─────────────────────────────────────────${reset}`);
+    console.log(`${fg.white}✅ Total Pesan Terbaca / Diproses   : ${bright}${results.messages}${reset}`);
+    console.log(`${fg.dim}🗑️ Pesan Kosong / Terhapus / Tiada  : ${results.deletedMessages || 0}${reset}`);
+    console.log(`${fg.cyan}🔗 Pesan Mengandung Tautan Sasaran  : ${bright}${results.messagesWithLink || 0}${reset}`);
+    console.log(`${fg.white}📝 Pesan Tanpa Tautan (Teks/Media)  : ${results.messagesWithoutLink || 0}${reset}`);
+    console.log(`${fg.magenta}🤖 Interaksi Deep Link (Link Send)  : ${bright}${results.interactions}${reset}`);
+    console.log(`${fg.green}🖼️ Response dengan Media            : ${bright}${results.totalMedia || 0}${reset}`);
+    console.log(`${fg.red}📄 Response TANPA Media             : ${results.responseWithoutMedia || 0}${reset}`);
+    console.log(`${fg.green}─────────────────────────────────────────${reset}\n`);
   }
 
   /**
@@ -251,13 +377,13 @@ class ConsoleUI {
     console.log('\n📊 HASIL SINKRONISASI CHAT');
     console.log('─────────────────────────────────────');
     if (result.success) {
-      console.log(`✅ Status              : Berhasil`);
+      console.log('✅ Status              : Berhasil');
       console.log(`📝 Pesan Diproses      : ${result.processedCount}`);
       console.log(`🔄 Pesan Disinkronkan  : ${result.syncedCount}`);
       console.log(`❌ Error                : ${result.errors}`);
       console.log(`⏱️ Durasi               : ${result.duration ? Math.round(result.duration / 1000) + ' detik' : 'N/A'}`);
     } else {
-      console.log(`❌ Status              : Gagal`);
+      console.log('❌ Status              : Gagal');
       console.log(`💬 Pesan Error        : ${result.error || 'Unknown error'}`);
     }
     console.log('─────────────────────────────────────\n');
@@ -360,7 +486,17 @@ class ConsoleUI {
       console.log('3. bot - untuk bot Telegram');
 
       const sourceTypeInput = this.rl.question('Tipe chat sumber (1-3, default: 2 untuk group): ') || '2';
-      const typeMap = { '1': 'channel', '2': 'group', '3': 'bot' };
+      const typeMap = { /**
+       *
+       */
+        1: 'channel', /**
+       *
+       */
+        2: 'group', /**
+       *
+       */
+        3: 'bot',
+      };
       const typeInput = parseInt(sourceTypeInput.trim());
       sourceChatType = (typeInput >= 1 && typeInput <= 3) ? typeMap[sourceTypeInput] : 'group';
     }
@@ -373,23 +509,56 @@ class ConsoleUI {
     const includeMedia = this.rl.question('Sertakan media? (y/n, default: y): ').toLowerCase() !== 'n';
 
     const config = {
+      /**
+       *
+       */
       sourceChatId: sourceChat,
+      /**
+       *
+       */
       targetChatId: targetChat,
+      /**
+       *
+       */
       sourceChatType,
+      /**
+       *
+       */
       targetChatType,
+      /**
+       *
+       */
       batchSize,
+      /**
+       *
+       */
       rateLimitDelayMs: rateLimitDelay,
+      /**
+       *
+       */
       includeMedia,
-      enabled: true
+      /**
+       *
+       */
+      enabled: true,
     };
 
     // Simpan source ke daftar tersimpan jika repository tersedia
     if (sourceRepository && sourceChat) {
       try {
         await sourceRepository.saveSource({
+          /**
+           *
+           */
           id: sourceChat,
+          /**
+           *
+           */
           type: sourceChatType,
-          title: sourceChat // Akan diupdate dengan title sebenarnya saat pertama kali digunakan
+          /**
+           *
+           */
+          title: sourceChat, // Akan diupdate dengan title sebenarnya saat pertama kali digunakan
         });
         console.log('💾 Source disimpan ke daftar tersimpan untuk penggunaan selanjutnya.');
       } catch (error) {
@@ -421,8 +590,9 @@ class ConsoleUI {
         const usageCount = source.usageCount || 0;
         const usageInfo = usageCount > 1 ? ` (${usageCount}x digunakan)` : '';
         const lastUsed = source.lastUsed ? new Date(source.lastUsed).toLocaleDateString('id-ID') : '';
-        const progressInfo = (source.lastMessageId !== null && source.lastMessageId !== undefined) ?
-          ` | Last Msg: ${source.lastMessageId}${source.lastCopyId !== null && source.lastCopyId !== undefined ? ` (Copied: ${source.lastCopyId})` : ''}` : '';
+        const progressInfo = (source.lastMessageId !== null && source.lastMessageId !== undefined)
+          ? ` | Last Msg: ${source.lastMessageId}${source.lastCopyId !== null && source.lastCopyId !== undefined ? ` (Copied: ${source.lastCopyId})` : ''}`
+          : '';
         const title = source.title || source.id || 'Unknown';
         const type = source.type || 'unknown';
         console.log(`${index + 1}. ${title} (${type}) - ${lastUsed}${usageInfo}${progressInfo}`);
