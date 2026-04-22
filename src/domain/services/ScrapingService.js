@@ -139,17 +139,27 @@ class ScrapingService {
                 console.log(`\x1b[35m🎯 Interacting with @${link.botUsername}...\x1b[0m`);
                 const interaction = await botInteractionService.interactWithBot(link.botUsername, link.startData);
 
-                if (interaction.success) {
+                  if (interaction.success) {
                   totalInteractions++;
                   const response = interaction.response;
-                  const hasMedia = response && response.media;
+                  
+                  // Robust media check
+                  const hasMedia = response && response.media && (
+                    response.media.photo || 
+                    response.media.video || 
+                    response.media.document ||
+                    response.media.webPage // Sometimes links have previews
+                  );
 
                   if (hasMedia) {
                     totalMedia++;
                     console.log('\x1b[32m✅ Response has media. Continuing...\x1b[0m');
                   } else {
                     responseWithoutMedia++;
-                    console.log('\x1b[31m⚠️ Response HAS NO MEDIA.\x1b[0m');
+                    console.log('\x1b[31m⚠️ Response HAS NO MEDIA (Text Only).\x1b[0m');
+                    if (response && response.message) {
+                      console.log(`\x1b[33m💬 Bot message: ${response.message.substring(0, 50)}...\x1b[0m`);
+                    }
                     console.log('\x1b[31m\x1b[1m🛑 ABORTING: Original logic requires media to continue.\x1b[0m');
                     aborted = true;
                   }

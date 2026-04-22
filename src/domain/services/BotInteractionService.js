@@ -71,13 +71,7 @@ class BotInteractionService {
       // Wait for bot response (Actual Functionality)
       console.log(`⏳ Waiting for response from @${normalizedBotUsername}...`);
       const responseMsg = await this.telegramClient.waitForNextMessage(chat, {
-        /**
-         *
-         */
         afterTime: sendTime,
-        /**
-         *
-         */
         timeout: 10000, // 10s timeout
       });
 
