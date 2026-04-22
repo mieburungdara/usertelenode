@@ -68,51 +68,61 @@ class BotInteractionService {
       await this.telegramClient.sendMessage(chat, `/start ${startParam}`);
       console.log(`✅ Sent /start ${startParam} to @${normalizedBotUsername}`);
 
-      // Wait for bot response (Actual Functionality)
+      // Wait for bot response with multiple message support (Actual Functionality)
       console.log(`⏳ Waiting for response from @${normalizedBotUsername}...`);
-      const responseMsg = await this.telegramClient.waitForNextMessage(chat, {
-        afterTime: sendTime,
-        timeout: 10000, // 10s timeout
-      });
+      
+      let finalResponse = null;
+      const startTime = Date.now();
+      const timeout = 20000; // 20s for slow bots
+      let lastCheckedTime = sendTime;
+      let lastSeenId = 0;
 
-      if (responseMsg) {
-        console.log(`📩 Received response from @${normalizedBotUsername}`);
+      while (Date.now() - startTime < timeout) {
+        const responseMsg = await this.telegramClient.waitForNextMessage(chat, {
+          afterTime: lastCheckedTime,
+          afterId: lastSeenId,
+          timeout: 5000,
+        });
+
+        if (responseMsg) {
+          console.log(`📩 Received message from @${normalizedBotUsername}`);
+          finalResponse = responseMsg;
+          lastSeenId = responseMsg.id; // Track this message ID so we skip it next time
+          
+          // Robust media check on the received message
+          const hasMedia = responseMsg.media && (
+            responseMsg.media.photo || 
+            responseMsg.media.video || 
+            responseMsg.media.document ||
+            responseMsg.media.webPage
+          );
+
+          if (hasMedia) {
+            console.log(`✅ Media detected in response!`);
+            break; // Found media, we can stop waiting
+          } else {
+            console.log(`ℹ️ Message is text-only: "${responseMsg.message?.substring(0, 50) || '(empty)'}". Waiting for media...`);
+            // Keep lastCheckedTime the same, but afterId ensures we skip this message
+          }
+        } else {
+          // No new message found in this poll cycle
+          if (finalResponse) break; // We already have at least one response, stop waiting
+        }
+      }
+
+      if (finalResponse) {
         return {
-          /**
-           *
-           */
           success: true,
-          /**
-           *
-           */
           botUsername: normalizedBotUsername,
-          /**
-           *
-           */
           startParam,
-          /**
-           *
-           */
-          response: responseMsg,
+          response: finalResponse,
         };
       } else {
         console.log(`⚠️ No response from @${normalizedBotUsername} within timeout`);
         return {
-          /**
-           *
-           */
           success: false,
-          /**
-           *
-           */
           botUsername: normalizedBotUsername,
-          /**
-           *
-           */
           startParam,
-          /**
-           *
-           */
           error: 'Timeout waiting for response',
         };
       }

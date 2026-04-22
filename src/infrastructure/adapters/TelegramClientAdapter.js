@@ -391,20 +391,24 @@ class TelegramClientAdapter {
   async waitForNextMessage (peer, options = {}) {
     const timeout = options.timeout || 15000;
     const afterTime = options.afterTime || Math.floor(Date.now() / 1000);
+    const afterId = options.afterId || 0; // Track by message ID to avoid duplicates
 
     const startTime = Date.now();
     while (Date.now() - startTime < timeout) {
       try {
-        const messages = await this.getMessages(peer, { /**
-         *
-         */
-          limit: 1,
-        });
+        // Fetch last 3 messages to catch multi-message bot responses
+        const messages = await this.getMessages(peer, { limit: 3 });
         if (messages.length > 0) {
-          const msg = messages[0];
-          // Cek apakah pesan baru datang setelah afterTime
-          if (msg.date > afterTime) {
-            return msg;
+          // Sort by date desc, then by id desc to get the truly latest
+          const sorted = [...messages]
+            .filter(m => m && m.date)
+            .sort((a, b) => b.date - a.date || b.id - a.id);
+          
+          for (const msg of sorted) {
+            // Use >= to handle same-second timestamps, and check msg.id to avoid returning same message
+            if (msg.date >= afterTime && msg.id > afterId) {
+              return msg;
+            }
           }
         }
       } catch (e) {

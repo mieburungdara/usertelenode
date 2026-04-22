@@ -302,7 +302,74 @@ class ScrapingService {
     // GENERATE report.md (Actual Functionality)
     await this.generateReportFile(channel, startId, savedEndId, stats, scrapingDetails);
 
+    // Send report to admin via Telegram
+    await this.sendReportToAdmin(channel, startId, savedEndId, stats);
+
     return stats;
+  }
+
+  /**
+   * Mengirim laporan scraping ke admin via Telegram
+   * @param {string} channel - Nama channel
+   * @param {number} startId - ID awal
+   * @param {number} endId - ID akhir
+   * @param {Object} stats - Statistik scraping
+   */
+  async sendReportToAdmin (channel, startId, endId, stats) {
+    const ADMIN_ID = 7602143247; // @fernathan
+
+    try {
+      let statusEmoji = '✅';
+      let statusText = 'SELESAI';
+      if (stats.error) {
+        statusEmoji = '❌';
+        statusText = 'ERROR';
+      } else if (stats.aborted) {
+        statusEmoji = '🛑';
+        statusText = 'DIHENTIKAN';
+      }
+
+      const now = new Date().toLocaleString('id-ID', {
+        timeZone: 'Asia/Jakarta',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+      });
+
+      const message = [
+        `${statusEmoji} <b>LAPORAN SCRAPING</b>`,
+        ``,
+        `📌 <b>Channel:</b> ${channel}`,
+        `📊 <b>Range:</b> ID ${startId} → ${endId}`,
+        `🕐 <b>Waktu:</b> ${now} WIB`,
+        ``,
+        `━━━━━ STATISTIK ━━━━━`,
+        `✅ Pesan Diproses: <b>${stats.messages}</b>`,
+        `🗑️ Terhapus/Kosong: <b>${stats.deletedMessages || 0}</b>`,
+        `🔗 Mengandung Link: <b>${stats.messagesWithLink || 0}</b>`,
+        `📝 Tanpa Link: <b>${stats.messagesWithoutLink || 0}</b>`,
+        `🤖 Interaksi Bot: <b>${stats.interactions}</b>`,
+        `🖼️ Dengan Media: <b>${stats.totalMedia || 0}</b>`,
+        `📄 Tanpa Media: <b>${stats.responseWithoutMedia || 0}</b>`,
+        ``,
+        `📋 <b>Status:</b> ${statusText}`,
+        stats.error ? `⚠️ <b>Error:</b> ${stats.error}` : '',
+        ``,
+        `<i>— UserTeleNode Bot</i>`,
+      ].filter(Boolean).join('\n');
+
+      await this.telegramClient.sendMessage(ADMIN_ID, {
+        message,
+        parseMode: 'html',
+      });
+
+      console.log('\x1b[32m📨 Laporan berhasil dikirim ke admin @fernathan\x1b[0m');
+    } catch (e) {
+      console.warn(`\x1b[33m⚠️ Gagal mengirim laporan ke admin: ${e.message}\x1b[0m`);
+    }
   }
 
   /**
