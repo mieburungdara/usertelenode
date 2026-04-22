@@ -215,45 +215,16 @@ class ScrapingService {
     await this.historyRepo.saveHistory(channel, startId, savedEndId);
 
     const stats = {
-      /**
-       *
-       */
+      totalToProcess,
       messages: processedMessages,
-      /**
-       *
-       */
       interactions: totalInteractions,
-      /**
-       *
-       */
       messagesWithLink,
-      /**
-       *
-       */
       messagesWithoutLink,
-      /**
-       *
-       */
       deletedMessages,
-      /**
-       *
-       */
       totalMedia,
-      /**
-       *
-       */
       responseWithoutMedia,
-      /**
-       *
-       */
       stoppedAt: savedEndId,
-      /**
-       *
-       */
       error: errorOccurred,
-      /**
-       *
-       */
       aborted,
     };
 
@@ -344,6 +315,7 @@ class ScrapingService {
         ``,
         `📌 <b>Channel:</b> ${channel}`,
         `📊 <b>Range:</b> ID ${startId} → ${endId}`,
+        `📋 <b>Estimasi Pesan:</b> ${stats.totalToProcess} ID`,
         `🕐 <b>Waktu:</b> ${now} WIB`,
         ``,
         `━━━━━ STATISTIK ━━━━━`,
