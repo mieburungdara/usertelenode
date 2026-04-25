@@ -51,74 +51,93 @@ class RunDeepLinkScraperUseCase {
       return;
     }
 
-    const num = parseInt(channelInput);
-    // Bedakan antara nomor urut pilihan (1,2,3...) dan ID numeric channel asli (-100123456789)
-    if (!isNaN(num) && num >= 1 && num <= finalChannelCache.length && String(num) === channelInput) {
-      const selectedChannel = finalChannelCache[num - 1];
-      const channel = selectedChannel.channelName;
-      // Suggest last scraped +1 for start, last message ID for end
-      const suggestedStart = (selectedChannel.lastScrapedId !== null && selectedChannel.lastScrapedId !== undefined ? selectedChannel.lastScrapedId + 1 : 1);
-      const suggestedEnd = selectedChannel.lastMessageId || (suggestedStart + 100);
-      // Get range from user with suggestions
-      const startIdInput = this.ui.getStartId(suggestedStart);
-      const endIdInput = this.ui.getEndId(suggestedEnd);
-      const startId = parseInt(startIdInput) || suggestedStart;
-      const endId = parseInt(endIdInput) || suggestedEnd;
-      const results = await this.scrapingService.scrapeChannel(channel, startId, endId, this.botInteractionService);
-      this.ui.displayResults(results);
-    } else {
-      // Cek apakah inputnya merupakan link pesan spesifik (baik public maupun private)
-      const privateMsgUrlMatch = channelInput.match(/(?:https?:\/\/)?t\.me\/c\/(\d+)\/(\d+)/i);
-      const publicMsgUrlMatch = channelInput.match(/(?:https?:\/\/)?t\.me\/([a-zA-Z0-9_]+)\/(\d+)/i);
+    const inputs = channelInput.split(/\s+/);
+    let reloadNeeded = false;
 
-      let targetChannelStr = null;
-      let startId = null;
-
-      if (privateMsgUrlMatch) {
-        targetChannelStr = parseInt(`-100${privateMsgUrlMatch[1]}`, 10);
-        startId = parseInt(privateMsgUrlMatch[2], 10);
-      } else if (publicMsgUrlMatch && publicMsgUrlMatch[1].toLowerCase() !== 'c') {
-        targetChannelStr = '@' + publicMsgUrlMatch[1];
-        startId = parseInt(publicMsgUrlMatch[2], 10);
+    for (let i = 0; i < inputs.length; i++) {
+      const currentInput = inputs[i];
+      if (inputs.length > 1) {
+        console.log(`\n======================================================`);
+        console.log(`🚀 MEMPROSES INPUT [${i + 1}/${inputs.length}]: ${currentInput}`);
+        console.log(`======================================================\n`);
       }
 
-      if (targetChannelStr) {
-        console.log('\n🔗 Tautan pesan terdeteksi!');
-        console.log(`📌 Mempersiapkan channel ${targetChannelStr} untuk ditarik...`);
+      const num = parseInt(currentInput);
+      // Bedakan antara nomor urut pilihan (1,2,3...) dan ID numeric channel asli (-100123456789)
+      if (!isNaN(num) && num >= 1 && num <= finalChannelCache.length && String(num) === currentInput) {
+        const selectedChannel = finalChannelCache[num - 1];
+        const channel = selectedChannel.channelName;
+        // Suggest last scraped +1 for start, last message ID for end
+        const suggestedStart = (selectedChannel.lastScrapedId !== null && selectedChannel.lastScrapedId !== undefined ? selectedChannel.lastScrapedId + 1 : 1);
+        const suggestedEnd = selectedChannel.lastMessageId || (suggestedStart + 100);
+        
+        let startId, endId;
+        if (inputs.length > 1) {
+          console.log(`⏩ Menggunakan default range untuk ${channel}: Start ID = ${suggestedStart}, End ID = ${suggestedEnd}`);
+          startId = suggestedStart;
+          endId = suggestedEnd;
+        } else {
+          // Get range from user with suggestions
+          const startIdInput = this.ui.getStartId(suggestedStart);
+          const endIdInput = this.ui.getEndId(suggestedEnd);
+          startId = parseInt(startIdInput) || suggestedStart;
+          endId = parseInt(endIdInput) || suggestedEnd;
+        }
 
-        // Daftarkan channel jika belum ada
-        await this.scrapingService.addChannel(targetChannelStr);
-
-        // Dapatkan update ID terakhir pada channel tersebut
-        console.log(`🌐 Mengambil informasi pesan terbaru dari ${targetChannelStr}...`);
-        const checks = await this.scrapingService.checkChannels([{ /**
-         *
-         */
-          channelName: targetChannelStr,
-        }]);
-        const endId = (checks.length > 0 && checks[0].lastMessageId) ? checks[0].lastMessageId : startId + 100;
-
-        console.log(`🚀 Memulai AUTO-SCRAPE untuk ${targetChannelStr}`);
-        console.log(`📊 Memproses ID pesan ${startId} hingga ${endId}...`);
-
-        // Langsung scrape tanpa pertanyaan
-        const results = await this.scrapingService.scrapeChannel(targetChannelStr, startId, endId, this.botInteractionService);
+        const results = await this.scrapingService.scrapeChannel(channel, startId, endId, this.botInteractionService);
         this.ui.displayResults(results);
-
-        console.log('\n🔄 Mengembalikan ke menu utama...');
-        return await this.execute(_account);
       } else {
-        // Jika bukan nomor urut maupun tautan pesan langsung, anggap sebagai penambahan channel baru reguler
-        console.log(`\n🔄 Mencoba memproses channel: ${channelInput}...`);
-        const result = await this.scrapingService.addChannel(channelInput);
-        this.ui.displayAddChannelResult(result);
+        // Cek apakah inputnya merupakan link pesan spesifik (baik public maupun private)
+        const privateMsgUrlMatch = currentInput.match(/(?:https?:\/\/)?t\.me\/c\/(\d+)\/(\d+)/i);
+        const publicMsgUrlMatch = currentInput.match(/(?:https?:\/\/)?t\.me\/([a-zA-Z0-9_]+)\/(\d+)/i);
 
-        // Jika sukses menambah atau channel ternyata sudah ada di database, kita muat ulang.
-        if (result.success || (result.message && result.message.includes('sudah ada'))) {
-          console.log('\n🔄 Memuat ulang daftar channel...');
-          return await this.execute(_account);
+        let targetChannelStr = null;
+        let startId = null;
+
+        if (privateMsgUrlMatch) {
+          targetChannelStr = parseInt(`-100${privateMsgUrlMatch[1]}`, 10);
+          startId = parseInt(privateMsgUrlMatch[2], 10);
+        } else if (publicMsgUrlMatch && publicMsgUrlMatch[1].toLowerCase() !== 'c') {
+          targetChannelStr = '@' + publicMsgUrlMatch[1];
+          startId = parseInt(publicMsgUrlMatch[2], 10);
+        }
+
+        if (targetChannelStr) {
+          console.log('\n🔗 Tautan pesan terdeteksi!');
+          console.log(`📌 Mempersiapkan channel ${targetChannelStr} untuk ditarik...`);
+
+          // Daftarkan channel jika belum ada
+          await this.scrapingService.addChannel(targetChannelStr);
+
+          // Dapatkan update ID terakhir pada channel tersebut
+          console.log(`🌐 Mengambil informasi pesan terbaru dari ${targetChannelStr}...`);
+          const checks = await this.scrapingService.checkChannels([{ channelName: targetChannelStr }]);
+          const endId = (checks.length > 0 && checks[0].lastMessageId) ? checks[0].lastMessageId : startId + 100;
+
+          console.log(`🚀 Memulai AUTO-SCRAPE untuk ${targetChannelStr}`);
+          console.log(`📊 Memproses ID pesan ${startId} hingga ${endId}...`);
+
+          // Langsung scrape tanpa pertanyaan
+          const results = await this.scrapingService.scrapeChannel(targetChannelStr, startId, endId, this.botInteractionService);
+          this.ui.displayResults(results);
+          reloadNeeded = true;
+        } else {
+          // Jika bukan nomor urut maupun tautan pesan langsung, anggap sebagai penambahan channel baru reguler
+          console.log(`\n🔄 Mencoba memproses channel: ${currentInput}...`);
+          const result = await this.scrapingService.addChannel(currentInput);
+          this.ui.displayAddChannelResult(result);
+
+          // Jika sukses menambah atau channel ternyata sudah ada di database, kita muat ulang.
+          if (result.success || (result.message && result.message.includes('sudah ada'))) {
+            reloadNeeded = true;
+          }
         }
       }
+    }
+
+    if (reloadNeeded) {
+      console.log('\n🔄 Memuat ulang daftar channel...');
+      return await this.execute(_account);
     }
   }
 }

@@ -206,35 +206,69 @@ class ConsoleUI {
       return;
     }
 
-    // Helper function to pad string
-    /**
-     *
-     * @param str
-     * @param width
-     * @param align
-     */
+    const { fg, bright, reset, dim } = this.colors;
+
+    // Helper: calculate visible string width
+    function getDisplayWidth(str) {
+      str = String(str).replace(/\x1b\[[0-9;]*m/g, '');
+      // Remove zero-width characters
+      str = str.replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E\uFE0F]/g, '');
+      let width = 0;
+      for (let i = 0; i < str.length; i++) {
+        const code = str.charCodeAt(i);
+        if (code >= 0xD800 && code <= 0xDBFF) {
+          width += 2; // Surrogate pairs usually represent emojis (width 2)
+          i++;
+        } else {
+          width += 1;
+        }
+      }
+      return width;
+    }
+
+    // Helper: pad string with alignment
     function pad (str, width, align = 'left') {
       str = String(str);
-      if (str.length > width) {
-        str = str.substring(0, width);
+      const stripped = str.replace(/\x1b\[[0-9;]*m/g, '');
+      const visWidth = getDisplayWidth(stripped);
+      
+      if (visWidth > width) {
+        // Truncate based on display width
+        let truncated = '';
+        let currentWidth = 0;
+        let j = 0;
+        const cleanStr = stripped.replace(/[\u200B-\u200D\uFEFF\u200E\u200F\u202A-\u202E\uFE0F]/g, '');
+        while (j < cleanStr.length && currentWidth < width - 1) {
+          const code = cleanStr.charCodeAt(j);
+          if (code >= 0xD800 && code <= 0xDBFF) {
+            if (currentWidth + 2 > width - 1) break;
+            truncated += cleanStr[j] + cleanStr[j+1];
+            currentWidth += 2;
+            j += 2;
+          } else {
+            truncated += cleanStr[j];
+            currentWidth += 1;
+            j += 1;
+          }
+        }
+        str = truncated + '…';
       }
+      
+      const currentVisWidth = getDisplayWidth(str);
+      const padLen = Math.max(0, width - currentVisWidth);
+      
       if (align === 'right') {
-        return str.padStart(width);
+        return ' '.repeat(padLen) + str;
       } else if (align === 'center') {
-        const totalPad = width - str.length;
-        const leftPad = Math.floor(totalPad / 2);
-        const rightPad = totalPad - leftPad;
+        const leftPad = Math.floor(padLen / 2);
+        const rightPad = padLen - leftPad;
         return ' '.repeat(leftPad) + str + ' '.repeat(rightPad);
       } else {
-        return str.padEnd(width);
+        return str + ' '.repeat(padLen);
       }
     }
 
-    // Function to format relative time
-    /**
-     *
-     * @param date
-     */
+    // Format relative time
     function formatRelativeTime (date) {
       const now = new Date();
       const diffMs = now - date;
@@ -243,76 +277,99 @@ class ConsoleUI {
       const diffHour = Math.floor(diffMin / 60);
       const diffDay = Math.floor(diffHour / 24);
 
-      if (diffSec < 60) { return 'baru saja'; }
-      if (diffMin < 60) { return `${diffMin} menit yang lalu`; }
-      if (diffHour < 24) { return `${diffHour} jam yang lalu`; }
-      if (diffDay < 7) { return `${diffDay} hari yang lalu`; }
-      if (diffDay < 30) { return `${Math.floor(diffDay / 7)} minggu yang lalu`; }
-      if (diffDay < 365) { return `${Math.floor(diffDay / 30)} bulan yang lalu`; }
-      return `${Math.floor(diffDay / 365)} tahun yang lalu`;
+      if (diffSec < 60) return 'baru saja';
+      if (diffMin < 60) return `${diffMin}m lalu`;
+      if (diffHour < 24) return `${diffHour}j lalu`;
+      if (diffDay < 7) return `${diffDay}h lalu`;
+      if (diffDay < 30) return `${Math.floor(diffDay / 7)}mg lalu`;
+      if (diffDay < 365) return `${Math.floor(diffDay / 30)}bln lalu`;
+      return `${Math.floor(diffDay / 365)}thn lalu`;
     }
 
-    // Calculate column widths
-    const noWidth = Math.max(2, String(channelCache.length).length);
-    const nameWidth = Math.max(7, channelCache.length > 0 ? Math.max(...channelCache.map(ch => String(ch.channelTitle || ch.channelName).length || 0)) : 7);
-    const idWidth = Math.max(15, channelCache.length > 0 ? Math.max(...channelCache.map(ch => ch.lastMessageId ? String(ch.lastMessageId).length : 3)) : 15); // "N/A" is 3
-    const scrapedIdWidth = Math.max(15, channelCache.length > 0 ? Math.max(...channelCache.map(ch => ch.lastScrapedId ? String(ch.lastScrapedId).length : 3)) : 15);
-    const timeWidth = 40; // For formatted time + relative
-    const statusWidth = Math.max(6, channelCache.length > 0 ? Math.max(...channelCache.map(ch => ch.status.length)) : 6);
+    // Prepare row data
+    const rows = channelCache.map((ch, idx) => {
+      const lastMsg = ch.lastMessageId || 0;
+      const lastScraped = ch.lastScrapedId || 0;
+      const unscraped = Math.max(0, lastMsg - lastScraped);
 
-    // Table header
-    const separator = '+' + '-'.repeat(noWidth + 2) + '+' + '-'.repeat(nameWidth + 2) + '+' + '-'.repeat(scrapedIdWidth + 2) + '+' + '-'.repeat(idWidth + 2) + '+' + '-'.repeat(timeWidth + 2) + '+' + '-'.repeat(statusWidth + 2) + '+';
-    const header = '| ' + pad('No', noWidth, 'center') + ' | ' + pad('Channel', nameWidth, 'center') + ' | ' + pad('Last Scraped ID', scrapedIdWidth, 'center') + ' | ' + pad('Last Message ID', idWidth, 'center') + ' | ' + pad('Last Message Time', timeWidth, 'center') + ' | ' + pad('Status', statusWidth, 'center') + ' |';
-
-    console.log('\n📋 Daftar channel yang tersedia:');
-    console.log(separator);
-    console.log(header);
-    console.log(separator);
-
-    // Table rows
-    channelCache.forEach((ch, idx) => {
-      let timeStr;
+      let timeStr = '-';
       if (ch.lastMessageTimestamp) {
         const date = new Date(ch.lastMessageTimestamp);
-        if (isNaN(date.getTime())) {
-          timeStr = 'N/A';
-        } else {
+        if (!isNaN(date.getTime())) {
           const dateTimeStr = date.toLocaleString('id-ID', {
-            /**
-             *
-             */
-            year: 'numeric',
-            /**
-             *
-             */
-            month: '2-digit',
-            /**
-             *
-             */
-            day: '2-digit',
-            /**
-             *
-             */
-            hour: '2-digit',
-            /**
-             *
-             */
-            minute: '2-digit',
+            day: '2-digit', month: '2-digit', year: '2-digit',
+            hour: '2-digit', minute: '2-digit',
           });
-          const relative = formatRelativeTime(date);
-          timeStr = `${dateTimeStr} (${relative})`;
+          timeStr = `${dateTimeStr} (${formatRelativeTime(date)})`;
         }
-      } else {
-        timeStr = 'N/A';
       }
-      const idStr = ch.lastMessageId !== null ? String(ch.lastMessageId) : 'N/A';
-      const scrapedIdStr = ch.lastScrapedId !== null && ch.lastScrapedId !== undefined ? String(ch.lastScrapedId) : 'N/A';
-      const row = '| ' + pad(idx + 1, noWidth, 'center') + ' | ' + pad(String(ch.channelTitle || ch.channelName), nameWidth) + ' | ' + pad(scrapedIdStr, scrapedIdWidth, 'right') + ' | ' + pad(idStr, idWidth, 'right') + ' | ' + pad(timeStr, timeWidth) + ' | ' + pad(ch.status, statusWidth, 'center') + ' |';
+
+      return {
+        no: idx + 1,
+        name: String(ch.channelTitle || ch.channelName),
+        scraped: lastScraped ? String(lastScraped) : '-',
+        lastMsg: lastMsg ? String(lastMsg) : '-',
+        unscraped,
+        timeStr,
+      };
+    });
+
+    // Column widths
+    const cols = {
+      no: Math.max(2, String(rows.length).length),
+      name: Math.max(10, Math.min(22, Math.max(...rows.map(r => getDisplayWidth(r.name))))),
+      scraped: Math.max(7, Math.max(...rows.map(r => getDisplayWidth(r.scraped)))),
+      lastMsg: Math.max(7, Math.max(...rows.map(r => getDisplayWidth(r.lastMsg)))),
+      unscraped: 6,
+      time: Math.max(12, Math.min(30, Math.max(...rows.map(r => getDisplayWidth(r.timeStr))))),
+    };
+
+    // Box drawing
+    const topLine    = `${fg.cyan}╔${'═'.repeat(cols.no+2)}╤${'═'.repeat(cols.name+2)}╤${'═'.repeat(cols.scraped+2)}╤${'═'.repeat(cols.lastMsg+2)}╤${'═'.repeat(cols.unscraped+2)}╤${'═'.repeat(cols.time+2)}╗${reset}`;
+    const headerLine = `${fg.cyan}╟${'─'.repeat(cols.no+2)}┼${'─'.repeat(cols.name+2)}┼${'─'.repeat(cols.scraped+2)}┼${'─'.repeat(cols.lastMsg+2)}┼${'─'.repeat(cols.unscraped+2)}┼${'─'.repeat(cols.time+2)}╢${reset}`;
+    const bottomLine = `${fg.cyan}╚${'═'.repeat(cols.no+2)}╧${'═'.repeat(cols.name+2)}╧${'═'.repeat(cols.scraped+2)}╧${'═'.repeat(cols.lastMsg+2)}╧${'═'.repeat(cols.unscraped+2)}╧${'═'.repeat(cols.time+2)}╝${reset}`;
+
+    // Header
+    const header = `${fg.cyan}║${reset} ${bright}${pad('No', cols.no, 'center')}${reset} ${fg.cyan}│${reset} ${bright}${pad('Channel', cols.name, 'center')}${reset} ${fg.cyan}│${reset} ${bright}${pad('Scraped', cols.scraped, 'center')}${reset} ${fg.cyan}│${reset} ${bright}${pad('Terbaru', cols.lastMsg, 'center')}${reset} ${fg.cyan}│${reset} ${bright}${pad('Baru', cols.unscraped, 'center')}${reset} ${fg.cyan}│${reset} ${bright}${pad('Waktu', cols.time, 'center')}${reset} ${fg.cyan}║${reset}`;
+
+    console.log(`\n${bright}📋 DAFTAR CHANNEL${reset}`);
+    console.log(topLine);
+    console.log(header);
+    console.log(headerLine);
+
+    // Rows
+    rows.forEach(r => {
+      // Color the 'unscraped' count based on urgency
+      let unscrColor = fg.green;
+      let unscrText = String(r.unscraped);
+      if (r.unscraped === 0) {
+        unscrColor = `${dim}`;
+        unscrText = '✓';
+      } else if (r.unscraped > 100) {
+        unscrColor = `${fg.red}${bright}`;
+      } else if (r.unscraped > 20) {
+        unscrColor = `${fg.yellow}${bright}`;
+      } else {
+        unscrColor = `${fg.green}`;
+      }
+
+      const row = `${fg.cyan}║${reset} ${pad(String(r.no), cols.no, 'center')} ${fg.cyan}│${reset} ${pad(r.name, cols.name)} ${fg.cyan}│${reset} ${pad(r.scraped, cols.scraped, 'right')} ${fg.cyan}│${reset} ${pad(r.lastMsg, cols.lastMsg, 'right')} ${fg.cyan}│${reset} ${unscrColor}${pad(unscrText, cols.unscraped, 'center')}${reset} ${fg.cyan}│${reset} ${pad(r.timeStr, cols.time)} ${fg.cyan}║${reset}`;
       console.log(row);
     });
 
-    console.log(separator);
-    console.log('\n💡 Masukkan nomor dari daftar, atau langsung ketik nama/ID channel baru');
+    console.log(bottomLine);
+
+    // Summary footer
+    const totalUnscraped = rows.reduce((sum, r) => sum + r.unscraped, 0);
+    const channelsWithNew = rows.filter(r => r.unscraped > 0).length;
+    
+    if (totalUnscraped > 0) {
+      console.log(`\n${fg.yellow}${bright}📊 ${channelsWithNew} channel${reset}${fg.yellow} memiliki total ${bright}${totalUnscraped}${reset}${fg.yellow} pesan baru yang belum di-scrape${reset}`);
+    } else {
+      console.log(`\n${fg.green}✅ Semua channel sudah di-scrape hingga pesan terbaru${reset}`);
+    }
+
+    console.log(`${dim}💡 Masukkan nomor dari daftar, atau ketik nama/ID channel baru${reset}`);
   }
 
   /**
